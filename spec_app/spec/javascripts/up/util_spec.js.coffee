@@ -35,7 +35,7 @@ describe 'up.util', ->
         u.nextFrame ->
           expect(callback).not.toHaveBeenCalled()
           funDeferred.resolve()
-          u.nextFrame ->
+          u.inFrames 4, ->
             expect(callback).toHaveBeenCalled()
             done()
 
@@ -525,7 +525,7 @@ describe 'up.util', ->
 
     describe 'up.util.resolvableWhen', ->
 
-      it 'returns a promise that is resolved when all the given deferreds are resolved', ->
+      it 'returns a promise that is resolved when all the given deferreds are resolved', (done) ->
         one = jasmine.createSpy()
         two = jasmine.createSpy()
         both = jasmine.createSpy()
@@ -537,21 +537,26 @@ describe 'up.util', ->
         bothDeferred = up.util.resolvableWhen(oneDeferred, twoDeferred)
         bothDeferred.then(both)
 
-        expect(one).not.toHaveBeenCalled()
-        expect(two).not.toHaveBeenCalled()
-        expect(both).not.toHaveBeenCalled()
+        u.nextFrame ->
+          expect(one).not.toHaveBeenCalled()
+          expect(two).not.toHaveBeenCalled()
+          expect(both).not.toHaveBeenCalled()
 
-        oneDeferred.resolve()
-        expect(one).toHaveBeenCalled()
-        expect(two).not.toHaveBeenCalled()
-        expect(both).not.toHaveBeenCalled()
+          oneDeferred.resolve()
+          u.nextFrame ->
+            expect(one).toHaveBeenCalled()
+            expect(two).not.toHaveBeenCalled()
+            expect(both).not.toHaveBeenCalled()
 
-        twoDeferred.resolve()
-        expect(one).toHaveBeenCalled()
-        expect(two).toHaveBeenCalled()
-        expect(both).toHaveBeenCalled()
+            twoDeferred.resolve()
+            u.nextFrame ->
+              expect(one).toHaveBeenCalled()
+              expect(two).toHaveBeenCalled()
+              expect(both).toHaveBeenCalled()
 
-      it 'returns a promise with a .resolve method that resolves the given deferreds', ->
+              done()
+
+      it 'returns a promise with a .resolve method that resolves the given deferreds', (done) ->
         one = jasmine.createSpy()
         two = jasmine.createSpy()
         both = jasmine.createSpy()
@@ -563,14 +568,18 @@ describe 'up.util', ->
         bothDeferred = up.util.resolvableWhen(oneDeferred, twoDeferred)
         bothDeferred.then(both)
 
-        expect(one).not.toHaveBeenCalled()
-        expect(two).not.toHaveBeenCalled()
-        expect(both).not.toHaveBeenCalled()
+        u.nextFrame ->
+          expect(one).not.toHaveBeenCalled()
+          expect(two).not.toHaveBeenCalled()
+          expect(both).not.toHaveBeenCalled()
 
-        bothDeferred.resolve()
-        expect(one).toHaveBeenCalled()
-        expect(two).toHaveBeenCalled()
-        expect(both).toHaveBeenCalled()
+          bothDeferred.resolve()
+          u.nextFrame ->
+            expect(one).toHaveBeenCalled()
+            expect(two).toHaveBeenCalled()
+            expect(both).toHaveBeenCalled()
+
+            done()
 
       it 'does not resolve the given deferreds more than once', ->
         oneDeferred = $.Deferred()

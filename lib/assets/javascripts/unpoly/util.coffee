@@ -777,6 +777,15 @@ up.util = (($) ->
     setTimeout(block, 0)
 
   ###*
+  Useful in tests to defeat setTimeout(fn, 0) clamping caused
+  by jQuery's promise implementation.
+
+  @internal
+  ###
+  inFrames = (count, block) ->
+    setTimeout(block, (count - 1) * 4)
+
+  ###*
   Returns the last element of the given array.
 
   @function up.util.last
@@ -2038,6 +2047,7 @@ up.util = (($) ->
   unJQuery: unJQuery
   setTimer: setTimer
   nextFrame: nextFrame
+  inFrames: inFrames
   measure: measure
   temporaryCss: temporaryCss
   cssAnimate: cssAnimate

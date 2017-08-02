@@ -37,15 +37,18 @@ describe 'up.dom', ->
           request = @lastRequest()
           expect(request.requestHeaders['X-Up-Target']).toEqual('.middle')
 
-        it 'returns a promise that will be resolved once the server response was received and the fragments were swapped', ->
+        it 'returns a promise that will be resolved once the server response was received and the fragments were swapped', (done) ->
           resolution = jasmine.createSpy()
           promise = up.replace('.middle', '/path')
           promise.then(resolution)
           expect(resolution).not.toHaveBeenCalled()
           expect($('.middle')).toHaveText('old-middle')
+
           @respond()
-          expect(resolution).toHaveBeenCalled()
-          expect($('.middle')).toHaveText('new-middle')
+          u.inFrames 9, ->
+            expect(resolution).toHaveBeenCalled()
+            expect($('.middle')).toHaveText('new-middle')
+            done()
 
         describe 'transitions', ->
 
@@ -72,39 +75,50 @@ describe 'up.dom', ->
             expect(replaceCallback).not.toHaveBeenCalled()
             @responseText = '<body>new text</body>'
             @respond()
-            u.nextFrame ->
+            u.inFrames 8, ->
               expect(replaceCallback).toHaveBeenCalled()
               done()
 
         describe 'when the server signals a redirect with X-Up-Location header (bugfix, logic should be moved to up.proxy)', ->
 
-          it 'considers a redirection URL an alias for the requested URL', ->
+          it 'considers a redirection URL an alias for the requested URL', (done) ->
             up.replace('.middle', '/foo')
             expect(jasmine.Ajax.requests.count()).toEqual(1)
             @respond(responseHeaders: { 'X-Up-Location': '/bar', 'X-Up-Method': 'GET' })
-            up.replace('.middle', '/bar')
-            expect(jasmine.Ajax.requests.count()).toEqual(1)
+            u.inFrames 7, ->
+              up.replace('.middle', '/bar')
+              expect(jasmine.Ajax.requests.count()).toEqual(1)
+              done()
 
-          it 'does not considers a redirection URL an alias for the requested URL if the original request was never cached', ->
+          it 'does not considers a redirection URL an alias for the requested URL if the original request was never cached', (done) ->
             up.replace('.middle', '/foo', method: 'post') # POST requests are not cached
             expect(jasmine.Ajax.requests.count()).toEqual(1)
             @respond(responseHeaders: { 'X-Up-Location': '/bar', 'X-Up-Method': 'GET' })
-            up.replace('.middle', '/bar')
-            expect(jasmine.Ajax.requests.count()).toEqual(2)
 
-          it 'does not considers a redirection URL an alias for the requested URL if the response returned a non-200 status code', ->
+            u.inFrames 7, ->
+              up.replace('.middle', '/bar')
+              expect(jasmine.Ajax.requests.count()).toEqual(2)
+              done()
+
+          it 'does not considers a redirection URL an alias for the requested URL if the response returned a non-200 status code', (done) ->
             up.replace('.middle', '/foo', failTarget: '.middle')
             expect(jasmine.Ajax.requests.count()).toEqual(1)
             @respond(responseHeaders: { 'X-Up-Location': '/bar', 'X-Up-Method': 'GET' }, status: '500')
-            up.replace('.middle', '/bar')
-            expect(jasmine.Ajax.requests.count()).toEqual(2)
 
-          it "does not explode if the original request's { data } is a FormData object", ->
+            u.inFrames 7, ->
+              up.replace('.middle', '/bar')
+              expect(jasmine.Ajax.requests.count()).toEqual(2)
+              done()
+
+          it "does not explode if the original request's { data } is a FormData object", (done) ->
             up.replace('.middle', '/foo', method: 'post', data: new FormData()) # POST requests are not cached
             expect(jasmine.Ajax.requests.count()).toEqual(1)
             @respond(responseHeaders: { 'X-Up-Location': '/bar', 'X-Up-Method': 'GET' })
-            secondReplace = -> up.replace('.middle', '/bar')
-            expect(secondReplace).not.toThrowError()
+
+            u.inFrames 7, ->
+              secondReplace = -> up.replace('.middle', '/bar')
+              expect(secondReplace).not.toThrowError()
+              done()
 
         describe 'with { data } option', ->
 
@@ -847,14 +861,14 @@ describe 'up.dom', ->
         it 'uses a { failTransition } option if the request failed'
 
       describeFallback 'canPushState', ->
-        
+
         it 'makes a full page load', ->
           spyOn(up.browser, 'loadPage')
           up.replace('.selector', '/path')
           expect(up.browser.loadPage).toHaveBeenCalledWith('/path', jasmine.anything())
-          
+
     describe 'up.extract', ->
-      
+
       it 'Updates a selector on the current page with the same selector from the given HTML string', ->
 
         affix('.before').text('old-before')
@@ -1304,19 +1318,19 @@ describe 'up.dom', ->
             done()
 
     describe 'up.destroy', ->
-      
+
       it 'removes the element with the given selector', ->
         affix('.element')
         up.destroy('.element')
         expect($('.element')).not.toExist()
-        
+
       it 'calls destructors for custom elements', ->
         up.compiler('.element', ($element) -> destructor)
         destructor = jasmine.createSpy('destructor')
         up.hello(affix('.element'))
         up.destroy('.element')
         expect(destructor).toHaveBeenCalled()
-        
+
       it 'allows to pass a new history entry as { history } option', ->
         affix('.element')
         up.destroy('.element', history: '/new-path')
@@ -1331,16 +1345,16 @@ describe 'up.dom', ->
     describe 'up.reload', ->
 
       describeCapability 'canPushState', ->
-      
+
         it 'reloads the given selector from the closest known source URL', (done) ->
           affix('.container[up-source="/source"] .element').find('.element').text('old text')
-    
+
           up.reload('.element').then ->
             expect($('.element')).toHaveText('new text')
             done()
-            
+
           expect(@lastRequest().url).toMatch(/\/source$/)
-    
+
           @respondWith """
             <div class="container">
               <div class="element">new text</div>
@@ -1348,15 +1362,15 @@ describe 'up.dom', ->
             """
 
       describeFallback 'canPushState', ->
-        
+
         it 'makes a page load from the closest known source URL', ->
           affix('.container[up-source="/source"] .element').find('.element').text('old text')
           spyOn(up.browser, 'loadPage')
           up.reload('.element')
           expect(up.browser.loadPage).toHaveBeenCalledWith('/source', jasmine.anything())
-          
-  
+
+
     describe 'up.reset', ->
-  
+
       it 'should have tests'
 

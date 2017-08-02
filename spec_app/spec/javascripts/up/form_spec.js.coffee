@@ -427,7 +427,7 @@ describe 'up.form', ->
         $form = affix('form')
         $field = $form.affix('input[up-autosubmit][val="old-value"]')
         up.hello($field)
-        submission = $.Deferred()
+        submission = u.newDeferred()
         submitSpy = up.form.knife.mock('submit').and.returnValue(submission)
         $field.val('new-value')
         $field.trigger('change')

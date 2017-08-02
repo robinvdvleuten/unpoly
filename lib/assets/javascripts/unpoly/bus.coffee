@@ -333,7 +333,7 @@ up.bus = (($) ->
   @internal
   ###
   whenEmitted = (args...) ->
-    deferred = $.Deferred()
+    deferred = u.newDeferred()
     if nobodyPrevents(args...)
       deferred.resolve()
     deferred.promise()

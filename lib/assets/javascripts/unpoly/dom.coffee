@@ -266,6 +266,7 @@ up.dom = (($) ->
       processResponse(true, target, url, request, xhr, successOptions)
 
     onFailure = (xhr, textStatus, errorThrown) ->
+      throw "jquery3: cannot have a promise with multiple rejection args"
       rejection = -> u.rejectedPromise(xhr, textStatus, errorThrown)
       if xhr.responseText
         promise = processResponse(false, failTarget, url, request, xhr, failureOptions)
@@ -841,7 +842,7 @@ up.dom = (($) ->
     else
       # Although someone prevented the destruction, keep a uniform API for
       # callers by returning a Deferred that will never be resolved.
-      $.Deferred()
+      u.newDeferred()
 
   ###*
   Before a page fragment is being [destroyed](/up.destroy), this

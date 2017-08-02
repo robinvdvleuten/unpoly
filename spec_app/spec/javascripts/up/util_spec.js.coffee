@@ -26,7 +26,7 @@ describe 'up.util', ->
             done()
 
       it "delays resolution of the proxy's .promise if the inner function returns a promise", (done) ->
-        funDeferred = $.Deferred()
+        funDeferred = u.newDeferred()
         fun = -> funDeferred
         proxy = up.util.previewable(fun)
         callback = jasmine.createSpy('promise callback')
@@ -529,9 +529,9 @@ describe 'up.util', ->
         one = jasmine.createSpy()
         two = jasmine.createSpy()
         both = jasmine.createSpy()
-        oneDeferred = $.Deferred()
+        oneDeferred = u.newDeferred()
         oneDeferred.then(one)
-        twoDeferred = $.Deferred()
+        twoDeferred = u.newDeferred()
         twoDeferred.then(two)
 
         bothDeferred = up.util.resolvableWhen(oneDeferred, twoDeferred)
@@ -560,9 +560,9 @@ describe 'up.util', ->
         one = jasmine.createSpy()
         two = jasmine.createSpy()
         both = jasmine.createSpy()
-        oneDeferred = $.Deferred()
+        oneDeferred = u.newDeferred()
         oneDeferred.then(one)
-        twoDeferred = $.Deferred()
+        twoDeferred = u.newDeferred()
         twoDeferred.then(two)
 
         bothDeferred = up.util.resolvableWhen(oneDeferred, twoDeferred)
@@ -582,7 +582,7 @@ describe 'up.util', ->
             done()
 
       it 'does not resolve the given deferreds more than once', ->
-        oneDeferred = $.Deferred()
+        oneDeferred = u.newDeferred()
         spyOn(oneDeferred, 'resolve')
         bothDeferred = up.util.resolvableWhen(oneDeferred)
 
@@ -594,7 +594,7 @@ describe 'up.util', ->
       describe 'bugfix against troublesome jQuery optimization if only one deferred is given', ->
 
         it 'does not simply return the given deferred', ->
-          oneDeferred = $.Deferred()
+          oneDeferred = u.newDeferred()
           whenDeferred = up.util.resolvableWhen(oneDeferred)
           # This is what $.when returns if only passed a single argument
           expect(whenDeferred).not.toBe(oneDeferred.promise())
@@ -604,7 +604,7 @@ describe 'up.util', ->
           expect(whenDeferred.promise()).not.toBe(oneDeferred)
 
         it 'does not create an infinite loop if the given deferred is nested twice and the first nesting is resolved', ->
-          oneDeferred = $.Deferred()
+          oneDeferred = u.newDeferred()
           firstNesting = up.util.resolvableWhen(oneDeferred)
           secondNesting = up.util.resolvableWhen(firstNesting)
           expect(-> firstNesting.resolve()).not.toThrowError()

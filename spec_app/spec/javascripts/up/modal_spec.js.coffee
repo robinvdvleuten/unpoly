@@ -268,7 +268,7 @@ describe 'up.modal', ->
               animations.push
                 text: u.trim($element.find('.target').text())
                 animation: animation
-            deferred = $.Deferred()
+            deferred = u.newDeferred()
             u.setTimer options.duration, -> deferred.resolve()
             deferred.promise()
 

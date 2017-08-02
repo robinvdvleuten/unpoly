@@ -783,7 +783,8 @@ up.util = (($) ->
   @internal
   ###
   inFrames = (count, block) ->
-    setTimeout(block, (count - 1) * 4)
+    clampedDelay = (count - 1) * 4
+    setTimeout(block, clampedDelay)
 
   ###*
   Returns the last element of the given array.
@@ -964,7 +965,7 @@ up.util = (($) ->
 
     # We don't finish an existing animation here, since the public API
     # we expose as `up.motion.animate()` already does this.
-    deferred = $.Deferred()
+    deferred = newDeferred()
 
     transitionProperties = Object.keys(lastFrame)
     transition =
@@ -1210,7 +1211,7 @@ up.util = (($) ->
   @stable
   ###
   resolvedDeferred = (args...) ->
-    deferred = $.Deferred()
+    deferred = newDeferred()
     deferred.resolve(args...)
     deferred
 
@@ -1223,8 +1224,8 @@ up.util = (($) ->
   @return {Promise}
   @stable
   ###
-  resolvedPromise = (args...) ->
-    resolvedDeferred(args...).promise()
+  resolvedPromise = (arg) ->
+    Promise.resolve(arg)
 
   ###*
   Returns a promise that is already rejected.
@@ -1235,10 +1236,8 @@ up.util = (($) ->
   @return {Promise}
   @stable
   ###
-  rejectedPromise = (args...) ->
-    deferred = $.Deferred()
-    deferred.reject(args...)
-    deferred.promise()
+  rejectedPromise = (arg) ->
+    Promise.reject(arg)
 
   ###*
   Returns whether the given argument is a resolved jQuery promise.
@@ -1247,6 +1246,7 @@ up.util = (($) ->
   @internal
   ###
   isResolvedPromise = (promise) ->
+    throw "jquery3: isResolvedPromise cannot be implemented"
     isPromise(promise) && promise.state?() == 'resolved'
 
   ###*
@@ -1257,7 +1257,7 @@ up.util = (($) ->
   @experimental
   ###
   unresolvableDeferred = ->
-    $.Deferred()
+    newDeferred()
 
   ###*
   Returns a promise that will never be resolved.
@@ -1290,7 +1290,7 @@ up.util = (($) ->
   resolvableWhen = (deferreds...) ->
     # Pass an additional resolved deferred to $.when so $.when  will
     # not return the given deferred if only one deferred is passed.
-    joined = $.when(resolvedDeferred(), deferreds...)
+    joined = Promise.all([resolvedDeferred(), deferreds...])
     joined.resolve = memoize(->
       each deferreds, (deferred) ->
         deferred.resolve()
@@ -1298,7 +1298,7 @@ up.util = (($) ->
     joined
 
 #  resolvableSequence = (first, callbacks...) ->
-#    sequence = $.Deferred().promise()
+#    sequence = newDeferred().promise()
 #    values = [first]
 #    current = first
 #    for callback in callbacks
@@ -1802,7 +1802,7 @@ up.util = (($) ->
     if $.isReady
       resolvedPromise()
     else
-      deferred = $.Deferred()
+      deferred = newDeferred()
       $ -> deferred.resolve()
       deferred.promise()
 
@@ -1835,7 +1835,7 @@ up.util = (($) ->
   @internal
   ###
   previewable = (fun) ->
-    deferred = $.Deferred()
+    deferred = newDeferred()
     preview = (args...) ->
       funValue = fun(args...)
       if isPromise(funValue)
@@ -1907,7 +1907,7 @@ up.util = (($) ->
 #  @internal
 #  ###
 #  race = (promises...) ->
-#    raceDone = $.Deferred()
+#    raceDone = newDeferred()
 #    each promises, (promise) ->
 #      promise.then -> raceDone.resolve()
 #    raceDone.promise()
@@ -1917,7 +1917,7 @@ up.util = (($) ->
   @internal
   ###
   promiseTimer = (ms) ->
-    deferred = $.Deferred()
+    deferred = newDeferred()
     timeout = setTimer ms, ->
       deferred.resolve()
     deferred.cancel = -> clearTimeout(timeout)
@@ -1976,6 +1976,17 @@ up.util = (($) ->
 
   isTruthy = (object) ->
     !!object
+
+  newDeferred = ->
+    resolve = undefined
+    reject = undefined
+    nativePromise = new Promise (givenResolve, givenReject) ->
+      resolve = givenResolve
+      reject = givenReject
+    nativePromise.resolve = resolve
+    nativePromise.reject = reject
+    nativePromise.promise = -> nativePromise # just return self
+    nativePromise
 
   requestDataAsArray: requestDataAsArray
   requestDataAsQuery: requestDataAsQuery
@@ -2092,6 +2103,7 @@ up.util = (($) ->
   detachWith: detachWith
   flatten: flatten
   isTruthy: isTruthy
+  newDeferred: newDeferred
 
 )(jQuery)
 

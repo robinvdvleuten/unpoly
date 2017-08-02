@@ -391,7 +391,7 @@ up.proxy = (($) ->
 
   queue = (request) ->
     up.puts('Queuing request for %s %s', request.method, request.url)
-    deferred = $.Deferred()
+    deferred = u.newDeferred()
     entry =
       deferred: deferred
       request: request

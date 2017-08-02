@@ -122,7 +122,7 @@ up.layout = (($) ->
     finishScrolling($viewport)
 
     if duration > 0
-      deferred = $.Deferred()
+      deferred = u.newDeferred()
 
       $viewport.data(SCROLL_PROMISE_KEY, deferred)
       deferred.then ->

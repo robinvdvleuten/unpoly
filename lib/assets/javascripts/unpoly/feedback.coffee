@@ -146,7 +146,7 @@ up.feedback = (($) ->
       var $button = $('button');
       $button.on('click', function() {
         up.feedback.start($button);
-        up.ajax(...).always(function() {
+        up.ajax(...).then(function() {
           up.feedback.stop($button);
         });
       });
@@ -175,7 +175,7 @@ up.feedback = (($) ->
     if action
       promise = action()
       if u.isPromise(promise)
-        promise.always -> stop($element)
+        u.always promise, -> stop($element)
       else
         up.warn('Expected block to return a promise, but got %o', promise)
       promise

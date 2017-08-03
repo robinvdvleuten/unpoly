@@ -596,12 +596,7 @@ describe 'up.util', ->
         it 'does not simply return the given deferred', ->
           oneDeferred = u.newDeferred()
           whenDeferred = up.util.resolvableWhen(oneDeferred)
-          # This is what $.when returns if only passed a single argument
-          expect(whenDeferred).not.toBe(oneDeferred.promise())
-          # Cover eventual implementations
           expect(whenDeferred).not.toBe(oneDeferred)
-          expect(whenDeferred.promise()).not.toBe(oneDeferred.promise())
-          expect(whenDeferred.promise()).not.toBe(oneDeferred)
 
         it 'does not create an infinite loop if the given deferred is nested twice and the first nesting is resolved', ->
           oneDeferred = u.newDeferred()

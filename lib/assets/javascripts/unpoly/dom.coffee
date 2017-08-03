@@ -262,14 +262,13 @@ up.dom = (($) ->
       headers: options.headers
       timeout: options.timeout
 
-    onSuccess = (html, textStatus, xhr) ->
-      processResponse(true, target, url, request, xhr, successOptions)
+    onSuccess = (response) ->
+      processResponse(response, true, successOptions)
 
-    onFailure = (xhr, textStatus, errorThrown) ->
-      throw "jquery3: cannot have a promise with multiple rejection args"
-      rejection = -> u.rejectedPromise(xhr, textStatus, errorThrown)
-      if xhr.responseText
-        promise = processResponse(false, failTarget, url, request, xhr, failureOptions)
+    onFailure = (response) ->
+      rejection = -> u.rejectedPromise(response)
+      if response.text
+        promise = processResponse(response, false, failureOptions)
         promise.then(rejection, rejection)
       else
         rejection()
@@ -281,7 +280,12 @@ up.dom = (($) ->
   ###*
   @internal
   ###
-  processResponse = (isSuccess, selector, url, request, xhr, options) ->
+  processResponse = (response, isSuccess, options) ->
+    request = response.request
+    url = request.url
+    selector = request.target
+    xhr = response.xhr
+
     options.method = u.normalizeMethod(u.option(up.protocol.methodFromXhr(xhr), options.method))
 
     isReloadable = (options.method == 'GET')

@@ -156,7 +156,7 @@ up.form = (($) ->
       return u.unresolvablePromise()
 
     promise = up.replace(target, url, options)
-    promise.always -> up.feedback.stop($form)
+    u.always promise, -> up.feedback.stop($form)
     promise
 
   ###*

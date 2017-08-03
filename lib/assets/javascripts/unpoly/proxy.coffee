@@ -248,7 +248,7 @@ up.proxy = (($) ->
       promise = loadOrQueue(request)
       set(request, promise)
       # Don't cache failed requests
-      promise.fail -> remove(request)
+      promise.catch -> remove(request)
 
     if pending && !options.preload
       # This might actually make `pendingCount` higher than the actual
@@ -262,7 +262,7 @@ up.proxy = (($) ->
       # - The request finishes.
       #   This triggers `up:proxy:recover`.
       loadStarted()
-      promise.always(loadEnded)
+      u.always promise, loadEnded
 
     promise
 
@@ -391,12 +391,10 @@ up.proxy = (($) ->
 
   queue = (request) ->
     up.puts('Queuing request for %s %s', request.method, request.url)
-    deferred = u.newDeferred()
-    entry =
-      deferred: deferred
-      request: request
-    queuedRequests.push(entry)
-    deferred.promise()
+    loader = -> load(request)
+    loader = u.previewable(loader)
+    queuedRequests.push(loader)
+    loader.promise()
 
   load = (request) ->
     up.emit('up:proxy:load', u.merge(request, message: ['Loading %s %s', request.method, request.url]))
@@ -419,21 +417,39 @@ up.proxy = (($) ->
       request.contentType = false
       request.processData = false
 
-    promise = $.ajax(request)
-    promise.done (data, textStatus, xhr) -> responseReceived(request, xhr)
-    promise.fail (xhr, textStatus, errorThrown) -> responseReceived(request, xhr)
-    promise
+    jqAjaxPromise = $.ajax(request)
 
-  responseReceived = (request, xhr) ->
-    up.emit('up:proxy:received', u.merge(request, message: ['Server responded with %s %s (%d bytes)', xhr.status, xhr.statusText, xhr.responseText?.length]))
-    pokeQueue()
+    # We want to return a native promise, but jQuery's AJAX deferred pass multiple
+    # arguments to callbacks. Since native promises only have a single settlement
+    # value, we need to convert these args into a signle object.
+    convertJqueryAjaxtToNativePromise(jqAjaxPromise)
 
-  pokeQueue = ->
-    if entry = queuedRequests.shift()
-      promise = load(entry.request)
-      promise.done (args...) -> entry.deferred.resolve(args...)
-      promise.fail (args...) -> entry.deferred.reject(args...)
-      return
+  buildResponse = (request, textStatus, xhr) ->
+    request: request
+    text: xhr.responseText
+    textStatus: textStatus
+    xhr: xhr
+
+  convertJqueryAjaxtToNativePromise = (jqAjaxPromise, request) ->
+    new Promise (resolve, reject) ->
+
+      jqAjaxPromise.done (data, textStatus, xhr) ->
+        response = buildResponse(request, textStatus, xhr)
+        responseReceived(response)
+        resolve(response)
+
+      jqAjaxPromise.fail (xhr, textStatus, errorThrown) ->
+        response = buildResponse(request, textStatus, xhr)
+        responseReceived(response)
+        reject(response)
+
+  responseReceived = (response) ->
+    emitMessage = ['Server responded with %s (%d bytes)', response.xhr.status, response.text]
+    eventProps = u.merge(response, message: emitMessage)
+    up.emit('up:proxy:received', eventProps)
+    # Since we have just completed a request, we now have the worker to load the next request.
+    if loader = queuedRequests.shift()
+      loader()
 
   ###*
   Makes the proxy assume that `newRequest` has the same response as the

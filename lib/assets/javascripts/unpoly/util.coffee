@@ -1875,7 +1875,7 @@ up.util = (($) ->
       unless @currentTask # don't start a new task while we're still running one
         if @currentTask = @queue.shift()
           promise = @currentTask()
-          promise.always =>
+          always promise, =>
             @currentTask = undefined
             @poke()
 
@@ -1976,6 +1976,9 @@ up.util = (($) ->
 
   isTruthy = (object) ->
     !!object
+
+  always = (promise, callback) ->
+    promise.then(callback, callback)
 
   newDeferred = ->
     resolve = undefined
@@ -2104,6 +2107,7 @@ up.util = (($) ->
   flatten: flatten
   isTruthy: isTruthy
   newDeferred: newDeferred
+  always: always
 
 )(jQuery)
 

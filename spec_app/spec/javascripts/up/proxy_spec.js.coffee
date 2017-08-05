@@ -4,9 +4,9 @@ describe 'up.proxy', ->
 
   describe 'JavaScript functions', ->
 
-    beforeEach ->
-      jasmine.clock().install()
-      jasmine.clock().mockDate()
+#    beforeEach ->
+#      jasmine.clock().install()
+#      jasmine.clock().mockDate()
 
     describe 'up.ajax', ->
 
@@ -24,35 +24,90 @@ describe 'up.proxy', ->
         expect(request.data()).toEqual(key: ['value'])
         expect(request.method).toEqual('POST')
 
-      it 'caches server responses for 5 minutes', ->
+      it 'caches server responses for 5 minutes', (done) ->
         responses = []
 
-        # Send the same request for the same path, 3 minutes apart
-        up.ajax(url: '/foo').then (data) -> responses.push(data)
-        jasmine.clock().tick(3 * 60 * 1000)
-        up.ajax(url: '/foo').then (data) -> responses.push(data)
+        asyncSequence done, mockTime: true, (sequence) ->
 
-        # See that only a single network request was triggered
-        expect(jasmine.Ajax.requests.count()).toEqual(1)
-        expect(responses).toEqual([])
+          sequence.next =>
+            # Send the same request for the same path, 3 minutes apart
+            up.ajax(url: '/foo').then (data) -> responses.push(data)
+            expect(jasmine.Ajax.requests.count()).toEqual(1)
 
-        @respondWith('foo')
+          sequence.after 3 * 60 * 1000, =>
+            up.ajax(url: '/foo').then (data) -> responses.push(data)
 
-        # See that both requests have been fulfilled by the same response
-        expect(responses).toEqual(['foo', 'foo'])
+            # See that only a single network request was triggered
+            expect(jasmine.Ajax.requests.count()).toEqual(1)
+            expect(responses).toEqual([])
 
-        # Send another request after another 3 minutes
-        # The clock is now a total of 6 minutes after the first request,
-        # exceeding the cache's retention time of 5 minutes.
-        jasmine.clock().tick(3 * 60 * 1000)
-        up.ajax(url: '/foo').then (data) -> responses.push(data)
+            @respondWith('foo')
 
-        # See that we have triggered a second request
-        expect(jasmine.Ajax.requests.count()).toEqual(2)
+          sequence.next ->
 
-        @respondWith('bar')
+            # See that both requests have been fulfilled by the same response
+            expect(responses).toEqual(['foo', 'foo'])
 
-        expect(responses).toEqual(['foo', 'foo', 'bar'])
+          sequence.after 3 * 60 * 1000, =>
+
+            # Send another request after another 3 minutes
+            # The clock is now a total of 6 minutes after the first request,
+            # exceeding the cache's retention time of 5 minutes.
+            up.ajax(url: '/foo').then (data) -> responses.push(data)
+
+            # See that we have triggered a second request
+            expect(jasmine.Ajax.requests.count()).toEqual(2)
+
+          sequence.next ->
+            @respondWith('bar')
+
+            expect(responses).toEqual(['foo', 'foo', 'bar'])
+
+
+
+#        responses = []
+#
+#        # Send the same request for the same path, 3 minutes apart
+#        prom = up.ajax(url: '/foo')
+#        prom.then (data) -> responses.push(data)
+#        prom.catch (e) ->
+#          alert("failed!")
+#          done.fail(e)
+#
+#        u.nextFrame ->
+#          alert("next")
+#          done()
+#
+#          jasmine.clock().tick(3 * 60 * 1000)
+#          up.ajax(url: '/foo').then (data) -> responses.push(data)
+#
+#
+#          # See that only a single network request was triggered
+#          expect(jasmine.Ajax.requests.count()).toEqual(1)
+#          expect(responses).toEqual([])
+#
+#          u.nextFrame ->
+#            @respondWith('foo')
+#
+#            # See that both requests have been fulfilled by the same response
+#            expect(responses).toEqual(['foo', 'foo'])
+#
+#            u.nextFrame ->
+#              # Send another request after another 3 minutes
+#              # The clock is now a total of 6 minutes after the first request,
+#              # exceeding the cache's retention time of 5 minutes.
+#              jasmine.clock().tick(3 * 60 * 1000)
+#              up.ajax(url: '/foo').then (data) -> responses.push(data)
+#
+#              u.nextFrame ->
+#                # See that we have triggered a second request
+#                expect(jasmine.Ajax.requests.count()).toEqual(2)
+#
+#                @respondWith('bar')
+#
+#                expect(responses).toEqual(['foo', 'foo', 'bar'])
+#
+#                done()
 
       it "does not cache responses if config.cacheExpiry is 0", ->
         up.proxy.config.cacheExpiry = 0

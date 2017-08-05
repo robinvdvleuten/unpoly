@@ -211,7 +211,6 @@ up.proxy = (($) ->
   @stable
   ###
   ajax = (args...) ->
-
     options = u.extractOptions(args)
     options.url = args[0] if u.isGiven(args[0])
 
@@ -422,7 +421,7 @@ up.proxy = (($) ->
     # We want to return a native promise, but jQuery's AJAX deferred pass multiple
     # arguments to callbacks. Since native promises only have a single settlement
     # value, we need to convert these args into a signle object.
-    convertJqueryAjaxtToNativePromise(jqAjaxPromise)
+    convertJqueryAjaxtToNativePromise(request, jqAjaxPromise)
 
   buildResponse = (request, textStatus, xhr) ->
     request: request
@@ -430,7 +429,7 @@ up.proxy = (($) ->
     textStatus: textStatus
     xhr: xhr
 
-  convertJqueryAjaxtToNativePromise = (jqAjaxPromise, request) ->
+  convertJqueryAjaxtToNativePromise = (request, jqAjaxPromise) ->
     new Promise (resolve, reject) ->
 
       jqAjaxPromise.done (data, textStatus, xhr) ->

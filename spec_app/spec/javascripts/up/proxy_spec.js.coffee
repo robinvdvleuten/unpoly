@@ -4,10 +4,6 @@ describe 'up.proxy', ->
 
   describe 'JavaScript functions', ->
 
-#    beforeEach ->
-#      jasmine.clock().install()
-#      jasmine.clock().mockDate()
-
     describe 'up.ajax', ->
 
       it 'makes a request with the given URL and params', ->
@@ -146,18 +142,23 @@ describe 'up.proxy', ->
           u.times 2, -> up.ajax(url: '/foo', method: method, cache: true)
           expect(jasmine.Ajax.requests.count()).toEqual(1)
 
-      it 'does not cache responses with a non-200 status code', ->
-        # Send the same request for the same path, 3 minutes apart
-        up.ajax(url: '/foo')
+      it 'does not cache responses with a non-200 status code', (done) ->
+        asyncSequence done, (sequence) =>
+          sequence.now =>
+            # Send the same request for the same path, 3 minutes apart
+            up.ajax(url: '/foo')
 
-        @respondWith
-          status: 500
-          contentType: 'text/html'
-          responseText: 'foo'
+          sequence.next =>
+            @respondWith
+              status: 500
+              contentType: 'text/html'
+              responseText: 'foo'
 
-        up.ajax(url: '/foo')
+          sequence.next =>
+            up.ajax(url: '/foo')
 
-        expect(jasmine.Ajax.requests.count()).toEqual(2)
+          sequence.next =>
+            expect(jasmine.Ajax.requests.count()).toEqual(2)
 
       describe 'with config.wrapMethods set', ->
 
@@ -235,133 +236,158 @@ describe 'up.proxy', ->
             up.on eventName, =>
               @events.push eventName
 
-        it 'emits an up:proxy:slow event once the proxy started loading, and up:proxy:recover if it is done loading', ->
-  
-          up.ajax(url: '/foo')
-  
-          expect(@events).toEqual([
-            'up:proxy:load',
-            'up:proxy:slow'
-          ])
-  
-          up.ajax(url: '/bar')
-  
-          expect(@events).toEqual([
-            'up:proxy:load',
-            'up:proxy:slow',
-            'up:proxy:load'
-          ])
-  
-          jasmine.Ajax.requests.at(0).respondWith
-            status: 200
-            contentType: 'text/html'
-            responseText: 'foo'
-  
-          expect(@events).toEqual([
-            'up:proxy:load',
-            'up:proxy:slow',
-            'up:proxy:load',
-            'up:proxy:received'
-          ])
-  
-          jasmine.Ajax.requests.at(1).respondWith
-            status: 200
-            contentType: 'text/html'
-            responseText: 'bar'
-  
-          expect(@events).toEqual([
-            'up:proxy:load',
-            'up:proxy:slow',
-            'up:proxy:load',
-            'up:proxy:received',
-            'up:proxy:received',
-            'up:proxy:recover'
-          ])
-  
-        it 'does not emit an up:proxy:slow event if preloading', ->
+        it 'emits an up:proxy:slow event once the proxy started loading, and up:proxy:recover if it is done loading', (done) ->
+          asyncSequence done, (sequence) =>
 
-          # A request for preloading preloading purposes
-          # doesn't make us busy.
-          up.ajax(url: '/foo', preload: true)
-          expect(@events).toEqual([
-            'up:proxy:load'
-          ])
-          expect(up.proxy.isBusy()).toBe(false)
+            sequence.now =>
+              up.ajax(url: '/foo')
 
-          # The same request with preloading does make us busy.
-          up.ajax(url: '/foo')
-          expect(@events).toEqual([
-            'up:proxy:load',
-            'up:proxy:slow'
-          ])
-          expect(up.proxy.isBusy()).toBe(true)
+            sequence.next =>
+              expect(@events).toEqual([
+                'up:proxy:load',
+                'up:proxy:slow'
+              ])
 
-          # The response resolves both promises and makes
-          # the proxy idle again.
-          jasmine.Ajax.requests.at(0).respondWith
-            status: 200
-            contentType: 'text/html'
-            responseText: 'foo'
-          expect(@events).toEqual([
-            'up:proxy:load',
-            'up:proxy:slow',
-            'up:proxy:received',
-            'up:proxy:recover'
-          ])
-          expect(up.proxy.isBusy()).toBe(false)
+            sequence.next =>
+              up.ajax(url: '/bar')
 
-        it 'can delay the up:proxy:slow event to prevent flickering of spinners', ->
-          up.proxy.config.slowDelay = 100
+            sequence.next =>
+              expect(@events).toEqual([
+                'up:proxy:load',
+                'up:proxy:slow',
+                'up:proxy:load'
+              ])
 
-          up.ajax(url: '/foo')
-          expect(@events).toEqual([
-            'up:proxy:load'
-          ])
+            sequence.next =>
+              jasmine.Ajax.requests.at(0).respondWith
+                status: 200
+                contentType: 'text/html'
+                responseText: 'foo'
 
-          jasmine.clock().tick(50)
-          expect(@events).toEqual([
-            'up:proxy:load'
-          ])
+            sequence.next =>
+              expect(@events).toEqual([
+                'up:proxy:load',
+                'up:proxy:slow',
+                'up:proxy:load',
+                'up:proxy:received'
+              ])
 
-          jasmine.clock().tick(50)
-          expect(@events).toEqual([
-            'up:proxy:load',
-            'up:proxy:slow'
-          ])
+            sequence.next =>
+              jasmine.Ajax.requests.at(1).respondWith
+                status: 200
+                contentType: 'text/html'
+                responseText: 'bar'
 
-          jasmine.Ajax.requests.at(0).respondWith
-            status: 200
-            contentType: 'text/html'
-            responseText: 'foo'
+            sequence.next =>
+              expect(@events).toEqual([
+                'up:proxy:load',
+                'up:proxy:slow',
+                'up:proxy:load',
+                'up:proxy:received',
+                'up:proxy:received',
+                'up:proxy:recover'
+              ])
 
-          expect(@events).toEqual([
-            'up:proxy:load',
-            'up:proxy:slow',
-            'up:proxy:received',
-            'up:proxy:recover'
-          ])
+        it 'does not emit an up:proxy:slow event if preloading', (done) ->
+          asyncSequence done, (sequence) =>
+            sequence.now =>
+              # A request for preloading preloading purposes
+              # doesn't make us busy.
+              up.ajax(url: '/foo', preload: true)
 
-        it 'does not emit up:proxy:recover if a delayed up:proxy:slow was never emitted due to a fast response', ->
-          up.proxy.config.slowDelay = 100
+            sequence.next =>
+              expect(@events).toEqual([
+                'up:proxy:load'
+              ])
+              expect(up.proxy.isBusy()).toBe(false)
 
-          up.ajax(url: '/foo')
-          expect(@events).toEqual([
-            'up:proxy:load'
-          ])
+            sequence.next =>
+              # The same request with preloading does make us busy.
+              up.ajax(url: '/foo')
 
-          jasmine.clock().tick(50)
+            sequence.next =>
+              expect(@events).toEqual([
+                'up:proxy:load',
+                'up:proxy:slow'
+              ])
+              expect(up.proxy.isBusy()).toBe(true)
 
-          jasmine.Ajax.requests.at(0).respondWith
-            status: 200
-            contentType: 'text/html'
-            responseText: 'foo'
+            sequence.next =>
+              # The response resolves both promises and makes
+              # the proxy idle again.
+              jasmine.Ajax.requests.at(0).respondWith
+                status: 200
+                contentType: 'text/html'
+                responseText: 'foo'
 
-          jasmine.clock().tick(100)
+            sequence.next =>
+              expect(@events).toEqual([
+                'up:proxy:load',
+                'up:proxy:slow',
+                'up:proxy:received',
+                'up:proxy:recover'
+              ])
+              expect(up.proxy.isBusy()).toBe(false)
 
-          expect(@events).toEqual([
-            'up:proxy:load',
-            'up:proxy:received'
-          ])
+        it 'can delay the up:proxy:slow event to prevent flickering of spinners', (done) ->
+          asyncSequence done, { mockTime: true }, (sequence) =>
+            sequence.now =>
+              up.proxy.config.slowDelay = 100
+              up.ajax(url: '/foo')
+
+            sequence.next =>
+              expect(@events).toEqual([
+                'up:proxy:load'
+              ])
+
+            sequence.after 50, =>
+              expect(@events).toEqual([
+                'up:proxy:load'
+              ])
+
+            sequence.after 60, =>
+              expect(@events).toEqual([
+                'up:proxy:load',
+                'up:proxy:slow'
+              ])
+
+            sequence.next =>
+              jasmine.Ajax.requests.at(0).respondWith
+                status: 200
+                contentType: 'text/html'
+                responseText: 'foo'
+
+            sequence.next =>
+              expect(@events).toEqual([
+                'up:proxy:load',
+                'up:proxy:slow',
+                'up:proxy:received',
+                'up:proxy:recover'
+              ])
+
+        it 'does not emit up:proxy:recover if a delayed up:proxy:slow was never emitted due to a fast response', (done) ->
+          asyncSequence done, (sequence) =>
+
+            sequence.now =>
+              up.proxy.config.slowDelay = 100
+              up.ajax(url: '/foo')
+
+            sequence.next =>
+              expect(@events).toEqual([
+                'up:proxy:load'
+              ])
+
+            sequence.after 50, =>
+              jasmine.Ajax.requests.at(0).respondWith
+                status: 200
+                contentType: 'text/html'
+                responseText: 'foo'
+
+            sequence.after 100, =>
+              expect(@events).toEqual([
+                'up:proxy:load',
+                'up:proxy:received'
+              ])
 
         it 'emits up:proxy:recover if a request returned but failed', ->
 

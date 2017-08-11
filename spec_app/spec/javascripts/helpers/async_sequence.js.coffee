@@ -58,8 +58,7 @@ window.asyncSequence = (done, args...) ->
 
     next: (block) ->
       # Delay by 1 instead of 0 so we are queued behind jQuery's
-      # internal setTimeout(0) and also behind the microtask queue of
-      # the next frame.
+      # internal setTimeout(0)
       queue.push([1, block])
 
   plan(dsl)
@@ -83,10 +82,17 @@ window.asyncSequence = (done, args...) ->
         when 'now'
           runBlockAndPoke(block)
         else
-          u.setTimer timing, -> runBlockAndPoke(block)
+          u.setTimer timing, ->
+            # Move the block behind the microtask queue of that frame
+            Promise.resolve().then -> runBlockAndPoke(block)
           # Mocked time also freezes setTimeout
           mockClock.tick(timing) if mockTime
     else
       done()
 
   pokeQueue()
+
+#window.sequencedIt = (description, block) ->
+#  it description, (done) ->
+#    asyncSequence done, (sequence) =>
+#      block(sequence)

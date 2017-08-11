@@ -397,7 +397,7 @@ up.dom = (($) ->
           options.reveal = false # only reveal the first selector atom in the union
 
       # Delay all further links in the promise chain until all fragments have been swapped
-      $.when(swapPromises...)
+      Promise.all(swapPromises)
 
   bestPreflightSelector = (selector, options) ->
     cascade = new up.dom.ExtractCascade(selector, options)

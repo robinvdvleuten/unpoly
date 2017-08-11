@@ -279,7 +279,7 @@ up.form = (($) ->
         timer?.cancel()
         timer = u.promiseTimer(delay)
         # We wait until both the delay has passed and a previous callback is done executing
-        $.when(timer, lastCallbackDone).then(nextCallback)
+        Promise.all([timer, lastCallbackDone]).then(nextCallback)
 
     # Although (depending on the browser) we only need/receive either input or change,
     # we always bind to both events in case another script manually triggers it.

@@ -572,10 +572,10 @@ up.modal = (($) ->
       u.resolvedPromise()
     else
       markAsAnimating()
-      promise = $.when(
+      promise = Promise.all([
         up.animate(state.$modal.find('.up-modal-viewport'), viewportAnimation, animateOptions),
         up.animate(state.$modal.find('.up-modal-backdrop'), backdropAnimation, animateOptions)
-      )
+      ])
       promise = promise.then -> markAsAnimating(false)
       promise
 

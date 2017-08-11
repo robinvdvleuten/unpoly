@@ -1240,16 +1240,6 @@ up.util = (($) ->
     Promise.reject(arg)
 
   ###*
-  Returns whether the given argument is a resolved jQuery promise.
-
-  @return {Boolean}
-  @internal
-  ###
-  isResolvedPromise = (promise) ->
-    throw "jquery3: isResolvedPromise cannot be implemented"
-    isPromise(promise) && promise.state?() == 'resolved'
-
-  ###*
   Returns a [Deferred object](https://api.jquery.com/category/deferred-object/) that will never be resolved.
 
   @function up.util.unresolvableDeferred
@@ -1288,27 +1278,12 @@ up.util = (($) ->
   @internal
   ###
   resolvableWhen = (deferreds...) ->
-    # Pass an additional resolved deferred to $.when so $.when  will
-    # not return the given deferred if only one deferred is passed.
-    joined = Promise.all([resolvedDeferred(), deferreds...])
+    joined = Promise.all(deferreds)
     joined.resolve = memoize(->
       each deferreds, (deferred) ->
         deferred.resolve()
     )
     joined
-
-#  resolvableSequence = (first, callbacks...) ->
-#    sequence = newDeferred().promise()
-#    values = [first]
-#    current = first
-#    for callback in callbacks
-#      current = current.then ->
-#        value = callback()
-#        values.push(value) if u.isPromise(value)
-#        value
-#    sequence.resolve = ->
-#      each values, (deferred) -> deferred.resolve?()
-#    sequence
 
   ###*
   On the given element, set attributes that are still missing.
@@ -1863,7 +1838,7 @@ up.util = (($) ->
 
     promise: =>
       promises = map @allTasks(), (task) -> task.promise
-      $.when(promises...)
+      Promise.all(promises)
 
     allTasks: =>
       tasks = []
@@ -2054,7 +2029,6 @@ up.util = (($) ->
   isElement: isElement
   isJQuery: isJQuery
   isPromise: isPromise
-  isResolvedPromise: isResolvedPromise
   isDeferred: isDeferred
   isHash: isHash
   isArray: isArray

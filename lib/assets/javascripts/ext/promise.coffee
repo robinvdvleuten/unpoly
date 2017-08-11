@@ -29,7 +29,9 @@ window['Promise'] ||= class
     winner.promise()
 
   @all: (promises) ->
-    $.when(promises...)
+    # Pass an additional resolved deferred to $.when so $.when will
+    # not return the given deferred if only one deferred is passed.
+    $.when(@resolve(), promises...)
 
   @reject: (value) ->
     deferred = $.Deferred()

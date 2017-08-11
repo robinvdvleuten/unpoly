@@ -585,7 +585,7 @@ up.motion = (($) ->
   @internal
   ###
   isNone = (animation) ->
-    animation is false || animation is 'none' || u.isMissing(animation) || u.isResolvedPromise(animation)
+    animation is false || animation is 'none' || u.isMissing(animation) || animation == none
 
   animation('none', none)
 

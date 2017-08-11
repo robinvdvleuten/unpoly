@@ -435,16 +435,18 @@ up.proxy = (($) ->
   convertJqueryAjaxtToNativePromise = (request, jqAjaxPromise) ->
     new Promise (resolve, reject) ->
 
-      jqAjaxPromise.done (data, textStatus, xhr) ->
+      onSuccess = (data, textStatus, xhr) ->
         console.debug("done!")
         response = buildResponse(request, textStatus, xhr)
         responseReceived(response)
         resolve(response)
 
-      jqAjaxPromise.fail (xhr, textStatus, errorThrown) ->
+      onFailure = (xhr, textStatus, errorThrown) ->
         response = buildResponse(request, textStatus, xhr)
         responseReceived(response)
         reject(response)
+
+      jqAjaxPromise.then(onSuccess, onFailure)
 
   responseReceived = (response) ->
     console.debug('Response is %o', response)

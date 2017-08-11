@@ -51,13 +51,16 @@ window.asyncSequence = (done, args...) ->
 
   dsl =
     now: (block) ->
-      queue.push(['sync', block])
+      queue.push(['now', block])
 
     after: (delay, block) ->
       queue.push([delay, block])
 
     next: (block) ->
-      queue.push([0, block])
+      # Delay by 1 instead of 0 so we are queued behind jQuery's
+      # internal setTimeout(0) and also behind the microtask queue of
+      # the next frame.
+      queue.push([1, block])
 
   plan(dsl)
 
@@ -76,14 +79,13 @@ window.asyncSequence = (done, args...) ->
 
       console.debug('--- asyncSequence: %s / %o ---', timing, block)
 
-      if timing == 'sync'
-        runBlockAndPoke(block)
-      else
-        u.setTimer timing, ->
-          Promise.resolve().then ->
-            runBlockAndPoke(block)
-        # Mocked time also freezes setTimeout
-        mockClock.tick(timing) if mockTime
+      switch timing
+        when 'now'
+          runBlockAndPoke(block)
+        else
+          u.setTimer timing, -> runBlockAndPoke(block)
+          # Mocked time also freezes setTimeout
+          mockClock.tick(timing) if mockTime
     else
       done()
 

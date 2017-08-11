@@ -196,16 +196,30 @@ describe 'up.proxy', ->
         afterEach ->
           up.proxy.config.maxRequests = @oldMaxRequests
 
-        it 'limits the number of concurrent requests', ->
+        it 'limits the number of concurrent requests', (done) ->
           responses = []
-          up.ajax(url: '/foo').then (html) -> responses.push(html)
-          up.ajax(url: '/bar').then (html) -> responses.push(html)
-          expect(jasmine.Ajax.requests.count()).toEqual(1) # only one request was made
-          @respondWith('first response', request: jasmine.Ajax.requests.at(0))
-          expect(responses).toEqual ['first response']
-          expect(jasmine.Ajax.requests.count()).toEqual(2) # a second request was made
-          @respondWith('second response', request: jasmine.Ajax.requests.at(1))
-          expect(responses).toEqual ['first response', 'second response']
+          trackResponse = (response) -> responses.push(response.body)
+
+          asyncSequence done, (sequence) =>
+            sequence.now =>
+              up.ajax(url: '/foo').then(trackResponse)
+              up.ajax(url: '/bar').then(trackResponse)
+
+            sequence.next =>
+              expect(jasmine.Ajax.requests.count()).toEqual(1) # only one request was made
+
+            sequence.next =>
+              @respondWith('first response', request: jasmine.Ajax.requests.at(0))
+
+            sequence.next =>
+              expect(responses).toEqual ['first response']
+              expect(jasmine.Ajax.requests.count()).toEqual(2) # a second request was made
+
+            sequence.next =>
+              @respondWith('second response', request: jasmine.Ajax.requests.at(1))
+
+            sequence.next =>
+              expect(responses).toEqual ['first response', 'second response']
 
 #        it 'considers preloading links for the request limit', ->
 #          up.ajax(url: '/foo', preload: true)

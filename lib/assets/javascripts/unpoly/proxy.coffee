@@ -393,7 +393,7 @@ up.proxy = (($) ->
     loader = -> load(request)
     loader = u.previewable(loader)
     queuedLoaders.push(loader)
-    loader.promise()
+    loader.promise
 
   load = (request) ->
     up.emit('up:proxy:load', u.merge(request, message: ['Loading %s %s', request.method, request.url]))

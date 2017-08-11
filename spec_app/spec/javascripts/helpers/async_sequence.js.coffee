@@ -36,7 +36,10 @@ u = up.util
 #
 #  { first, next, after, last }
 
-window.asyncSequence = (done, options = {}, plan) ->
+window.asyncSequence = (done, args...) ->
+  plan = args.pop()
+  options = args.pop() || {}
+
   mockTime = u.option(options.mockTime, false)
 
   if mockTime
@@ -71,10 +74,14 @@ window.asyncSequence = (done, options = {}, plan) ->
       timing = entry[0]
       block = entry[1]
 
+      console.debug('--- asyncSequence: %s / %o ---', timing, block)
+
       if timing == 'sync'
         runBlockAndPoke(block)
       else
-        u.setTimer timing, -> runBlockAndPoke(block)
+        u.setTimer timing, ->
+          Promise.resolve().then ->
+            runBlockAndPoke(block)
         # Mocked time also freezes setTimeout
         mockClock.tick(timing) if mockTime
     else

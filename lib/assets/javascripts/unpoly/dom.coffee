@@ -267,7 +267,7 @@ up.dom = (($) ->
 
     onFailure = (response) ->
       rejection = -> u.rejectedPromise(response)
-      if response.text
+      if response.body
         promise = processResponse(response, false, failureOptions)
         promise.then(rejection, rejection)
       else
@@ -326,7 +326,7 @@ up.dom = (($) ->
     if options.preload
       u.resolvedPromise()
     else
-      extract(selector, xhr.responseText, options)
+      extract(selector, response.body, options)
 
   shouldExtractTitle = (options) ->
     not (options.title is false || u.isString(options.title) || (options.history is false && options.title isnt true))

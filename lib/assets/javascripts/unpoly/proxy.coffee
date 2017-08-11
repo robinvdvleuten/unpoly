@@ -50,7 +50,7 @@ up.proxy = (($) ->
   pendingCount = undefined
   slowEventEmitted = undefined
 
-  queuedRequests = []
+  queuedLoaders = []
 
   ###*
   @property up.proxy.config
@@ -149,7 +149,7 @@ up.proxy = (($) ->
     config.reset()
     cache.clear()
     slowEventEmitted = false
-    queuedRequests = []
+    queuedLoaders = []
 
   reset()
 
@@ -211,6 +211,7 @@ up.proxy = (($) ->
   @stable
   ###
   ajax = (args...) ->
+    console.debug('ajax(...)')
     options = u.extractOptions(args)
     options.url = args[0] if u.isGiven(args[0])
 
@@ -228,8 +229,6 @@ up.proxy = (($) ->
 
     request = normalizeRequest(request)
 
-    pending = true
-
     # Non-GET requests always touch the network
     # unless `options.cache` is explicitly set to `true`.
     # These requests are never cached.
@@ -241,15 +240,15 @@ up.proxy = (($) ->
     # The promise might still be pending.
     else if (promise = get(request)) && !ignoreCache
       up.puts 'Re-using cached response for %s %s', request.method, request.url
-      pending = (promise.state() == 'pending')
     # If no existing promise is available, we make a network request.
     else
+      console.debug('Calling loadOrQueue')
       promise = loadOrQueue(request)
       set(request, promise)
       # Don't cache failed requests
       promise.catch -> remove(request)
 
-    if pending && !options.preload
+    if !options.preload
       # This might actually make `pendingCount` higher than the actual
       # number of outstanding requests. However, we need to cover the
       # following case:
@@ -308,7 +307,7 @@ up.proxy = (($) ->
       # we wrap the mission in a function for scheduling below.
       emission = ->
         if isBusy() # a fast response might have beaten the delay
-          up.emit('up:proxy:slow', message: 'Proxy is busy')
+          up.emit('up:proxy:slow', message: 'Proxy is slow to respond')
           slowEventEmitted = true
       slowDelayTimer = u.setTimer(config.slowDelay, emission)
 
@@ -383,6 +382,7 @@ up.proxy = (($) ->
   ###
 
   loadOrQueue = (request) ->
+    console.debug('loadOrQueue')
     if pendingCount < config.maxRequests
       load(request)
     else
@@ -392,7 +392,7 @@ up.proxy = (($) ->
     up.puts('Queuing request for %s %s', request.method, request.url)
     loader = -> load(request)
     loader = u.previewable(loader)
-    queuedRequests.push(loader)
+    queuedLoaders.push(loader)
     loader.promise()
 
   load = (request) ->
@@ -425,7 +425,7 @@ up.proxy = (($) ->
 
   buildResponse = (request, textStatus, xhr) ->
     request: request
-    text: xhr.responseText
+    body: xhr.responseText
     textStatus: textStatus
     xhr: xhr
 
@@ -433,6 +433,7 @@ up.proxy = (($) ->
     new Promise (resolve, reject) ->
 
       jqAjaxPromise.done (data, textStatus, xhr) ->
+        console.debug("done!")
         response = buildResponse(request, textStatus, xhr)
         responseReceived(response)
         resolve(response)
@@ -443,11 +444,12 @@ up.proxy = (($) ->
         reject(response)
 
   responseReceived = (response) ->
-    emitMessage = ['Server responded with %s (%d bytes)', response.xhr.status, response.text]
+    console.debug('Response is %o', response)
+    emitMessage = ['Server responded with HTTP %d (%d bytes)', response.xhr.status, response.body.length]
     eventProps = u.merge(response, message: emitMessage)
     up.emit('up:proxy:received', eventProps)
     # Since we have just completed a request, we now have the worker to load the next request.
-    if loader = queuedRequests.shift()
+    if loader = queuedLoaders.shift()
       loader()
 
   ###*

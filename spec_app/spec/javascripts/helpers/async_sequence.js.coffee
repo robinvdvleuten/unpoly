@@ -82,9 +82,11 @@ window.asyncSequence = (done, args...) ->
         when 'now'
           runBlockAndPoke(block)
         else
-          u.setTimer timing, ->
+          fun = ->
             # Move the block behind the microtask queue of that frame
             Promise.resolve().then -> runBlockAndPoke(block)
+          setTimeout(fun, timing)
+
           # Mocked time also freezes setTimeout
           mockClock.tick(timing) if mockTime
     else

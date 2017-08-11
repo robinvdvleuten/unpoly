@@ -1991,6 +1991,19 @@ up.util = (($) ->
     nativePromise.promise = -> nativePromise # just return self
     nativePromise
 
+#  timerList = ->
+#    timers = []
+#
+#    addTimer: (delay, block) ->
+#      timer = undefined
+#      timer = setTimer delay, ->
+#        remove(timers, timer)
+#        block()
+#      timers.push(timer)
+#    clearAll: ->
+#      each timers, (timer) ->
+#        clearTimeout(timer)
+
   requestDataAsArray: requestDataAsArray
   requestDataAsQuery: requestDataAsQuery
   appendRequestData: appendRequestData

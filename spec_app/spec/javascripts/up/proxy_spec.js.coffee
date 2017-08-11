@@ -383,42 +383,49 @@ describe 'up.proxy', ->
                 contentType: 'text/html'
                 responseText: 'foo'
 
-            sequence.after 100, =>
+            sequence.after 150, =>
               expect(@events).toEqual([
                 'up:proxy:load',
                 'up:proxy:received'
               ])
 
-        it 'emits up:proxy:recover if a request returned but failed', ->
+        it 'emits up:proxy:recover if a request returned but failed', (done) ->
+          asyncSequence done, (sequence) =>
+            sequence.now =>
+              up.ajax(url: '/foo')
 
-          up.ajax(url: '/foo')
+            sequence.next =>
+              expect(@events).toEqual([
+                'up:proxy:load',
+                'up:proxy:slow'
+              ])
 
-          expect(@events).toEqual([
-            'up:proxy:load',
-            'up:proxy:slow'
-          ])
+            sequence.next =>
+              jasmine.Ajax.requests.at(0).respondWith
+                status: 500
+                contentType: 'text/html'
+                responseText: 'something went wrong'
 
-          jasmine.Ajax.requests.at(0).respondWith
-            status: 500
-            contentType: 'text/html'
-            responseText: 'something went wrong'
-
-          expect(@events).toEqual([
-            'up:proxy:load',
-            'up:proxy:slow',
-            'up:proxy:received',
-            'up:proxy:recover'
-          ])
+            sequence.next =>
+              expect(@events).toEqual([
+                'up:proxy:load',
+                'up:proxy:slow',
+                'up:proxy:received',
+                'up:proxy:recover'
+              ])
 
 
     describe 'up.proxy.preload', ->
 
       describeCapability 'canPushState', ->
 
-        it "loads and caches the given link's destination", ->
-          $link = affix('a[href="/path"]')
-          up.proxy.preload($link)
-          expect(u.isPromise(up.proxy.get(url: '/path'))).toBe(true)
+        it "loads and caches the given link's destination", (done) ->
+          asyncSequence done, (sequence) =>
+            sequence.now =>
+              $link = affix('a[href="/path"]')
+              up.proxy.preload($link)
+            sequence.next =>
+              expect(u.isPromise(up.proxy.get(url: '/path'))).toBe(true)
 
         it "does not load a link whose method has side-effects", ->
           $link = affix('a[href="/path"][data-method="post"]')

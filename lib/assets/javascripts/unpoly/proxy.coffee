@@ -300,9 +300,8 @@ up.proxy = (($) ->
     pendingCount > 0
 
   loadStarted = ->
-    wasIdle = isIdle()
     pendingCount += 1
-    if wasIdle
+    unless slowDelayTimer
       # Since the emission of up:proxy:slow might be delayed by config.slowDelay,
       # we wrap the mission in a function for scheduling below.
       emission = ->
@@ -310,6 +309,7 @@ up.proxy = (($) ->
           up.emit('up:proxy:slow', message: 'Proxy is slow to respond')
           slowEventEmitted = true
       slowDelayTimer = u.setTimer(config.slowDelay, emission)
+
 
   ###*
   This event is [emitted](/up.emit) when [AJAX requests](/up.ajax)
@@ -365,9 +365,12 @@ up.proxy = (($) ->
 
   loadEnded = ->
     pendingCount -= 1
-    if isIdle() && slowEventEmitted
-      up.emit('up:proxy:recover', message: 'Proxy is idle')
-      slowEventEmitted = false
+
+    if isIdle()
+      cancelSlowDelay()
+      if slowEventEmitted
+        up.emit('up:proxy:recover', message: 'Proxy is idle')
+        slowEventEmitted = false
 
   ###*
   This event is [emitted](/up.emit) when [AJAX requests](/up.ajax)

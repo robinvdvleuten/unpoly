@@ -59,7 +59,7 @@ window.asyncSequence = (done, args...) ->
     next: (block) ->
       # Delay by 1 instead of 0 so we are queued behind jQuery's
       # internal setTimeout(0)
-      queue.push([1, block])
+      queue.push([0, block])
 
   plan(dsl)
 

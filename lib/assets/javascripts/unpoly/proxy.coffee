@@ -369,7 +369,7 @@ up.proxy = (($) ->
     if isIdle()
       cancelSlowDelay()
       if slowEventEmitted
-        up.emit('up:proxy:recover', message: 'Proxy is idle')
+        up.emit('up:proxy:recover', message: 'Proxy has recovered from slow response')
         slowEventEmitted = false
 
   ###*

@@ -236,58 +236,6 @@ describe 'up.proxy', ->
             up.on eventName, =>
               @events.push eventName
 
-        it 'emits an up:proxy:slow event once the proxy started loading, and up:proxy:recover if it is done loading', (done) ->
-          asyncSequence done, (sequence) =>
-
-            sequence.now =>
-              up.ajax(url: '/foo')
-
-            sequence.next =>
-              expect(@events).toEqual([
-                'up:proxy:load',
-                'up:proxy:slow'
-              ])
-
-            sequence.next =>
-              up.ajax(url: '/bar')
-
-            sequence.next =>
-              expect(@events).toEqual([
-                'up:proxy:load',
-                'up:proxy:slow',
-                'up:proxy:load'
-              ])
-
-            sequence.next =>
-              jasmine.Ajax.requests.at(0).respondWith
-                status: 200
-                contentType: 'text/html'
-                responseText: 'foo'
-
-            sequence.next =>
-              expect(@events).toEqual([
-                'up:proxy:load',
-                'up:proxy:slow',
-                'up:proxy:load',
-                'up:proxy:received'
-              ])
-
-            sequence.next =>
-              jasmine.Ajax.requests.at(1).respondWith
-                status: 200
-                contentType: 'text/html'
-                responseText: 'bar'
-
-            sequence.next =>
-              expect(@events).toEqual([
-                'up:proxy:load',
-                'up:proxy:slow',
-                'up:proxy:load',
-                'up:proxy:received',
-                'up:proxy:received',
-                'up:proxy:recover'
-              ])
-
         it 'does not emit an up:proxy:slow event if preloading', (done) ->
           asyncSequence done, (sequence) =>
             sequence.now =>
@@ -302,7 +250,7 @@ describe 'up.proxy', ->
               expect(up.proxy.isBusy()).toBe(false)
 
             sequence.next =>
-              # The same request with preloading does make us busy.
+              # The same request with preloading does trigger up:proxy:slow.
               up.ajax(url: '/foo')
 
             sequence.next =>

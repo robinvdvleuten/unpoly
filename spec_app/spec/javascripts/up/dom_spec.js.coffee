@@ -151,11 +151,17 @@ describe 'up.dom', ->
               sequence.next =>
                 expect(extractSpy).toHaveBeenCalledWith('body', jasmine.any(String), jasmine.any(Object))
 
-          it 'uses a target selector given as { failTarget } option', ->
-            up.replace('.middle', '/path', failTarget: '.after')
-            @respond(status: 500)
-            expect($('.middle')).toHaveText('old-middle')
-            expect($('.after')).toHaveText('new-after')
+          it 'uses a target selector given as { failTarget } option', (done) ->
+            asyncSequence done, (sequence) =>
+              sequence.now =>
+                up.replace('.middle', '/path', failTarget: '.after')
+
+              sequence.next =>
+                @respond(status: 500)
+
+              sequence.next =>
+                expect($('.middle')).toHaveText('old-middle')
+                expect($('.after')).toHaveText('new-after')
 
           it 'rejects the returned promise', ->
             affix('.after')

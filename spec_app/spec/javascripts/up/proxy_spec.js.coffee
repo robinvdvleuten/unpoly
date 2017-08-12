@@ -20,49 +20,46 @@ describe 'up.proxy', ->
         expect(request.data()).toEqual(key: ['value'])
         expect(request.method).toEqual('POST')
 
-      it 'caches server responses for the 5 minutes', (done) ->
-
+      asyncIt 'caches server responses for the 5 minutes', { mockTime: true }, (next) ->
         responses = []
         trackResponse = (response) ->
           console.debug('Tracking response %s', response.body)
           responses.push(response.body)
 
-        asyncSequence done, { mockTime: true }, (sequence) =>
+        next =>
+          up.ajax(url: '/foo').then(trackResponse)
+          expect(jasmine.Ajax.requests.count()).toEqual(1)
 
-          sequence.now =>
-            up.ajax(url: '/foo').then(trackResponse)
-            expect(jasmine.Ajax.requests.count()).toEqual(1)
+        next.after (3 * 60 * 1000), =>
+          # Send the same request for the same path
+          up.ajax(url: '/foo').then(trackResponse)
 
-          sequence.after (3 * 60 * 1000), =>
-            # Send the same request for the same path
-            up.ajax(url: '/foo').then(trackResponse)
+          # See that only a single network request was triggered
+          expect(jasmine.Ajax.requests.count()).toEqual(1)
+          expect(responses).toEqual([])
 
-            # See that only a single network request was triggered
-            expect(jasmine.Ajax.requests.count()).toEqual(1)
-            expect(responses).toEqual([])
+        next =>
+          # Server responds once.
+          @respondWith('foo')
 
-          sequence.next =>
-            # Server responds once.
-            @respondWith('foo')
+        next =>
+          # See that both requests have been fulfilled
+          expect(responses).toEqual(['foo', 'foo'])
 
-          sequence.next =>
-            # See that both requests have been fulfilled
-            expect(responses).toEqual(['foo', 'foo'])
+        next.after (3 * 60 * 1000), =>
+          # Send another request after another 3 minutes
+          # The clock is now a total of 6 minutes after the first request,
+          # exceeding the cache's retention time of 5 minutes.
+          up.ajax(url: '/foo').then(trackResponse)
 
-          sequence.after (3 * 60 * 1000), =>
-            # Send another request after another 3 minutes
-            # The clock is now a total of 6 minutes after the first request,
-            # exceeding the cache's retention time of 5 minutes.
-            up.ajax(url: '/foo').then(trackResponse)
+          # See that we have triggered a second request
+          expect(jasmine.Ajax.requests.count()).toEqual(2)
 
-            # See that we have triggered a second request
-            expect(jasmine.Ajax.requests.count()).toEqual(2)
+        next =>
+          @respondWith('bar')
 
-          sequence.next =>
-            @respondWith('bar')
-
-          sequence.next =>
-            expect(responses).toEqual(['foo', 'foo', 'bar'])
+        next =>
+          expect(responses).toEqual(['foo', 'foo', 'bar'])
 
 
       it "does not cache responses if config.cacheExpiry is 0", ->
@@ -142,23 +139,11 @@ describe 'up.proxy', ->
           u.times 2, -> up.ajax(url: '/foo', method: method, cache: true)
           expect(jasmine.Ajax.requests.count()).toEqual(1)
 
-      it 'does not cache responses with a non-200 status code', (done) ->
-        asyncSequence done, (sequence) =>
-          sequence.now =>
-            # Send the same request for the same path, 3 minutes apart
-            up.ajax(url: '/foo')
-
-          sequence.next =>
-            @respondWith
-              status: 500
-              contentType: 'text/html'
-              responseText: 'foo'
-
-          sequence.next =>
-            up.ajax(url: '/foo')
-
-          sequence.next =>
-            expect(jasmine.Ajax.requests.count()).toEqual(2)
+      asyncIt 'does not cache responses with a non-200 status code', (next) ->
+        next => up.ajax(url: '/foo')
+        next => @respondWith(status: 500, contentType: 'text/html', responseText: 'foo')
+        next => up.ajax(url: '/foo')
+        next => expect(jasmine.Ajax.requests.count()).toEqual(2)
 
       describe 'with config.wrapMethods set', ->
 
@@ -197,30 +182,29 @@ describe 'up.proxy', ->
         afterEach ->
           up.proxy.config.maxRequests = @oldMaxRequests
 
-        it 'limits the number of concurrent requests', (done) ->
+        asyncIt 'limits the number of concurrent requests', (next) ->
           responses = []
           trackResponse = (response) -> responses.push(response.body)
 
-          asyncSequence done, (sequence) =>
-            sequence.now =>
-              up.ajax(url: '/foo').then(trackResponse)
-              up.ajax(url: '/bar').then(trackResponse)
+          next =>
+            up.ajax(url: '/foo').then(trackResponse)
+            up.ajax(url: '/bar').then(trackResponse)
 
-            sequence.next =>
-              expect(jasmine.Ajax.requests.count()).toEqual(1) # only one request was made
+          next =>
+            expect(jasmine.Ajax.requests.count()).toEqual(1) # only one request was made
 
-            sequence.next =>
-              @respondWith('first response', request: jasmine.Ajax.requests.at(0))
+          next =>
+            @respondWith('first response', request: jasmine.Ajax.requests.at(0))
 
-            sequence.next =>
-              expect(responses).toEqual ['first response']
-              expect(jasmine.Ajax.requests.count()).toEqual(2) # a second request was made
+          next =>
+            expect(responses).toEqual ['first response']
+            expect(jasmine.Ajax.requests.count()).toEqual(2) # a second request was made
 
-            sequence.next =>
-              @respondWith('second response', request: jasmine.Ajax.requests.at(1))
+          next =>
+            @respondWith('second response', request: jasmine.Ajax.requests.at(1))
 
-            sequence.next =>
-              expect(responses).toEqual ['first response', 'second response']
+          next =>
+            expect(responses).toEqual ['first response', 'second response']
 
 #        it 'considers preloading links for the request limit', ->
 #          up.ajax(url: '/foo', preload: true)
@@ -236,144 +220,138 @@ describe 'up.proxy', ->
             up.on eventName, =>
               @events.push eventName
 
-        it 'does not emit an up:proxy:slow event if preloading', (done) ->
-          asyncSequence done, (sequence) =>
-            sequence.now =>
-              # A request for preloading preloading purposes
-              # doesn't make us busy.
-              up.ajax(url: '/foo', preload: true)
+        it 'does not emit an up:proxy:slow event if preloading', (next) ->
+          next =>
+            # A request for preloading preloading purposes
+            # doesn't make us busy.
+            up.ajax(url: '/foo', preload: true)
 
-            sequence.next =>
-              expect(@events).toEqual([
-                'up:proxy:load'
-              ])
-              expect(up.proxy.isBusy()).toBe(false)
+          next =>
+            expect(@events).toEqual([
+              'up:proxy:load'
+            ])
+            expect(up.proxy.isBusy()).toBe(false)
 
-            sequence.next =>
-              # The same request with preloading does trigger up:proxy:slow.
-              up.ajax(url: '/foo')
+          next =>
+            # The same request with preloading does trigger up:proxy:slow.
+            up.ajax(url: '/foo')
 
-            sequence.next =>
-              expect(@events).toEqual([
-                'up:proxy:load',
-                'up:proxy:slow'
-              ])
-              expect(up.proxy.isBusy()).toBe(true)
+          next =>
+            expect(@events).toEqual([
+              'up:proxy:load',
+              'up:proxy:slow'
+            ])
+            expect(up.proxy.isBusy()).toBe(true)
 
-            sequence.next =>
-              # The response resolves both promises and makes
-              # the proxy idle again.
-              jasmine.Ajax.requests.at(0).respondWith
-                status: 200
-                contentType: 'text/html'
-                responseText: 'foo'
+          next =>
+            # The response resolves both promises and makes
+            # the proxy idle again.
+            jasmine.Ajax.requests.at(0).respondWith
+              status: 200
+              contentType: 'text/html'
+              responseText: 'foo'
 
-            sequence.next =>
-              expect(@events).toEqual([
-                'up:proxy:load',
-                'up:proxy:slow',
-                'up:proxy:received',
-                'up:proxy:recover'
-              ])
-              expect(up.proxy.isBusy()).toBe(false)
+          next =>
+            expect(@events).toEqual([
+              'up:proxy:load',
+              'up:proxy:slow',
+              'up:proxy:received',
+              'up:proxy:recover'
+            ])
+            expect(up.proxy.isBusy()).toBe(false)
 
-        it 'can delay the up:proxy:slow event to prevent flickering of spinners', (done) ->
-          asyncSequence done, { mockTime: true }, (sequence) =>
-            sequence.now =>
-              up.proxy.config.slowDelay = 100
-              up.ajax(url: '/foo')
+        asyncIt 'can delay the up:proxy:slow event to prevent flickering of spinners', { mockTime: true }, (next) ->
+          next =>
+            up.proxy.config.slowDelay = 100
+            up.ajax(url: '/foo')
 
-            sequence.next =>
-              expect(@events).toEqual([
-                'up:proxy:load'
-              ])
+          next =>
+            expect(@events).toEqual([
+              'up:proxy:load'
+            ])
 
-            sequence.after 50, =>
-              expect(@events).toEqual([
-                'up:proxy:load'
-              ])
+          next.after 50, =>
+            expect(@events).toEqual([
+              'up:proxy:load'
+            ])
 
-            sequence.after 60, =>
-              expect(@events).toEqual([
-                'up:proxy:load',
-                'up:proxy:slow'
-              ])
+          next.after 60, =>
+            expect(@events).toEqual([
+              'up:proxy:load',
+              'up:proxy:slow'
+            ])
 
-            sequence.next =>
-              jasmine.Ajax.requests.at(0).respondWith
-                status: 200
-                contentType: 'text/html'
-                responseText: 'foo'
+          next =>
+            jasmine.Ajax.requests.at(0).respondWith
+              status: 200
+              contentType: 'text/html'
+              responseText: 'foo'
 
-            sequence.next =>
-              expect(@events).toEqual([
-                'up:proxy:load',
-                'up:proxy:slow',
-                'up:proxy:received',
-                'up:proxy:recover'
-              ])
+          next =>
+            expect(@events).toEqual([
+              'up:proxy:load',
+              'up:proxy:slow',
+              'up:proxy:received',
+              'up:proxy:recover'
+            ])
 
-        it 'does not emit up:proxy:recover if a delayed up:proxy:slow was never emitted due to a fast response', (done) ->
-          asyncSequence done, (sequence) =>
+        asyncIt 'does not emit up:proxy:recover if a delayed up:proxy:slow was never emitted due to a fast response', (next) ->
+          next =>
+            up.proxy.config.slowDelay = 100
+            up.ajax(url: '/foo')
 
-            sequence.now =>
-              up.proxy.config.slowDelay = 100
-              up.ajax(url: '/foo')
+          next =>
+            expect(@events).toEqual([
+              'up:proxy:load'
+            ])
 
-            sequence.next =>
-              expect(@events).toEqual([
-                'up:proxy:load'
-              ])
+          next.after 50, =>
+            jasmine.Ajax.requests.at(0).respondWith
+              status: 200
+              contentType: 'text/html'
+              responseText: 'foo'
 
-            sequence.after 50, =>
-              jasmine.Ajax.requests.at(0).respondWith
-                status: 200
-                contentType: 'text/html'
-                responseText: 'foo'
+          next.after 150, =>
+            expect(@events).toEqual([
+              'up:proxy:load',
+              'up:proxy:received'
+            ])
 
-            sequence.after 150, =>
-              expect(@events).toEqual([
-                'up:proxy:load',
-                'up:proxy:received'
-              ])
+        asyncIt 'emits up:proxy:recover if a request returned but failed', (next) ->
+          next =>
+            up.ajax(url: '/foo')
 
-        it 'emits up:proxy:recover if a request returned but failed', (done) ->
-          asyncSequence done, (sequence) =>
-            sequence.now =>
-              up.ajax(url: '/foo')
+          next =>
+            expect(@events).toEqual([
+              'up:proxy:load',
+              'up:proxy:slow'
+            ])
 
-            sequence.next =>
-              expect(@events).toEqual([
-                'up:proxy:load',
-                'up:proxy:slow'
-              ])
+          next =>
+            jasmine.Ajax.requests.at(0).respondWith
+              status: 500
+              contentType: 'text/html'
+              responseText: 'something went wrong'
 
-            sequence.next =>
-              jasmine.Ajax.requests.at(0).respondWith
-                status: 500
-                contentType: 'text/html'
-                responseText: 'something went wrong'
-
-            sequence.next =>
-              expect(@events).toEqual([
-                'up:proxy:load',
-                'up:proxy:slow',
-                'up:proxy:received',
-                'up:proxy:recover'
-              ])
+          next =>
+            expect(@events).toEqual([
+              'up:proxy:load',
+              'up:proxy:slow',
+              'up:proxy:received',
+              'up:proxy:recover'
+            ])
 
 
     describe 'up.proxy.preload', ->
 
       describeCapability 'canPushState', ->
 
-        it "loads and caches the given link's destination", (done) ->
-          asyncSequence done, (sequence) =>
-            sequence.now =>
-              $link = affix('a[href="/path"]')
-              up.proxy.preload($link)
-            sequence.next =>
-              expect(u.isPromise(up.proxy.get(url: '/path'))).toBe(true)
+        asyncIt "loads and caches the given link's destination", (next) ->
+          next =>
+            $link = affix('a[href="/path"]')
+            up.proxy.preload($link)
+          next =>
+            expect(u.isPromise(up.proxy.get(url: '/path'))).toBe(true)
 
         it "does not load a link whose method has side-effects", ->
           $link = affix('a[href="/path"][data-method="post"]')

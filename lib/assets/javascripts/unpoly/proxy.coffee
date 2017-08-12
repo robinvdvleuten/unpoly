@@ -448,11 +448,21 @@ up.proxy = (($) ->
 
       jqAjaxPromise.then(onSuccess, onFailure)
 
+  isMaterialError = (response) ->
+    u.isBlank(response.body)
+
   responseReceived = (response) ->
     console.debug('Response is %o', response)
-    emitMessage = ['Server responded with HTTP %d (%d bytes)', response.xhr.status, response.body.length]
-    eventProps = u.merge(response, message: emitMessage)
-    up.emit('up:proxy:received', eventProps)
+
+    if isMaterialError(response)
+      emitMessage = ['Request failed (%s)', response.textStatus]
+      eventProps = u.merge(response, message: emitMessage)
+      up.emit('up:proxy:failed', eventProps)
+    else
+      emitMessage = ['Server responded with HTTP %d (%d bytes)', response.xhr.status, response.body.length]
+      eventProps = u.merge(response, message: emitMessage)
+      up.emit('up:proxy:received', eventProps)
+
     # Since we have just completed a request, we now have the worker to load the next request.
     if loader = queuedLoaders.shift()
       loader()

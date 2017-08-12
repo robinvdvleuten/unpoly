@@ -263,6 +263,7 @@ up.dom = (($) ->
       timeout: options.timeout
 
     onSuccess = (response) ->
+      console.debug('--- onSuccess in dom')
       processResponse(true, improvedTarget, response, successOptions)
 
     onFailure = (response) ->
@@ -272,7 +273,7 @@ up.dom = (($) ->
         promise = processResponse(false, improvedFailTarget, response, failureOptions)
         u.always(promise, rejection)
       else
-        rejection
+        rejection()
 
     promise = up.ajax(request)
     promise = promise.then(onSuccess, onFailure)

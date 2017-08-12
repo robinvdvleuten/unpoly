@@ -139,29 +139,13 @@ describe 'up.dom', ->
 
         describe 'when the server responds with a non-200 status code', ->
 
-          it 'replaces the <body> instead of the given selector', (done) ->
+          asyncIt 'replaces the <body> instead of the given selector', (next) ->
             # can't have the example replace the Jasmine test runner UI
             extractSpy = up.dom.knife.mock('extract').and.returnValue(u.resolvedPromise())
 
-            asyncSequence done, (sequence) =>
-              sequence.now =>
-                up.replace('.middle', '/path')
-              sequence.next =>
-                @respond(status: 500)
-              sequence.next =>
-                expect(extractSpy).toHaveBeenCalledWith('body', jasmine.any(String), jasmine.any(Object))
-
-#          it 'uses a target selector given as { failTarget } option', (done) ->
-#            asyncSequence done, (sequence) =>
-#              sequence.now =>
-#                up.replace('.middle', '/path', failTarget: '.after')
-#
-#              sequence.next =>
-#                @respond(status: 500)
-#
-#              sequence.next =>
-#                expect($('.middle')).toHaveText('old-middle')
-#                expect($('.after')).toHaveText('new-after')
+            next => up.replace('.middle', '/path')
+            next => @respond(status: 500)
+            next => expect(extractSpy).toHaveBeenCalledWith('body', jasmine.any(String), jasmine.any(Object))
 
           asyncIt 'uses a target selector given as { failTarget } option', (next) ->
             next =>
@@ -173,45 +157,50 @@ describe 'up.dom', ->
             next =>
               expect($('.middle')).toHaveText('old-middle')
               expect($('.after')).toHaveText('new-after')
-#
-#          it 'uses a target selector given as { failTarget } option', asyncExample (next) ->
-#            next =>
-#              up.replace('.middle', '/path', failTarget: '.after')
-#
-#            next =>
-#              @respond(status: 500)
-#
-#            next =>
-#              expect($('.middle')).toHaveText('old-middle')
-#              expect($('.after')).toHaveText('new-after')
 
-          it 'rejects the returned promise', ->
+          it 'rejects the returned promise', (done) ->
             affix('.after')
             promise = up.replace('.middle', '/path', failTarget: '.after')
-            expect(promise.state()).toEqual('pending')
-            @respond(status: 500)
-            expect(promise.state()).toEqual('rejected')
+
+            u.nextFrame =>
+              promiseState promise, (state) =>
+                expect(state).toEqual('pending')
+
+                @respond(status: 500)
+
+                u.nextFrame =>
+                  promiseState promise, (state) =>
+                    expect(state).toEqual('rejected')
+                    done()
 
         describe 'when the request times out', ->
 
           it "doesn't crash and rejects the returned promise", (done) ->
-            jasmine.clock().install() # required by responseTimeout()
             affix('.target')
-            promise = up.replace('.middle', '/path', timeout: 10 * 1000)
-            expect(promise.state()).toEqual('pending')
-            jasmine.clock().tick(11 * 1000)
-            expect(promise.state()).toEqual('rejected')
-            done()
+            promise = up.replace('.middle', '/path', timeout: 25)
+
+            u.nextFrame ->
+              promiseState promise, (state) ->
+                expect(state).toEqual('pending')
+                u.setTimer 50, ->
+                  promiseState promise, (state) ->
+                    expect(state).toEqual('rejected')
+                    done()
 
         describe 'when there is a network issue', ->
 
           it "doesn't crash and rejects the returned promise", (done) ->
             affix('.target')
             promise = up.replace('.middle', '/path')
-            @lastRequest().responseError()
-            u.nextFrame ->
-              expect(promise.state()).toEqual('rejected')
-              done()
+            
+            u.nextFrame =>
+              promiseState promise, (state) =>
+                expect(state).toEqual('pending')
+                @lastRequest().responseError()
+                u.nextFrame =>
+                  promiseState promise, (state) =>
+                    expect(state).toEqual('rejected')
+                    done()
 
 #        describe 'history', ->
 #

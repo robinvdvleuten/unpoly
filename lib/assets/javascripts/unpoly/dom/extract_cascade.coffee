@@ -63,7 +63,7 @@ class up.dom.ExtractCascade
         message = "Could not find #{@options.humanizedTarget} in response"
       else
         message = "Could not match #{@options.humanizedTarget} in current page and response"
-      if @response && @options.inspectResponse
+      if @options.inspectResponse
         inspectAction = { label: 'Open response', callback: @options.inspectResponse }
       up.fail(["#{message} (tried %o)", @candidates], action: inspectAction)
 

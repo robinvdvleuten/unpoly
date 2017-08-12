@@ -5,12 +5,12 @@ function promiseState(promise, callback) {
     if (value === uniqueValue) {
       return callback('pending')
     } else {
-      return callback('fulfilled')
+      return callback('fulfilled', value)
     }
   }
 
   function notifyRejected(reason) {
-    return callback('rejected')
+    return callback('rejected', reason)
   }
 
   var race = [promise, Promise.resolve(uniqueValue)]

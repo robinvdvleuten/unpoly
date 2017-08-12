@@ -20,7 +20,7 @@ describe 'up.proxy', ->
         expect(request.data()).toEqual(key: ['value'])
         expect(request.method).toEqual('POST')
 
-      asyncIt 'caches server responses for the 5 minutes', { mockTime: true }, (next) ->
+      it 'caches server responses for the 5 minutes', asyncSpec { mockTime: true }, (next) ->
         responses = []
         trackResponse = (response) ->
           console.debug('Tracking response %s', response.body)
@@ -139,7 +139,7 @@ describe 'up.proxy', ->
           u.times 2, -> up.ajax(url: '/foo', method: method, cache: true)
           expect(jasmine.Ajax.requests.count()).toEqual(1)
 
-      asyncIt 'does not cache responses with a non-200 status code', (next) ->
+      it 'does not cache responses with a non-200 status code', asyncSpec (next) ->
         next => up.ajax(url: '/foo')
         next => @respondWith(status: 500, contentType: 'text/html', responseText: 'foo')
         next => up.ajax(url: '/foo')
@@ -182,7 +182,7 @@ describe 'up.proxy', ->
         afterEach ->
           up.proxy.config.maxRequests = @oldMaxRequests
 
-        asyncIt 'limits the number of concurrent requests', (next) ->
+        it 'limits the number of concurrent requests', asyncSpec (next) ->
           responses = []
           trackResponse = (response) -> responses.push(response.body)
 
@@ -260,7 +260,7 @@ describe 'up.proxy', ->
             ])
             expect(up.proxy.isBusy()).toBe(false)
 
-        asyncIt 'can delay the up:proxy:slow event to prevent flickering of spinners', { mockTime: true }, (next) ->
+        it 'can delay the up:proxy:slow event to prevent flickering of spinners', asyncSpec { mockTime: true }, (next) ->
           next =>
             up.proxy.config.slowDelay = 100
             up.ajax(url: '/foo')
@@ -295,7 +295,7 @@ describe 'up.proxy', ->
               'up:proxy:recover'
             ])
 
-        asyncIt 'does not emit up:proxy:recover if a delayed up:proxy:slow was never emitted due to a fast response', (next) ->
+        it 'does not emit up:proxy:recover if a delayed up:proxy:slow was never emitted due to a fast response', asyncSpec (next) ->
           next =>
             up.proxy.config.slowDelay = 100
             up.ajax(url: '/foo')
@@ -317,7 +317,7 @@ describe 'up.proxy', ->
               'up:proxy:received'
             ])
 
-        asyncIt 'emits up:proxy:recover if a request returned but failed', (next) ->
+        it 'emits up:proxy:recover if a request returned but failed', asyncSpec (next) ->
           next =>
             up.ajax(url: '/foo')
 
@@ -346,7 +346,7 @@ describe 'up.proxy', ->
 
       describeCapability 'canPushState', ->
 
-        asyncIt "loads and caches the given link's destination", (next) ->
+        it "loads and caches the given link's destination", asyncSpec (next) ->
           next =>
             $link = affix('a[href="/path"]')
             up.proxy.preload($link)

@@ -59,7 +59,7 @@ u = up.util
 #  pokeQueue()
 
 
-asyncExampleBody = (args...) ->
+window.asyncSpec = (args...) ->
   (done) ->
 
     plan = args.pop()
@@ -115,4 +115,4 @@ asyncExampleBody = (args...) ->
 
 
 window.asyncIt = (description, args...) ->
-  it description, asyncExampleBody(args...)
+  it description, asyncSpec(args...)

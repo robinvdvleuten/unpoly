@@ -1,5 +1,5 @@
 afterEach ->
   up.reset()
-  $('.up-error').remove()
+  $('.up-toast').remove()
 
 

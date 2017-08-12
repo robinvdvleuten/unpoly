@@ -124,13 +124,16 @@ describe 'up.feedback', ->
 
       describeCapability 'canPushState', ->
 
-        it 'marks clicked links as .up-active until the request finishes', ->
+        it 'marks clicked links as .up-active until the request finishes', asyncSpec (next) ->
           $link = affix('a[href="/foo"][up-target=".main"]')
           affix('.main')
           Trigger.clickSequence($link)
-          expect($link).toHaveClass('up-active')
-          @respondWith('<div class="main">new-text</div>')
-          expect($link).not.toHaveClass('up-active')
+
+          next =>
+            expect($link).toHaveClass('up-active')
+            @respondWith('<div class="main">new-text</div>')
+          next =>
+            expect($link).not.toHaveClass('up-active')
 
         it 'marks links with [up-instant] on mousedown as .up-active until the request finishes', ->
           $link = affix('a[href="/foo"][up-instant][up-target=".main"]')
@@ -157,7 +160,6 @@ describe 'up.feedback', ->
           Trigger.clickSequence($link)
           expect($link).toHaveClass('up-active')
           u.nextFrame =>
-            debugger
             @respondWith('<div class="main">new-text</div>')
             expect($link).not.toHaveClass('up-active')
             done()

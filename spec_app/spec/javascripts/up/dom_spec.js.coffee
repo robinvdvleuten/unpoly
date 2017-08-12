@@ -139,7 +139,7 @@ describe 'up.dom', ->
 
         describe 'when the server responds with a non-200 status code', ->
 
-          asyncIt 'replaces the <body> instead of the given selector', (next) ->
+          it 'replaces the <body> instead of the given selector', asyncSpec (next) ->
             # can't have the example replace the Jasmine test runner UI
             extractSpy = up.dom.knife.mock('extract').and.returnValue(u.resolvedPromise())
 
@@ -147,7 +147,7 @@ describe 'up.dom', ->
             next => @respond(status: 500)
             next => expect(extractSpy).toHaveBeenCalledWith('body', jasmine.any(String), jasmine.any(Object))
 
-          asyncIt 'uses a target selector given as { failTarget } option', (next) ->
+          it 'uses a target selector given as { failTarget } option', asyncSpec (next) ->
             next =>
               up.replace('.middle', '/path', failTarget: '.after')
 
@@ -202,393 +202,450 @@ describe 'up.dom', ->
                     expect(state).toEqual('rejected')
                     done()
 
-#        describe 'history', ->
-#
-#          it 'should set the browser location to the given URL', (done) ->
-#            promise = up.replace('.middle', '/path')
-#            @respond()
-#            promise.then ->
-#              expect(location.href).toEqualUrl('/path')
-#              done()
-#
-#          it 'does not add a history entry after non-GET requests', ->
-#            promise = up.replace('.middle', '/path', method: 'post')
-#            @respond()
-#            expect(location.href).toEqualUrl(@hrefBeforeExample)
-#
-#          it 'adds a history entry after non-GET requests if the response includes a { X-Up-Method: "get" } header (will happen after a redirect)', ->
-#            promise = up.replace('.middle', '/path', method: 'post')
-#            @respond(responseHeaders: { 'X-Up-Method': 'GET' })
-#            expect(location.href).toEqualUrl('/path')
-#
-#          it 'does not a history entry after a failed GET-request', ->
-#            promise = up.replace('.middle', '/path', method: 'post', failTarget: '.middle')
-#            @respond(status: 500)
-#            expect(location.href).toEqualUrl(@hrefBeforeExample)
-#
-#          it 'does not add a history entry with { history: false } option', ->
-#            promise = up.replace('.middle', '/path', history: false)
-#            @respond()
-#            expect(location.href).toEqualUrl(@hrefBeforeExample)
-#
-#          it "detects a redirect's new URL when the server sets an X-Up-Location header", ->
-#            promise = up.replace('.middle', '/path')
-#            @respond(responseHeaders: { 'X-Up-Location': '/other-path' })
-#            expect(location.href).toEqualUrl('/other-path')
-#
-#          it 'adds params from a { data } option to the URL of a GET request', ->
-#            promise = up.replace('.middle', '/path', data: { 'foo-key': 'foo value', 'bar-key': 'bar value' })
-#            @respond()
-#            expect(location.href).toEqualUrl('/path?foo-key=foo%20value&bar-key=bar%20value')
-#
-#          describe 'if a URL is given as { history } option', ->
-#
-#            it 'uses that URL as the new location after a GET request', ->
-#              promise = up.replace('.middle', '/path', history: '/given-path')
-#              @respond(failTarget: '.middle')
-#              expect(location.href).toEqualUrl('/given-path')
-#
-#            it 'adds a history entry after a non-GET request', ->
-#              promise = up.replace('.middle', '/path', method: 'post', history: '/given-path')
-#              @respond(failTarget: '.middle')
-#              expect(location.href).toEqualUrl('/given-path')
-#
-#            it 'does not add a history entry after a failed non-GET request', ->
-#              promise = up.replace('.middle', '/path', method: 'post', history: '/given-path', failTarget: '.middle')
-#              @respond(failTarget: '.middle', status: 500)
-#              expect(location.href).toEqualUrl(@hrefBeforeExample)
-#
-#        describe 'source', ->
-#
-#          it 'remembers the source the fragment was retrieved from', (done) ->
-#            promise = up.replace('.middle', '/path')
-#            @respond()
-#            promise.then ->
-#              expect($('.middle').attr('up-source')).toMatch(/\/path$/)
-#              done()
-#
-#          it 'reuses the previous source for a non-GET request (since that is reloadable)', ->
-#            @oldMiddle.attr('up-source', '/previous-source')
-#            up.replace('.middle', '/path', method: 'post')
-#            @respond()
-#            expect($('.middle')).toHaveText('new-middle')
-#            expect(up.dom.source('.middle')).toEqualUrl('/previous-source')
-#
-#          describe 'if a URL is given as { source } option', ->
-#
-#            it 'uses that URL as the source for a GET request', ->
-#              promise = up.replace('.middle', '/path', source: '/given-path')
-#              @respond()
-#              expect(up.dom.source('.middle')).toEqualUrl('/given-path')
-#
-#            it 'uses that URL as the source after a non-GET request', ->
-#              promise = up.replace('.middle', '/path', method: 'post', source: '/given-path')
-#              @respond()
-#              expect(up.dom.source('.middle')).toEqualUrl('/given-path')
-#
-#            it 'ignores the option and reuses the previous source after a failed non-GET request', ->
-#              @oldMiddle.attr('up-source', '/previous-source')
-#              promise = up.replace('.middle', '/path', method: 'post', source: '/given-path', failTarget: '.middle')
-#              @respond(status: 500)
-#              expect(up.dom.source('.middle')).toEqualUrl('/previous-source')
-#
-#        describe 'document title', ->
-#
-#          it "sets the document title to the response <title>", ->
-#            affix('.container').text('old container text')
-#            up.replace('.container', '/path')
-#            @respondWith """
-#              <html>
-#                <head>
-#                  <title>Title from HTML</title>
-#                </head>
-#                <body>
-#                  <div class='container'>
-#                    new container text
-#                  </div>
-#                </body>
-#              </html>
-#            """
-#            expect($('.container')).toHaveText('new container text')
-#            expect(document.title).toBe('Title from HTML')
-#
-#          it "sets the document title to an 'X-Up-Title' header in the response", ->
-#            affix('.container').text('old container text')
-#            up.replace('.container', '/path')
-#            @respondWith
-#              responseHeaders:
-#                'X-Up-Title': 'Title from header'
-#              responseText: """
-#                <div class='container'>
-#                  new container text
-#                </div>
-#                """
-#            expect($('.container')).toHaveText('new container text')
-#            expect(document.title).toBe('Title from header')
-#
-#          it "prefers the X-Up-Title header to the response <title>", ->
-#            affix('.container').text('old container text')
-#            up.replace('.container', '/path')
-#            @respondWith
-#              responseHeaders:
-#                'X-Up-Title': 'Title from header'
-#              responseText: """
-#                <html>
-#                  <head>
-#                    <title>Title from HTML</title>
-#                  </head>
-#                  <body>
-#                    <div class='container'>
-#                      new container text
-#                    </div>
-#                  </body>
-#                </html>
-#              """
-#            expect($('.container')).toHaveText('new container text')
-#            expect(document.title).toBe('Title from header')
-#
-#          it "sets the document title to the response <title> with { history: false, title: true } options (bugfix)", ->
-#            affix('.container').text('old container text')
-#            up.replace('.container', '/path', history: false, title: true)
-#            @respondWith """
-#              <html>
-#                <head>
-#                  <title>Title from HTML</title>
-#                </head>
-#                <body>
-#                  <div class='container'>
-#                    new container text
-#                  </div>
-#                </body>
-#              </html>
-#            """
-#            expect($('.container')).toHaveText('new container text')
-#            expect(document.title).toBe('Title from HTML')
-#
-#          it 'does not update the document title if the response has a <title> tag inside an inline SVG image (bugfix)', ->
-#            affix('.container').text('old container text')
-#            document.title = 'old document title'
-#            up.replace('.container', '/path', history: false, title: true)
-#
-#            @respondWith """
-#              <svg width="500" height="300" xmlns="http://www.w3.org/2000/svg">
-#                <g>
-#                  <title>SVG Title Demo example</title>
-#                  <rect x="10" y="10" width="200" height="50" style="fill:none; stroke:blue; stroke-width:1px"/>
-#                </g>
-#              </svg>
-#
-#              <div class='container'>
-#                new container text
-#              </div>
-#            """
-#            expect($('.container')).toHaveText('new container text')
-#            expect(document.title).toBe('old document title')
-#
-#          it "does not extract the title from the response or HTTP header if history isn't updated", ->
-#            affix('.container').text('old container text')
-#            document.title = 'old document title'
-#            up.replace('.container', '/path', history: false)
-#            @respondWith
-#              responseHeaders:
-#                'X-Up-Title': 'Title from header'
-#              responseText: """
-#              <html>
-#                <head>
-#                  <title>Title from HTML</title>
-#                </head>
-#                <body>
-#                  <div class='container'>
-#                    new container text
-#                  </div>
-#                </body>
-#              </html>
-#            """
-#            expect(document.title).toBe('old document title')
-#
-#          it 'allows to pass an explicit title as { title } option', ->
-#            affix('.container').text('old container text')
-#            up.replace('.container', '/path', title: 'Title from options')
-#            @respondWith """
-#              <html>
-#                <head>
-#                  <title>Title from HTML</title>
-#                </head>
-#                <body>
-#                  <div class='container'>
-#                    new container text
-#                  </div>
-#                </body>
-#              </html>
-#            """
-#            expect($('.container')).toHaveText('new container text')
-#            expect(document.title).toBe('Title from options')
-#
-#        describe 'selector processing', ->
-#
-#          it 'replaces multiple selectors separated with a comma', (done) ->
-#            promise = up.replace('.middle, .after', '/path')
-#            @respond()
-#            promise.then ->
-#              expect($('.before')).toHaveText('old-before')
-#              expect($('.middle')).toHaveText('new-middle')
-#              expect($('.after')).toHaveText('new-after')
-#              done()
-#
-#          it 'replaces the body if asked to replace the "html" selector'
-#
-#          it 'prepends instead of replacing when the target has a :before pseudo-selector', (done) ->
-#            promise = up.replace('.middle:before', '/path')
-#            @respond()
-#            promise.then ->
-#              expect($('.before')).toHaveText('old-before')
-#              expect($('.middle')).toHaveText('new-middleold-middle')
-#              expect($('.after')).toHaveText('old-after')
-#              done()
-#
-#          it 'appends instead of replacing when the target has a :after pseudo-selector', (done) ->
-#            promise = up.replace('.middle:after', '/path')
-#            @respond()
-#            promise.then ->
-#              expect($('.before')).toHaveText('old-before')
-#              expect($('.middle')).toHaveText('old-middlenew-middle')
-#              expect($('.after')).toHaveText('old-after')
-#              done()
-#
-#          it "lets the developer choose between replacing/prepending/appending for each selector", (done) ->
-#            promise = up.replace('.before:before, .middle, .after:after', '/path')
-#            @respond()
-#            promise.then ->
-#              expect($('.before')).toHaveText('new-beforeold-before')
-#              expect($('.middle')).toHaveText('new-middle')
-#              expect($('.after')).toHaveText('old-afternew-after')
-#              done()
-#
-#          it 'understands non-standard CSS selector extensions such as :has(...)', (done) ->
-#            $first = affix('.boxx#first')
-#            $firstChild = $('<span class="first-child">old first</span>').appendTo($first)
-#            $second = affix('.boxx#second')
-#            $secondChild = $('<span class="second-child">old second</span>').appendTo($second)
-#
-#            promise = up.replace('.boxx:has(.first-child)', '/path')
-#            @respondWith """
-#              <div class="boxx" id="first">
-#                <span class="first-child">new first</span>
-#              </div>
-#              """
-#
-#            promise.then ->
-#              expect($('#first span')).toHaveText('new first')
-#              expect($('#second span')).toHaveText('old second')
-#              done()
-#
-#          describe 'when selectors are missing on the page before the request was made', ->
-#
-#            beforeEach ->
-#              up.dom.config.fallbacks = []
-#
-#            it 'tries selectors from options.fallback before making a request', ->
-#              affix('.box').text('old box')
-#              up.replace('.unknown', '/path', fallback: '.box')
-#              @respondWith '<div class="box">new box</div>'
-#              expect('.box').toHaveText('new box')
-#
-#            it 'throws an error if all alternatives are exhausted', ->
-#              replacement = -> up.replace('.unknown', '/path', fallback: '.more-unknown')
-#              expect(replacement).toThrowError(/Could not find target in current page/i)
-#
-#            it 'considers a union selector to be missing if one of its selector-atoms are missing', ->
-#              affix('.target').text('old target')
-#              affix('.fallback').text('old fallback')
-#              up.replace('.target, .unknown', '/path', fallback: '.fallback')
-#              @respondWith """
-#                <div class="target">new target</div>
-#                <div class="fallback">new fallback</div>
-#              """
-#              expect('.target').toHaveText('old target')
-#              expect('.fallback').toHaveText('new fallback')
-#
-#            it 'tries a selector from up.dom.config.fallbacks if options.fallback is missing', ->
-#              up.dom.config.fallbacks = ['.existing']
-#              affix('.existing').text('old existing')
-#              up.replace('.unknown', '/path')
-#              @respondWith '<div class="existing">new existing</div>'
-#              expect('.existing').toHaveText('new existing')
-#
-#            it 'does not try a selector from up.dom.config.fallbacks if options.fallback is false', ->
-#              up.dom.config.fallbacks = ['.existing']
-#              affix('.existing').text('old existing')
-#              replacement = -> up.replace('.unknown', '/path', fallback: false)
-#              expect(replacement).toThrowError(/Could not find target in current page/i)
-#
-#          describe 'when selectors are missing on the page after the request was made', ->
-#
-#            beforeEach ->
-#              up.dom.config.fallbacks = []
-#
-#            it 'tries selectors from options.fallback before swapping elements', ->
-#              $target = affix('.target').text('old target')
-#              $fallback = affix('.fallback').text('old fallback')
-#              up.replace('.target', '/path', fallback: '.fallback')
-#              $target.remove()
-#              @respondWith """
-#                <div class="target">new target</div>
-#                <div class="fallback">new fallback</div>
-#              """
-#              expect('.fallback').toHaveText('new fallback')
-#
-#            it 'throws an error if all alternatives are exhausted', ->
-#              $target = affix('.target').text('old target')
-#              $fallback = affix('.fallback').text('old fallback')
-#              up.replace('.target', '/path', fallback: '.fallback')
-#              $target.remove()
-#              $fallback.remove()
-#              respond = =>
-#                @respondWith """
-#                  <div class="target">new target</div>
-#                  <div class="fallback">new fallback</div>
-#                """
-#              expect(respond).toThrowError(/Could not find target in current page/i)
-#
-#            it 'considers a union selector to be missing if one of its selector-atoms are missing', ->
-#              $target = affix('.target').text('old target')
-#              $target2 = affix('.target2').text('old target2')
-#              $fallback = affix('.fallback').text('old fallback')
-#              up.replace('.target, .target2', '/path', fallback: '.fallback')
-#              $target2.remove()
-#              @respondWith """
-#                <div class="target">new target</div>
-#                <div class="target2">new target2</div>
-#                <div class="fallback">new fallback</div>
-#              """
-#              expect('.target').toHaveText('old target')
-#              expect('.fallback').toHaveText('new fallback')
-#
-#            it 'tries a selector from up.dom.config.fallbacks if options.fallback is missing', ->
-#              up.dom.config.fallbacks = ['.fallback']
-#              $target = affix('.target').text('old target')
-#              $fallback = affix('.fallback').text('old fallback')
-#              up.replace('.target', '/path')
-#              $target.remove()
-#              @respondWith """
-#                <div class="target">new target</div>
-#                <div class="fallback">new fallback</div>
-#              """
-#              expect('.fallback').toHaveText('new fallback')
-#
-#            it 'does not try a selector from up.dom.config.fallbacks if options.fallback is false', ->
-#              up.dom.config.fallbacks = ['.fallback']
-#              $target = affix('.target').text('old target')
-#              $fallback = affix('.fallback').text('old fallback')
-#              up.replace('.target', '/path', fallback: false)
-#              $target.remove()
-#              respond = =>
-#                @respondWith """
-#                  <div class="target">new target</div>
-#                  <div class="fallback">new fallback</div>
-#                """
-#              expect(respond).toThrowError(/Could not find target in current page/i)
-#
+        describe 'history', ->
+
+          it 'should set the browser location to the given URL', (done) ->
+            promise = up.replace('.middle', '/path')
+            @respond()
+            promise.then ->
+              expect(location.href).toEqualUrl('/path')
+              done()
+
+          it 'does not add a history entry after non-GET requests', asyncSpec (next) ->
+            up.replace('.middle', '/path', method: 'post')
+            next => @respond()
+            next => expect(location.href).toEqualUrl(@hrefBeforeExample)
+
+          it 'adds a history entry after non-GET requests if the response includes a { X-Up-Method: "get" } header (will happen after a redirect)', asyncSpec (next) ->
+            up.replace('.middle', '/path', method: 'post')
+            next => @respond(responseHeaders: { 'X-Up-Method': 'GET' })
+            next => expect(location.href).toEqualUrl('/path')
+
+          it 'does not a history entry after a failed GET-request', asyncSpec (next) ->
+            up.replace('.middle', '/path', method: 'post', failTarget: '.middle')
+            next => @respond(status: 500)
+            next => expect(location.href).toEqualUrl(@hrefBeforeExample)
+
+          it 'does not add a history entry with { history: false } option', asyncSpec (next) ->
+            up.replace('.middle', '/path', history: false)
+            next => @respond()
+            next => expect(location.href).toEqualUrl(@hrefBeforeExample)
+
+          it "detects a redirect's new URL when the server sets an X-Up-Location header", asyncSpec (next) ->
+            up.replace('.middle', '/path')
+            next => @respond(responseHeaders: { 'X-Up-Location': '/other-path' })
+            next => expect(location.href).toEqualUrl('/other-path')
+
+          it 'adds params from a { data } option to the URL of a GET request', asyncSpec (next) ->
+            up.replace('.middle', '/path', data: { 'foo-key': 'foo value', 'bar-key': 'bar value' })
+            next => @respond()
+            next => expect(location.href).toEqualUrl('/path?foo-key=foo%20value&bar-key=bar%20value')
+
+          describe 'if a URL is given as { history } option', ->
+
+            it 'uses that URL as the new location after a GET request', asyncSpec (next) ->
+              up.replace('.middle', '/path', history: '/given-path')
+              next => @respond(failTarget: '.middle')
+              next => expect(location.href).toEqualUrl('/given-path')
+
+            it 'adds a history entry after a non-GET request', asyncSpec (next) ->
+              up.replace('.middle', '/path', method: 'post', history: '/given-path')
+              next => @respond(failTarget: '.middle')
+              next => expect(location.href).toEqualUrl('/given-path')
+
+            it 'does not add a history entry after a failed non-GET request', asyncSpec (next) ->
+              up.replace('.middle', '/path', method: 'post', history: '/given-path', failTarget: '.middle')
+              next => @respond(failTarget: '.middle', status: 500)
+              next => expect(location.href).toEqualUrl(@hrefBeforeExample)
+
+        describe 'source', ->
+
+          it 'remembers the source the fragment was retrieved from', (done) ->
+            promise = up.replace('.middle', '/path')
+            @respond()
+            promise.then ->
+              expect($('.middle').attr('up-source')).toMatch(/\/path$/)
+              done()
+
+          it 'reuses the previous source for a non-GET request (since that is reloadable)', asyncSpec (next) ->
+            @oldMiddle.attr('up-source', '/previous-source')
+            up.replace('.middle', '/path', method: 'post')
+            next =>
+              @respond()
+            next =>
+              expect($('.middle')).toHaveText('new-middle')
+              expect(up.dom.source('.middle')).toEqualUrl('/previous-source')
+
+          describe 'if a URL is given as { source } option', ->
+
+            it 'uses that URL as the source for a GET request', asyncSpec (next) ->
+              up.replace('.middle', '/path', source: '/given-path')
+              next => @respond()
+              next => expect(up.dom.source('.middle')).toEqualUrl('/given-path')
+
+            it 'uses that URL as the source after a non-GET request', asyncSpec (next) ->
+              up.replace('.middle', '/path', method: 'post', source: '/given-path')
+              next => @respond()
+              next => expect(up.dom.source('.middle')).toEqualUrl('/given-path')
+
+            it 'ignores the option and reuses the previous source after a failed non-GET request', asyncSpec (next) ->
+              @oldMiddle.attr('up-source', '/previous-source')
+              up.replace('.middle', '/path', method: 'post', source: '/given-path', failTarget: '.middle')
+              next => @respond(status: 500)
+              next => expect(up.dom.source('.middle')).toEqualUrl('/previous-source')
+
+        describe 'document title', ->
+
+          it "sets the document title to the response <title>", asyncSpec (next) ->
+            affix('.container').text('old container text')
+            up.replace('.container', '/path')
+
+            next =>
+              @respondWith """
+                <html>
+                  <head>
+                    <title>Title from HTML</title>
+                  </head>
+                  <body>
+                    <div class='container'>
+                      new container text
+                    </div>
+                  </body>
+                </html>
+              """
+
+            next =>
+              expect($('.container')).toHaveText('new container text')
+              expect(document.title).toBe('Title from HTML')
+
+          it "sets the document title to an 'X-Up-Title' header in the response", asyncSpec (next) ->
+            affix('.container').text('old container text')
+            up.replace('.container', '/path')
+
+            next =>
+              @respondWith
+                responseHeaders:
+                  'X-Up-Title': 'Title from header'
+                responseText: """
+                  <div class='container'>
+                    new container text
+                  </div>
+                  """
+
+            next =>
+              expect($('.container')).toHaveText('new container text')
+              expect(document.title).toBe('Title from header')
+
+          it "prefers the X-Up-Title header to the response <title>", asyncSpec (next) ->
+            affix('.container').text('old container text')
+            up.replace('.container', '/path')
+
+            next =>
+              @respondWith
+                responseHeaders:
+                  'X-Up-Title': 'Title from header'
+                responseText: """
+                  <html>
+                    <head>
+                      <title>Title from HTML</title>
+                    </head>
+                    <body>
+                      <div class='container'>
+                        new container text
+                      </div>
+                    </body>
+                  </html>
+                """
+
+            next =>
+              expect($('.container')).toHaveText('new container text')
+              expect(document.title).toBe('Title from header')
+
+          it "sets the document title to the response <title> with { history: false, title: true } options (bugfix)", asyncSpec (next) ->
+            affix('.container').text('old container text')
+            up.replace('.container', '/path', history: false, title: true)
+
+            next =>
+              @respondWith """
+                <html>
+                  <head>
+                    <title>Title from HTML</title>
+                  </head>
+                  <body>
+                    <div class='container'>
+                      new container text
+                    </div>
+                  </body>
+                </html>
+              """
+
+            next =>
+              expect($('.container')).toHaveText('new container text')
+              expect(document.title).toBe('Title from HTML')
+
+          it 'does not update the document title if the response has a <title> tag inside an inline SVG image (bugfix)', asyncSpec (next) ->
+            affix('.container').text('old container text')
+            document.title = 'old document title'
+            up.replace('.container', '/path', history: false, title: true)
+
+            next =>
+              @respondWith """
+                <svg width="500" height="300" xmlns="http://www.w3.org/2000/svg">
+                  <g>
+                    <title>SVG Title Demo example</title>
+                    <rect x="10" y="10" width="200" height="50" style="fill:none; stroke:blue; stroke-width:1px"/>
+                  </g>
+                </svg>
+
+                <div class='container'>
+                  new container text
+                </div>
+              """
+
+            next =>
+              expect($('.container')).toHaveText('new container text')
+              expect(document.title).toBe('old document title')
+
+          it "does not extract the title from the response or HTTP header if history isn't updated", asyncSpec (next) ->
+            affix('.container').text('old container text')
+            document.title = 'old document title'
+            up.replace('.container', '/path', history: false)
+
+            next =>
+              @respondWith
+                responseHeaders:
+                  'X-Up-Title': 'Title from header'
+                responseText: """
+                <html>
+                  <head>
+                    <title>Title from HTML</title>
+                  </head>
+                  <body>
+                    <div class='container'>
+                      new container text
+                    </div>
+                  </body>
+                </html>
+              """
+
+            next =>
+              expect(document.title).toBe('old document title')
+
+          it 'allows to pass an explicit title as { title } option', asyncSpec (next) ->
+            affix('.container').text('old container text')
+            up.replace('.container', '/path', title: 'Title from options')
+
+            next =>
+              @respondWith """
+                <html>
+                  <head>
+                    <title>Title from HTML</title>
+                  </head>
+                  <body>
+                    <div class='container'>
+                      new container text
+                    </div>
+                  </body>
+                </html>
+              """
+
+            next =>
+              expect($('.container')).toHaveText('new container text')
+              expect(document.title).toBe('Title from options')
+
+        describe 'selector processing', ->
+
+          it 'replaces multiple selectors separated with a comma', (done) ->
+            promise = up.replace('.middle, .after', '/path')
+            @respond()
+            promise.then ->
+              expect($('.before')).toHaveText('old-before')
+              expect($('.middle')).toHaveText('new-middle')
+              expect($('.after')).toHaveText('new-after')
+              done()
+
+          it 'replaces the body if asked to replace the "html" selector'
+
+          it 'prepends instead of replacing when the target has a :before pseudo-selector', (done) ->
+            promise = up.replace('.middle:before', '/path')
+            @respond()
+            promise.then ->
+              expect($('.before')).toHaveText('old-before')
+              expect($('.middle')).toHaveText('new-middleold-middle')
+              expect($('.after')).toHaveText('old-after')
+              done()
+
+          it 'appends instead of replacing when the target has a :after pseudo-selector', (done) ->
+            promise = up.replace('.middle:after', '/path')
+            @respond()
+            promise.then ->
+              expect($('.before')).toHaveText('old-before')
+              expect($('.middle')).toHaveText('old-middlenew-middle')
+              expect($('.after')).toHaveText('old-after')
+              done()
+
+          it "lets the developer choose between replacing/prepending/appending for each selector", (done) ->
+            promise = up.replace('.before:before, .middle, .after:after', '/path')
+            @respond()
+            promise.then ->
+              expect($('.before')).toHaveText('new-beforeold-before')
+              expect($('.middle')).toHaveText('new-middle')
+              expect($('.after')).toHaveText('old-afternew-after')
+              done()
+
+          it 'understands non-standard CSS selector extensions such as :has(...)', (done) ->
+            $first = affix('.boxx#first')
+            $firstChild = $('<span class="first-child">old first</span>').appendTo($first)
+            $second = affix('.boxx#second')
+            $secondChild = $('<span class="second-child">old second</span>').appendTo($second)
+
+            promise = up.replace('.boxx:has(.first-child)', '/path')
+            @respondWith """
+              <div class="boxx" id="first">
+                <span class="first-child">new first</span>
+              </div>
+              """
+
+            promise.then ->
+              expect($('#first span')).toHaveText('new first')
+              expect($('#second span')).toHaveText('old second')
+              done()
+
+          describe 'when selectors are missing on the page before the request was made', ->
+
+            beforeEach ->
+              up.dom.config.fallbacks = []
+
+            it 'tries selectors from options.fallback before making a request', asyncSpec (next) ->
+              affix('.box').text('old box')
+              up.replace('.unknown', '/path', fallback: '.box')
+
+              next => @respondWith '<div class="box">new box</div>'
+              next => expect('.box').toHaveText('new box')
+
+            it 'rejects the promise if all alternatives are exhausted', (done) ->
+              promise = up.replace('.unknown', '/path', fallback: '.more-unknown')
+              promise.catch (e) ->
+                expect(e).toBeError(/Could not find target in current page/i)
+                done()
+
+            it 'considers a union selector to be missing if one of its selector-atoms are missing', asyncSpec (next) ->
+              affix('.target').text('old target')
+              affix('.fallback').text('old fallback')
+              up.replace('.target, .unknown', '/path', fallback: '.fallback')
+
+              next =>
+                @respondWith """
+                  <div class="target">new target</div>
+                  <div class="fallback">new fallback</div>
+                """
+
+              next =>
+                expect('.target').toHaveText('old target')
+                expect('.fallback').toHaveText('new fallback')
+
+            it 'tries a selector from up.dom.config.fallbacks if options.fallback is missing', asyncSpec (next) ->
+              up.dom.config.fallbacks = ['.existing']
+              affix('.existing').text('old existing')
+              up.replace('.unknown', '/path')
+              next => @respondWith '<div class="existing">new existing</div>'
+              next => expect('.existing').toHaveText('new existing')
+
+            it 'does not try a selector from up.dom.config.fallbacks if options.fallback is false', (done) ->
+              up.dom.config.fallbacks = ['.existing']
+              affix('.existing').text('old existing')
+              up.replace('.unknown', '/path', fallback: false).catch (e) ->
+                expect(e).toBeError(/Could not find target in current page/i)
+                done()
+
+          describe 'when selectors are missing on the page after the request was made', ->
+
+            beforeEach ->
+              up.dom.config.fallbacks = []
+
+            it 'tries selectors from options.fallback before swapping elements', asyncSpec (next) ->
+              $target = affix('.target').text('old target')
+              $fallback = affix('.fallback').text('old fallback')
+              up.replace('.target', '/path', fallback: '.fallback')
+              $target.remove()
+
+              next =>
+                @respondWith """
+                  <div class="target">new target</div>
+                  <div class="fallback">new fallback</div>
+                """
+              next =>
+                expect('.fallback').toHaveText('new fallback')
+
+            it 'rejects the promise if all alternatives are exhausted', (done) ->
+              $target = affix('.target').text('old target')
+              $fallback = affix('.fallback').text('old fallback')
+              promise = up.replace('.target', '/path', fallback: '.fallback')
+              $target.remove()
+              $fallback.remove()
+
+              u.nextFrame =>
+                @respondWith """
+                  <div class="target">new target</div>
+                  <div class="fallback">new fallback</div>
+                """
+
+                u.nextFrame =>
+                  promiseState promise, (state, value) ->
+                    expect(state).toEqual('rejected')
+                    expect(value).toBeError(/Could not find target in current page/i)
+                    done()
+
+            it 'considers a union selector to be missing if one of its selector-atoms are missing', asyncSpec (next) ->
+              $target = affix('.target').text('old target')
+              $target2 = affix('.target2').text('old target2')
+              $fallback = affix('.fallback').text('old fallback')
+              up.replace('.target, .target2', '/path', fallback: '.fallback')
+              $target2.remove()
+
+              next =>
+                @respondWith """
+                  <div class="target">new target</div>
+                  <div class="target2">new target2</div>
+                  <div class="fallback">new fallback</div>
+                """
+              next =>
+                expect('.target').toHaveText('old target')
+                expect('.fallback').toHaveText('new fallback')
+
+            it 'tries a selector from up.dom.config.fallbacks if options.fallback is missing', asyncSpec (next) ->
+              up.dom.config.fallbacks = ['.fallback']
+              $target = affix('.target').text('old target')
+              $fallback = affix('.fallback').text('old fallback')
+              up.replace('.target', '/path')
+              $target.remove()
+
+              next =>
+                @respondWith """
+                  <div class="target">new target</div>
+                  <div class="fallback">new fallback</div>
+                """
+
+              next =>
+                expect('.fallback').toHaveText('new fallback')
+
+            it 'does not try a selector from up.dom.config.fallbacks if options.fallback is false', (done) ->
+              up.dom.config.fallbacks = ['.fallback']
+              $target = affix('.target').text('old target')
+              $fallback = affix('.fallback').text('old fallback')
+              promise = up.replace('.target', '/path', fallback: false)
+              $target.remove()
+
+              u.nextFrame =>
+                @respondWith """
+                  <div class="target">new target</div>
+                  <div class="fallback">new fallback</div>
+                """
+
+                promise.catch (e) ->
+                  expect(e).toBeError(/Could not find target in current page/i)
+                  done()
+
 #          describe 'when selectors are missing in the response', ->
 #
 #            beforeEach ->

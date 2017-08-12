@@ -73,7 +73,8 @@ describe 'up.popup', ->
         up.popup.close()
         respond = => @respondWith('<div class="container">text</div>')
         expect(respond).not.toThrowError()
-        expect($('.up-error')).not.toExist()
+        expect($('.up-toast')).not.toExist()
+        throw "rewrite the error detection in this spec"
 
       describe 'with { html } option', ->
 

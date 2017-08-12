@@ -231,12 +231,6 @@ up.dom = (($) ->
   ###
   replace = (selectorOrElement, url, options) ->
     options = u.options(options)
-
-    if !up.browser.canPushState() && options.history != false
-      unless options.preload
-        up.browser.loadPage(url, u.only(options, 'method', 'data'))
-      return u.unresolvablePromise()
-
     options.inspectResponse = -> up.browser.loadPage(url, u.only(options, 'method', 'data'))
 
     successOptions = u.merge options,
@@ -248,8 +242,13 @@ up.dom = (($) ->
     u.renameKey(failureOptions, 'failTransition', 'transition')
     u.renameKey(failureOptions, 'failLayer', 'layer')
 
-    improvedTarget = bestPreflightSelector(selectorOrElement, successOptions)
-    improvedFailTarget = bestPreflightSelector(options.failTarget, failureOptions)
+    try
+      improvedTarget = bestPreflightSelector(selectorOrElement, successOptions)
+      improvedFailTarget = bestPreflightSelector(options.failTarget, failureOptions)
+    catch e
+      # Since we're an async function, we should not throw exceptions but return a rejected promise.
+      # http://2ality.com/2016/03/promise-rejections-vs-exceptions.html
+      return Promise.reject(e)
 
     request =
       url: url

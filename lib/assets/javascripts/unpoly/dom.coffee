@@ -248,30 +248,31 @@ up.dom = (($) ->
     u.renameKey(failureOptions, 'failTransition', 'transition')
     u.renameKey(failureOptions, 'failLayer', 'layer')
 
-    target = bestPreflightSelector(selectorOrElement, successOptions)
-    failTarget = bestPreflightSelector(options.failTarget, failureOptions)
+    improvedTarget = bestPreflightSelector(selectorOrElement, successOptions)
+    improvedFailTarget = bestPreflightSelector(options.failTarget, failureOptions)
 
     request =
       url: url
       method: options.method
       data: options.data
-      target: target
-      failTarget: failTarget
+      target: improvedTarget
+      failTarget: improvedFailTarget
       cache: options.cache
       preload: options.preload
       headers: options.headers
       timeout: options.timeout
 
     onSuccess = (response) ->
-      processResponse(response, true, successOptions)
+      processResponse(true, improvedTarget, response, successOptions)
 
     onFailure = (response) ->
+      console.error('--- onFailure in dom')
       rejection = -> u.rejectedPromise(response)
       if response.body
-        promise = processResponse(response, false, failureOptions)
-        promise.then(rejection, rejection)
+        promise = processResponse(false, improvedFailTarget, response, failureOptions)
+        u.always(promise, rejection)
       else
-        rejection()
+        rejection
 
     promise = up.ajax(request)
     promise = promise.then(onSuccess, onFailure)
@@ -280,11 +281,12 @@ up.dom = (($) ->
   ###*
   @internal
   ###
-  processResponse = (response, isSuccess, options) ->
+  processResponse = (isSuccess, selector, response, options) ->
     request = response.request
     url = request.url
-    selector = request.target
     xhr = response.xhr
+
+    console.debug('processing response with %s', selector)
 
     options.method = u.normalizeMethod(u.option(up.protocol.methodFromXhr(xhr), options.method))
 

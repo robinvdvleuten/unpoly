@@ -436,12 +436,12 @@ up.proxy = (($) ->
     new Promise (resolve, reject) ->
 
       onSuccess = (data, textStatus, xhr) ->
-        console.debug("done!")
         response = buildResponse(request, textStatus, xhr)
         responseReceived(response)
         resolve(response)
 
       onFailure = (xhr, textStatus, errorThrown) ->
+        console.error('--- onFailure in proxy')
         response = buildResponse(request, textStatus, xhr)
         responseReceived(response)
         reject(response)

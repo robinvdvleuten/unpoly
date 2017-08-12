@@ -151,17 +151,39 @@ describe 'up.dom', ->
               sequence.next =>
                 expect(extractSpy).toHaveBeenCalledWith('body', jasmine.any(String), jasmine.any(Object))
 
-          it 'uses a target selector given as { failTarget } option', (done) ->
-            asyncSequence done, (sequence) =>
-              sequence.now =>
-                up.replace('.middle', '/path', failTarget: '.after')
+#          it 'uses a target selector given as { failTarget } option', (done) ->
+#            asyncSequence done, (sequence) =>
+#              sequence.now =>
+#                up.replace('.middle', '/path', failTarget: '.after')
+#
+#              sequence.next =>
+#                @respond(status: 500)
+#
+#              sequence.next =>
+#                expect($('.middle')).toHaveText('old-middle')
+#                expect($('.after')).toHaveText('new-after')
 
-              sequence.next =>
-                @respond(status: 500)
+          asyncIt 'uses a target selector given as { failTarget } option', (next) ->
+            next =>
+              up.replace('.middle', '/path', failTarget: '.after')
 
-              sequence.next =>
-                expect($('.middle')).toHaveText('old-middle')
-                expect($('.after')).toHaveText('new-after')
+            next =>
+              @respond(status: 500)
+
+            next =>
+              expect($('.middle')).toHaveText('old-middle')
+              expect($('.after')).toHaveText('new-after')
+#
+#          it 'uses a target selector given as { failTarget } option', asyncExample (next) ->
+#            next =>
+#              up.replace('.middle', '/path', failTarget: '.after')
+#
+#            next =>
+#              @respond(status: 500)
+#
+#            next =>
+#              expect($('.middle')).toHaveText('old-middle')
+#              expect($('.after')).toHaveText('new-after')
 
           it 'rejects the returned promise', ->
             affix('.after')

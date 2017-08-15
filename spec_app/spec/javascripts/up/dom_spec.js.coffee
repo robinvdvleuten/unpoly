@@ -964,7 +964,7 @@ describe 'up.dom', ->
 
     describe 'up.extract', ->
 
-      it 'Updates a selector on the current page with the same selector from the given HTML string', ->
+      it 'Updates a selector on the current page with the same selector from the given HTML string', asyncSpec (next) ->
 
         affix('.before').text('old-before')
         affix('.middle').text('old-middle')
@@ -979,9 +979,10 @@ describe 'up.dom', ->
 
         up.extract('.middle', html)
 
-        expect($('.before')).toHaveText('old-before')
-        expect($('.middle')).toHaveText('new-middle')
-        expect($('.after')).toHaveText('old-after')
+        next ->
+          expect($('.before')).toHaveText('old-before')
+          expect($('.middle')).toHaveText('new-middle')
+          expect($('.after')).toHaveText('old-after')
 
       it "throws an error if the selector can't be found on the current page", ->
         html = '<div class="foo-bar">text</div>'
@@ -1065,30 +1066,33 @@ describe 'up.dom', ->
           expect($version2).not.toHaveClass('up-destroying')
           expect($version2Ghost).not.toHaveClass('up-destroying')
 
-        it 'cancels an existing transition by instantly jumping to the last frame', ->
+        it 'cancels an existing transition by instantly jumping to the last frame', asyncSpec (next) ->
           affix('.element').text('version 1')
           up.extract('.element', '<div class="element">version 2</div>', transition: 'cross-fade', duration: 200)
 
-          $ghost1 = $('.element.up-ghost:contains("version 1")')
-          expect($ghost1).toHaveLength(1)
-          expect($ghost1.css('opacity')).toBeAround(1.0, 0.1)
+          next =>
+            $ghost1 = $('.element.up-ghost:contains("version 1")')
+            expect($ghost1).toHaveLength(1)
+            expect($ghost1.css('opacity')).toBeAround(1.0, 0.1)
 
-          $ghost2 = $('.element.up-ghost:contains("version 2")')
-          expect($ghost2).toHaveLength(1)
-          expect($ghost2.css('opacity')).toBeAround(0.0, 0.1)
+            $ghost2 = $('.element.up-ghost:contains("version 2")')
+            expect($ghost2).toHaveLength(1)
+            expect($ghost2.css('opacity')).toBeAround(0.0, 0.1)
 
-          up.extract('.element', '<div class="element">version 3</div>', transition: 'cross-fade', duration: 200)
+          next =>
+            up.extract('.element', '<div class="element">version 3</div>', transition: 'cross-fade', duration: 200)
 
-          $ghost1 = $('.element.up-ghost:contains("version 1")')
-          expect($ghost1).toHaveLength(0)
+          next =>
+            $ghost1 = $('.element.up-ghost:contains("version 1")')
+            expect($ghost1).toHaveLength(0)
 
-          $ghost2 = $('.element.up-ghost:contains("version 2")')
-          expect($ghost2).toHaveLength(1)
-          expect($ghost2.css('opacity')).toBeAround(1.0, 0.1)
+            $ghost2 = $('.element.up-ghost:contains("version 2")')
+            expect($ghost2).toHaveLength(1)
+            expect($ghost2.css('opacity')).toBeAround(1.0, 0.1)
 
-          $ghost3 = $('.element.up-ghost:contains("version 3")')
-          expect($ghost3).toHaveLength(1)
-          expect($ghost3.css('opacity')).toBeAround(0.0, 0.1)
+            $ghost3 = $('.element.up-ghost:contains("version 3")')
+            expect($ghost3).toHaveLength(1)
+            expect($ghost3.css('opacity')).toBeAround(0.0, 0.1)
 
         it 'delays the resolution of the returned promise until the transition is over', (done) ->
           affix('.element').text('version 1')
@@ -1105,11 +1109,12 @@ describe 'up.dom', ->
           beforeEach ->
             up.motion.config.enabled = false
 
-          it 'immediately swaps the old and new elements', ->
+          it 'immediately swaps the old and new elements without creating unnecessary ghosts', asyncSpec (next) ->
             affix('.element').text('version 1')
             up.extract('.element', '<div class="element">version 2</div>', transition: 'cross-fade', duration: 200)
-            expect($('.element')).toHaveText('version 2')
-            expect($('.up-ghost')).toHaveLength(0)
+            next =>
+              expect($('.element')).toHaveText('version 2')
+              expect($('.up-ghost')).toHaveLength(0)
 
       describe 'handling of [up-keep] elements', ->
 
@@ -1124,11 +1129,12 @@ describe 'up.dom', ->
 # Need to refactor this spec file so examples don't all share one example
           $('.before, .middle, .after').remove()
 
-        it 'keeps an [up-keep] element, but does replace other elements around it', ->
+        it 'keeps an [up-keep] element, but does replace other elements around it', asyncSpec (next) ->
           $container = affix('.container')
           $container.affix('.before').text('old-before')
           $container.affix('.middle[up-keep]').text('old-middle')
           $container.affix('.after').text('old-after')
+
           up.extract '.container', """
             <div class='container'>
               <div class='before'>new-before</div>
@@ -1136,17 +1142,20 @@ describe 'up.dom', ->
               <div class='after'>new-after</div>
             </div>
             """
-          expect($('.before')).toHaveText('new-before')
-          expect($('.middle')).toHaveText('old-middle')
-          expect($('.after')).toHaveText('new-after')
 
-        it 'keeps an [up-keep] element, but does replace text nodes around it', ->
+          next =>
+            expect($('.before')).toHaveText('new-before')
+            expect($('.middle')).toHaveText('old-middle')
+            expect($('.after')).toHaveText('new-after')
+
+        it 'keeps an [up-keep] element, but does replace text nodes around it', asyncSpec (next) ->
           $container = affix('.container')
           $container.html """
             old-before
             <div class='element' up-keep>old-inside</div>
             old-after
             """
+
           up.extract '.container', """
             <div class='container'>
               new-before
@@ -1154,7 +1163,9 @@ describe 'up.dom', ->
               new-after
             </div>
             """
-          expect(squish($('.container').text())).toEqual('new-before old-inside new-after')
+
+          next =>
+            expect(squish($('.container').text())).toEqual('new-before old-inside new-after')
 
         describe 'if an [up-keep] element is itself a direct replacement target', ->
 
@@ -1174,7 +1185,7 @@ describe 'up.dom', ->
             expect(insertedListener).not.toHaveBeenCalled()
             expect(keptListener).toHaveBeenCalledWith(jasmine.anything(), $('.keeper'), jasmine.anything())
 
-        it "removes an [up-keep] element if no matching element is found in the response", ->
+        it "removes an [up-keep] element if no matching element is found in the response", asyncSpec (next) ->
           barCompiler = jasmine.createSpy()
           barDestructor = jasmine.createSpy()
           up.compiler '.bar', ($bar) ->
@@ -1198,13 +1209,14 @@ describe 'up.dom', ->
             </div>
             """
 
-          expect($('.container .foo')).toExist()
-          expect($('.container .bar')).not.toExist()
+          next =>
+            expect($('.container .foo')).toExist()
+            expect($('.container .bar')).not.toExist()
 
-          expect(barCompiler.calls.allArgs()).toEqual [['old-bar']]
-          expect(barDestructor.calls.allArgs()).toEqual [['old-bar']]
+            expect(barCompiler.calls.allArgs()).toEqual [['old-bar']]
+            expect(barDestructor.calls.allArgs()).toEqual [['old-bar']]
 
-        it "updates an element if a matching element is found in the response, but that other element is no longer [up-keep]", ->
+        it "updates an element if a matching element is found in the response, but that other element is no longer [up-keep]", asyncSpec (next) ->
           barCompiler = jasmine.createSpy()
           barDestructor = jasmine.createSpy()
           up.compiler '.bar', ($bar) ->
@@ -1230,13 +1242,14 @@ describe 'up.dom', ->
             </div>
             """
 
-          expect($('.container .foo')).toHaveText('new-foo')
-          expect($('.container .bar')).toHaveText('new-bar')
+          next =>
+            expect($('.container .foo')).toHaveText('new-foo')
+            expect($('.container .bar')).toHaveText('new-bar')
 
-          expect(barCompiler.calls.allArgs()).toEqual [['old-bar'], ['new-bar']]
-          expect(barDestructor.calls.allArgs()).toEqual [['old-bar']]
+            expect(barCompiler.calls.allArgs()).toEqual [['old-bar'], ['new-bar']]
+            expect(barDestructor.calls.allArgs()).toEqual [['old-bar']]
 
-        it 'moves a kept element to the ancestry position of the matching element in the response', ->
+        it 'moves a kept element to the ancestry position of the matching element in the response', asyncSpec (next) ->
           $container = affix('.container')
           $container.html """
             <div class="parent1">
@@ -1254,10 +1267,12 @@ describe 'up.dom', ->
               </div>
             </div>
             """
-          expect($('.keeper')).toHaveText('old-inside')
-          expect($('.keeper').parent()).toEqual($('.parent2'))
 
-        it 'lets developers choose a selector to match against as the value of the up-keep attribute', ->
+          next =>
+            expect($('.keeper')).toHaveText('old-inside')
+            expect($('.keeper').parent()).toEqual($('.parent2'))
+
+        it 'lets developers choose a selector to match against as the value of the up-keep attribute', asyncSpec (next) ->
           $container = affix('.container')
           $container.html """
             <div class="keeper" up-keep=".stayer"></div>
@@ -1267,7 +1282,9 @@ describe 'up.dom', ->
               <div up-keep class="stayer"></div>
             </div>
             """
-          expect('.keeper').toExist()
+
+          next =>
+            expect('.keeper').toExist()
 
         it 'does not compile a kept element a second time', ->
           compiler = jasmine.createSpy('compiler')
@@ -1288,7 +1305,7 @@ describe 'up.dom', ->
           expect(compiler.calls.count()).toEqual(1)
           expect('.keeper').toExist()
 
-        it 'does not lose jQuery event handlers on a kept element (bugfix)', ->
+        it 'does not lose jQuery event handlers on a kept element (bugfix)', asyncSpec (next) ->
           handler = jasmine.createSpy('event handler')
           up.compiler '.keeper', ($keeper) ->
             $keeper.on 'click', handler
@@ -1305,27 +1322,32 @@ describe 'up.dom', ->
             </div>
             """
 
-          $keeper = $('.keeper')
-          expect($keeper).toHaveText('old-text')
-          Trigger.click($keeper)
-          expect(handler).toHaveBeenCalled()
+          next =>
+            expect('.keeper').toHaveText('old-text')
 
-        it 'lets listeners cancel the keeping by preventing default on an up:fragment:keep event', ->
+          next =>
+            Trigger.click('.keeper')
+
+          next =>
+            expect(handler).toHaveBeenCalled()
+
+        it 'lets listeners cancel the keeping by preventing default on an up:fragment:keep event', asyncSpec (next) ->
           $keeper = affix('.keeper[up-keep]').text('old-inside')
           $keeper.on 'up:fragment:keep', (event) -> event.preventDefault()
           up.extract '.keeper', "<div class='keeper' up-keep>new-inside</div>"
-          expect($('.keeper')).toHaveText('new-inside')
+          next => expect($('.keeper')).toHaveText('new-inside')
 
-        it 'lets listeners prevent up:fragment:keep event if the element was kept before (bugfix)', ->
+        it 'lets listeners prevent up:fragment:keep event if the element was kept before (bugfix)', asyncSpec (next) ->
           $keeper = affix('.keeper[up-keep]').text('version 1')
           $keeper.on 'up:fragment:keep', (event) ->
             event.preventDefault() if event.$newElement.text() == 'version 3'
-          up.extract '.keeper', "<div class='keeper' up-keep>version 2</div>"
-          expect($('.keeper')).toHaveText('version 1')
-          up.extract '.keeper', "<div class='keeper' up-keep>version 3</div>"
-          expect($('.keeper')).toHaveText('version 3')
 
-        it 'emits an up:fragment:kept event on a kept element and up:fragment:inserted on an updated parent', ->
+          next => up.extract '.keeper', "<div class='keeper' up-keep>version 2</div>"
+          next => expect($('.keeper')).toHaveText('version 1')
+          next => up.extract '.keeper', "<div class='keeper' up-keep>version 3</div>"
+          next => expect($('.keeper')).toHaveText('version 3')
+
+        it 'emits an up:fragment:kept event on a kept element and up:fragment:inserted on an updated parent', asyncSpec (next) ->
           insertedListener = jasmine.createSpy()
           up.on('up:fragment:inserted', insertedListener)
           keptListener = jasmine.createSpy()
@@ -1335,26 +1357,32 @@ describe 'up.dom', ->
           $container.html """
             <div class="keeper" up-keep></div>
             """
+
           up.extract '.container', """
             <div class='container'>
               <div class="keeper" up-keep></div>
             </div>
             """
-          expect(insertedListener).toHaveBeenCalledWith(jasmine.anything(), $('.container'), jasmine.anything())
-          expect(keptListener).toHaveBeenCalledWith(jasmine.anything(), $('.container .keeper'), jasmine.anything())
 
-        it 'emits an up:fragment:kept event on a kept element with a newData property corresponding to the up-data attribute value of the discarded element', ->
+          next =>
+            expect(insertedListener).toHaveBeenCalledWith(jasmine.anything(), $('.container'), jasmine.anything())
+            expect(keptListener).toHaveBeenCalledWith(jasmine.anything(), $('.container .keeper'), jasmine.anything())
+
+        it 'emits an up:fragment:kept event on a kept element with a newData property corresponding to the up-data attribute value of the discarded element', (next) ->
           keptListener = jasmine.createSpy()
           up.on 'up:fragment:kept', (event) -> keptListener(event.$element, event.newData)
           $container = affix('.container')
           $keeper = $container.affix('.keeper[up-keep]').text('old-inside')
+
           up.extract '.container', """
             <div class='container'>
               <div class='keeper' up-keep up-data='{ "foo": "bar" }'>new-inside</div>
             </div>
           """
-          expect($('.keeper')).toHaveText('old-inside')
-          expect(keptListener).toHaveBeenCalledWith($keeper, { 'foo': 'bar' })
+
+          next =>
+            expect($('.keeper')).toHaveText('old-inside')
+            expect(keptListener).toHaveBeenCalledWith($keeper, { 'foo': 'bar' })
 
         it 'emits an up:fragment:kept with { newData: {} } if the discarded element had no up-data value', ->
           keptListener = jasmine.createSpy()
@@ -1414,27 +1442,31 @@ describe 'up.dom', ->
 
     describe 'up.destroy', ->
 
-      it 'removes the element with the given selector', ->
+      it 'removes the element with the given selector', (done) ->
         affix('.element')
-        up.destroy('.element')
-        expect($('.element')).not.toExist()
+        up.destroy('.element').then ->
+          expect($('.element')).not.toExist()
+          done()
 
-      it 'calls destructors for custom elements', ->
+      it 'calls destructors for custom elements', (done) ->
         up.compiler('.element', ($element) -> destructor)
         destructor = jasmine.createSpy('destructor')
         up.hello(affix('.element'))
-        up.destroy('.element')
-        expect(destructor).toHaveBeenCalled()
+        up.destroy('.element').then ->
+          expect(destructor).toHaveBeenCalled()
+          done()
 
-      it 'allows to pass a new history entry as { history } option', ->
+      it 'allows to pass a new history entry as { history } option', (done) ->
         affix('.element')
-        up.destroy('.element', history: '/new-path')
-        expect(location.href).toEqualUrl('/new-path')
+        up.destroy('.element', history: '/new-path').then ->
+          expect(location.href).toEqualUrl('/new-path')
+          done()
 
-      it 'allows to pass a new document title as { title } option', ->
+      it 'allows to pass a new document title as { title } option', (done) ->
         affix('.element')
-        up.destroy('.element', history: '/new-path', title: 'Title from options')
-        expect(document.title).toEqual('Title from options')
+        up.destroy('.element', history: '/new-path', title: 'Title from options').then ->
+          expect(document.title).toEqual('Title from options')
+          done()
 
 
     describe 'up.reload', ->

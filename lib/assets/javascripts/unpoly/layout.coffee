@@ -447,11 +447,14 @@ up.layout = (($) ->
 
   ###*
   @function up.layout.revealOrRestoreScroll
+  @param {Boolean} [options.restoreScroll]
+  @param {Boolean|String} [options.reveal]
   @return {Deferred}
     A promise for when the revealing or scroll restoration ends
   @internal
   ###
   revealOrRestoreScroll = (selectorOrElement, options) ->
+    debugger
     $element = $(selectorOrElement)
 
     if options.restoreScroll
@@ -463,7 +466,7 @@ up.layout = (($) ->
         selector = revealSelector(options.reveal)
         $element = up.first(selector) || $element
         revealOptions.top = true
-        return reveal($element, revealOptions)
+      return reveal($element, revealOptions)
 
     # If we didn't need to scroll above, just return a resolved promise
     # to fulfill this function's signature.

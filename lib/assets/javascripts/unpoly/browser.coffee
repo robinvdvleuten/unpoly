@@ -284,13 +284,6 @@ up.browser = (($) ->
   This is usually a better fallback than loading incompatible Javascript and causing
   many errors on load.
 
-  \#\#\# Graceful degradation
-
-  This function also returns `true` if Unpoly only support some features, but can degrade
-  gracefully for other features. E.g. Internet Explorer 9 is almost fully supported, but due to
-  its lack of [`history.pushState`](https://developer.mozilla.org/en-US/docs/Web/API/History/pushState)
-  Unpoly falls back to a full page load when asked to manipulate history.
-
   @function up.browser.isSupported
   @stable
   ###
@@ -298,7 +291,8 @@ up.browser = (($) ->
     !isIE10OrWorse() &&
       isRecentJQuery() &&
       canConsole() &&
-      canPushState() &&
+      # We don't require pushState in order to cater for Safari booting Unpoly with a non-GET method.
+      # canPushState() &&
       canDomParser() &&
       canFormData() &&
       canCssTransition() &&

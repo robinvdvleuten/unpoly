@@ -168,7 +168,8 @@ up.browser = (($) ->
     # 2. Some browsers have a bug where the initial request method is used for all
     #    subsequently pushed states. That means if the user reloads the page on a later
     #    GET state, the browser will wrongly attempt a POST request.
-    #    Modern Firefoxes, Chromes and IE10+ don't seem to be affected by this.
+    #    This issue affects Safari 9 and 10 (last tested in 2017-08).
+    #    Modern Firefoxes, Chromes and IE10+ don't have this behavior.
     #
     # The way that we work around this is that we don't support pushState if the
     # initial request method was anything other than GET (but allow the rest of the

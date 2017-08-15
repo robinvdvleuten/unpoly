@@ -3,5 +3,6 @@ beforeEach ->
   @titleBeforeExample = document.title
   
 afterEach ->
-  history.replaceState?({ fromResetPathHelper: true }, @titleBeforeExample, @hrefBeforeExample)
+  if up.browser.canPushState()
+    history.replaceState?({ fromResetPathHelper: true }, @titleBeforeExample, @hrefBeforeExample)
   document.title = @titleBeforeExample

@@ -1,7 +1,8 @@
 beforeEach ->
-  up.dom.config.fallbacks = ['.fallback-container']
-  $element = $('<div class="fallback-container"></div>')
+  up.dom.config.fallbacks = ['.default-fallback']
+  up.history.config.popTargets = ['.default-fallback']
+  $element = $('<div class="default-fallback"></div>')
   $element.appendTo(document.body)
 
 afterEach ->
-  up.destroy('.fallback-container')
+  up.destroy('.default-fallback')

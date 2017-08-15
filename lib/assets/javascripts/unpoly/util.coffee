@@ -63,18 +63,18 @@ up.util = (($) ->
   @internal
   ###
   normalizeUrl = (urlOrAnchor, options) ->
-    anchor = parseUrl(urlOrAnchor)
-    normalized = anchor.protocol + "//" + anchor.hostname
-    normalized += ":#{anchor.port}" unless isStandardPort(anchor.protocol, anchor.port)
-    pathname = anchor.pathname
+    parts = parseUrl(urlOrAnchor)
+    normalized = parts.protocol + "//" + parts.hostname
+    normalized += ":#{parts.port}" unless isStandardPort(parts.protocol, parts.port)
+    pathname = parts.pathname
     # Some IEs don't include a leading slash in the #pathname property.
     # We have seen this in IE11 and W3Schools claims it happens in IE9 or earlier
     # http://www.w3schools.com/jsref/prop_anchor_pathname.asp
     pathname = "/#{pathname}" unless pathname[0] == '/'
     pathname = pathname.replace(/\/$/, '') if options?.stripTrailingSlash == true
     normalized += pathname
-    normalized += anchor.hash if options?.hash == true
-    normalized += anchor.search unless options?.search == false
+    normalized += parts.hash if options?.hash == true
+    normalized += parts.search unless options?.search == false
     normalized
 
   ###*
@@ -91,6 +91,10 @@ up.util = (($) ->
   @experimental
   ###
   parseUrl = (urlOrAnchor) ->
+    # If we are handed a parsed URL, just return it
+    if urlOrAnchor.pathname
+      return urlOrAnchor
+
     anchor = null
     if isString(urlOrAnchor)
       anchor = $('<a>').attr(href: urlOrAnchor).get(0)

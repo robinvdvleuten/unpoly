@@ -192,10 +192,12 @@ up.dom = (($) ->
     If a `String` is given, it is used as the URL the browser's location bar and history.
     If omitted or true, the `url` argument will be used.
     If set to `false`, the history will remain unchanged.
-  @param {String|Boolean} [options.source=true]
-  @param {String} [options.reveal=false]
+  @param {Boolean|String} [options.source=true]
+  @param {Boolean|String} [options.reveal=false]
     Whether to [reveal](/up.reveal) the element being updated, by
     scrolling its containing viewport.
+
+    You can also pass a CSS selector for the element to reveal.
   @param {Boolean} [options.restoreScroll=false]
     If set to true, Unpoly will try to restore the scroll position
     of all the viewports around or below the updated element. The position
@@ -287,6 +289,10 @@ up.dom = (($) ->
     xhr = response.xhr
 
     console.debug('processing response with %s', selector)
+
+    if options.reveal == true && request.hash
+      # If the request URL had a #hash and options.reveal is not given, we reveal that #hash.
+      options.reveal = request.hash
 
     options.method = u.normalizeMethod(u.option(up.protocol.methodFromXhr(xhr), options.method))
 

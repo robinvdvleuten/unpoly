@@ -156,7 +156,11 @@ up.proxy = (($) ->
   normalizeRequest = (request) ->
     unless request._normalized
       request.method = u.normalizeMethod(request.method)
-      request.url = u.normalizeUrl(request.url) if request.url
+      urlParts = u.parseUrl(request.url)
+      # Remember the #hash for later revealing.
+      # It will be lost during normalization.
+      request.hash = urlParts.hash
+      request.url = u.normalizeUrl(urlParts)
       request.target ||= 'body'
       request._normalized = true
     request

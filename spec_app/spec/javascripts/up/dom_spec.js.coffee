@@ -554,7 +554,7 @@ describe 'up.dom', ->
               next => @respondWith '<div class="existing">new existing</div>'
               next => expect('.existing').toHaveText('new existing')
 
-            it 'does not try a selector from up.dom.config.fallbacks if options.fallback is false', (done) ->
+            it 'does not try a selector from up.dom.config.fallbacks and rejects the promise if options.fallback is false', (done) ->
               up.dom.config.fallbacks = ['.existing']
               affix('.existing').text('old existing')
               up.replace('.unknown', '/path', fallback: false).catch (e) ->
@@ -577,6 +577,7 @@ describe 'up.dom', ->
                   <div class="target">new target</div>
                   <div class="fallback">new fallback</div>
                 """
+
               next =>
                 expect('.fallback').toHaveText('new fallback')
 
@@ -632,7 +633,7 @@ describe 'up.dom', ->
               next =>
                 expect('.fallback').toHaveText('new fallback')
 
-            it 'does not try a selector from up.dom.config.fallbacks if options.fallback is false', (done) ->
+            it 'does not try a selector from up.dom.config.fallbacks and rejects the promise if options.fallback is false', (done) ->
               up.dom.config.fallbacks = ['.fallback']
               $target = affix('.target').text('old target')
               $fallback = affix('.fallback').text('old fallback')
@@ -654,60 +655,74 @@ describe 'up.dom', ->
             beforeEach ->
               up.dom.config.fallbacks = []
 
-            it 'tries selectors from options.fallback before swapping elements', ->
+            it 'tries selectors from options.fallback before swapping elements', asyncSpec (next) ->
               $target = affix('.target').text('old target')
               $fallback = affix('.fallback').text('old fallback')
               up.replace('.target', '/path', fallback: '.fallback')
-              @respondWith """
-                <div class="fallback">new fallback</div>
-              """
-              expect('.target').toHaveText('old target')
-              expect('.fallback').toHaveText('new fallback')
 
-            it 'throws an error if all alternatives are exhausted', ->
-              $target = affix('.target').text('old target')
-              $fallback = affix('.fallback').text('old fallback')
-              up.replace('.target', '/path', fallback: '.fallback')
-              respond = =>
+              next =>
                 @respondWith """
-                  <div class="unexpected">new unexpected</div>
+                  <div class="fallback">new fallback</div>
                 """
-              expect(respond).toThrowError(/Could not find target in response/i)
 
-            it 'considers a union selector to be missing if one of its selector-atoms are missing', ->
+              next =>
+                expect('.target').toHaveText('old target')
+                expect('.fallback').toHaveText('new fallback')
+
+            it 'rejects the promise if all alternatives are exhausted', (done) ->
+              $target = affix('.target').text('old target')
+              $fallback = affix('.fallback').text('old fallback')
+              promise = up.replace('.target', '/path', fallback: '.fallback')
+
+              u.nextFrame =>
+                @respondWith '<div class="unexpected">new unexpected</div>'
+
+              promise.catch (e) ->
+                expect(e).toBeError(/Could not find target in response/i)
+                done()
+
+            it 'considers a union selector to be missing if one of its selector-atoms are missing', asyncSpec (next) ->
               $target = affix('.target').text('old target')
               $target2 = affix('.target2').text('old target2')
               $fallback = affix('.fallback').text('old fallback')
               up.replace('.target, .target2', '/path', fallback: '.fallback')
-              @respondWith """
-                <div class="target">new target</div>
-                <div class="fallback">new fallback</div>
-              """
-              expect('.target').toHaveText('old target')
-              expect('.target2').toHaveText('old target2')
-              expect('.fallback').toHaveText('new fallback')
 
-            it 'tries a selector from up.dom.config.fallbacks if options.fallback is missing', ->
+              next =>
+                @respondWith """
+                  <div class="target">new target</div>
+                  <div class="fallback">new fallback</div>
+                """
+
+              next =>
+                expect('.target').toHaveText('old target')
+                expect('.target2').toHaveText('old target2')
+                expect('.fallback').toHaveText('new fallback')
+
+            it 'tries a selector from up.dom.config.fallbacks if options.fallback is missing', asyncSpec (next) ->
               up.dom.config.fallbacks = ['.fallback']
               $target = affix('.target').text('old target')
               $fallback = affix('.fallback').text('old fallback')
               up.replace('.target', '/path')
-              @respondWith """
-                <div class="fallback">new fallback</div>
-              """
-              expect('.target').toHaveText('old target')
-              expect('.fallback').toHaveText('new fallback')
 
-            it 'does not try a selector from up.dom.config.fallbacks if options.fallback is false', ->
+              next =>
+                @respondWith '<div class="fallback">new fallback</div>'
+
+              next =>
+                expect('.target').toHaveText('old target')
+                expect('.fallback').toHaveText('new fallback')
+
+            it 'does not try a selector from up.dom.config.fallbacks and rejects the promise if options.fallback is false', (done) ->
               up.dom.config.fallbacks = ['.fallback']
               $target = affix('.target').text('old target')
               $fallback = affix('.fallback').text('old fallback')
-              up.replace('.target', '/path', fallback: false)
-              respond = =>
-                @respondWith """
-                  <div class="fallback">new fallback</div>
-                """
-              expect(respond).toThrowError(/Could not find target in response/i)
+              promise = up.replace('.target', '/path', fallback: false)
+
+              u.nextFrame =>
+                @respondWith '<div class="fallback">new fallback</div>'
+
+              promise.catch (e) ->
+                expect(e).toBeError(/Could not find target in response/i)
+                done()
 
         describe 'execution of script tags', ->
 
@@ -823,7 +838,7 @@ describe 'up.dom', ->
 
         describe 'with { restoreScroll: true } option', ->
 
-          it 'restores the scroll positions of all viewports around the target', ->
+          it 'restores the scroll positions of all viewports around the target', asyncSpec (next) ->
 
             $viewport = affix('div[up-viewport] .element').css
               'height': '100px'
@@ -837,19 +852,15 @@ describe 'up.dom', ->
                 responseText: '<div class="element" style="height: 300px"></div>'
 
             up.replace('.element', '/foo')
-            respond()
 
-            $viewport.scrollTop(65)
-
-            up.replace('.element', '/bar')
-            respond()
-
-            $viewport.scrollTop(0)
-
-            up.replace('.element', '/foo', restoreScroll: true)
+            next => respond()
+            next => $viewport.scrollTop(65)
+            next => up.replace('.element', '/bar')
+            next => respond()
+            next => $viewport.scrollTop(0)
+            next => up.replace('.element', '/foo', restoreScroll: true)
             # No need to respond because /foo has been cached before
-
-            expect($viewport.scrollTop()).toEqual(65)
+            next => expect($viewport.scrollTop()).toEqual(65)
 
 
         describe 'with { reveal: true } option', ->
@@ -885,8 +896,8 @@ describe 'up.dom', ->
 
           describe 'when there is an anchor #hash in the URL', ->
 
-            it 'scrolls to the top of a child with the ID of that #hash', (done) ->
-              promise = up.replace('.middle', '/path#three', reveal: true)
+            it 'scrolls to the top of a child with the ID of that #hash', asyncSpec (next) ->
+              up.replace('.middle', '/path#three', reveal: true)
               @responseText =
                 """
                 <div class="middle">
@@ -895,11 +906,13 @@ describe 'up.dom', ->
                   <div id="three">three</div>
                 </div>
                 """
-              @respond()
-              promise.then =>
+
+              next =>
+                @respond()
+
+              next =>
                 expect(@revealedHTML).toEqual ['<div id="three">three</div>']
                 expect(@revealOptions).toEqual { top: true }
-                done()
 
             it "reveals the entire element if it has no child with the ID of that #hash", (done) ->
               promise = up.replace('.middle', '/path#four', reveal: true)

@@ -457,15 +457,22 @@ up.layout = (($) ->
       restoreScroll(around: $element)
     else if options.reveal
       revealOptions = {}
-      if options.source
-        parsed = u.parseUrl(options.source)
-        if $target = firstHashTarget(parsed.hash)
-          $element = $target
-          revealOptions.top = true
-      reveal($element, revealOptions)
+      if u.isString(options.reveal)
+        selector = revealSelector(options.reveal)
+        $element = up.first(selector)
+        revealOptions.top = true
+      reveal($element, revealOptions) if $element
     else
       u.resolvedDeferred()
 
+  ###*
+  @internal
+  ###
+  revealSelector = (selector, options) ->
+    selector = up.dom.resolveSelector(selector, options)
+    if selector[0] == '#'
+      selector += ", a[name='#{selector}']"
+    selector
 
   ###*
   Marks this element as a scrolling container ("viewport").

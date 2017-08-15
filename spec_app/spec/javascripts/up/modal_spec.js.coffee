@@ -11,81 +11,93 @@ describe 'up.modal', ->
       it "loads the given link's destination in a dialog window", (done) ->
         $link = affix('a[href="/path/to"][up-modal=".middle"]').text('link')
         promise = up.modal.follow($link)
-        expect(@lastRequest().url).toMatch /\/path\/to$/
-        @respondWith """
+
+        u.nextFrame =>
+          expect(@lastRequest().url).toMatch /\/path\/to$/
+          @respondWith """
+            <div class="before">new-before</div>
+            <div class="middle">new-middle</div>
+            <div class="after">new-after</div>
+            """
+
+          promise.then =>
+            expect($('.up-modal')).toExist()
+            expect($('.up-modal-dialog')).toExist()
+            expect($('.up-modal-dialog .middle')).toExist()
+            expect($('.up-modal-dialog .middle')).toHaveText('new-middle')
+            expect($('.up-modal-dialog .before')).not.toExist()
+            expect($('.up-modal-dialog .after')).not.toExist()
+            done()
+
+    describe 'up.modal.extract', ->
+
+      it 'opens a modal by extracting the given selector from the given HTML string', (done) ->
+        oldHref = location.href
+        promise = up.modal.extract '.middle', """
           <div class="before">new-before</div>
           <div class="middle">new-middle</div>
           <div class="after">new-after</div>
           """
-        promise.then ->
+
+        promise.then =>
           expect($('.up-modal')).toExist()
           expect($('.up-modal-dialog')).toExist()
           expect($('.up-modal-dialog .middle')).toExist()
           expect($('.up-modal-dialog .middle')).toHaveText('new-middle')
           expect($('.up-modal-dialog .before')).not.toExist()
           expect($('.up-modal-dialog .after')).not.toExist()
+
+          # Can't change URLs
+          expect(location.href).toEqual(oldHref)
           done()
-
-    describe 'up.modal.extract', ->
-
-      it 'opens a modal by extracting the given selector from the given HTML string', ->
-        oldHref = location.href
-        up.modal.extract '.middle', """
-          <div class="before">new-before</div>
-          <div class="middle">new-middle</div>
-          <div class="after">new-after</div>
-        """
-        expect($('.up-modal')).toExist()
-        expect($('.up-modal-dialog')).toExist()
-        expect($('.up-modal-dialog .middle')).toExist()
-        expect($('.up-modal-dialog .middle')).toHaveText('new-middle')
-        expect($('.up-modal-dialog .before')).not.toExist()
-        expect($('.up-modal-dialog .after')).not.toExist()
-
-        # Can't change URLs
-        expect(location.href).toEqual(oldHref)
 
     describe 'up.modal.visit', ->
 
-      it "requests the given URL and places the given selector into a modal", ->
-        up.modal.visit '/foo', target: '.middle'
+      it "requests the given URL and places the given selector into a modal", (done) ->
+        promise = up.modal.visit('/foo', target: '.middle')
 
-        @respondWith """
-          <div class="before">new-before</div>
-          <div class="middle">new-middle</div>
-          <div class="after">new-after</div>
-        """
-
-        expect('.up-modal').toExist()
-        expect('.up-modal-dialog').toExist()
-        expect('.up-modal-dialog .middle').toExist()
-        expect('.up-modal-dialog .middle').toHaveText('new-middle')
-        expect('.up-modal-dialog .before').not.toExist()
-        expect('.up-modal-dialog .after').not.toExist()
-
-        expect(location.pathname).toEqualUrl('/foo')
-
-      it "doesn't create an .up-modal frame and replaces { failTarget } if the server returns a non-200 response", ->
-        affix('.error').text('old error')
-
-        up.modal.visit '/foo', target: '.target', failTarget: '.error'
-
-        @respondWith
-          status: 500
-          responseText: """
-            <div class="target">new target</div>
-            <div class="error">new error</div>
+        u.nextFrame =>
+          @respondWith """
+            <div class="before">new-before</div>
+            <div class="middle">new-middle</div>
+            <div class="after">new-after</div>
           """
 
-        expect('.up-modal').not.toExist()
-        expect('.error').toHaveText('new error')
+        promise.then =>
+          expect('.up-modal').toExist()
+          expect('.up-modal-dialog').toExist()
+          expect('.up-modal-dialog .middle').toExist()
+          expect('.up-modal-dialog .middle').toHaveText('new-middle')
+          expect('.up-modal-dialog .before').not.toExist()
+          expect('.up-modal-dialog .after').not.toExist()
+          expect(location.pathname).toEqualUrl('/foo')
+          done()
+
+      it "doesn't create an .up-modal frame and replaces { failTarget } if the server returns a non-200 response", (done) ->
+        affix('.error').text('old error')
+
+        promise = up.modal.visit('/foo', target: '.target', failTarget: '.error')
+
+        u.nextFrame =>
+          @respondWith
+            status: 500
+            responseText: """
+              <div class="target">new target</div>
+              <div class="error">new error</div>
+              """
+
+        promise.catch =>
+          expect('.up-modal').not.toExist()
+          expect('.error').toHaveText('new error')
+          done()
 
       describe 'preventing elements from jumping as scrollbars change', ->
 
         it "brings its own scrollbar, padding the body on the right", (done) ->
           promise = up.modal.visit('/foo', target: '.container')
 
-          @respondWith('<div class="container">text</div>')
+          u.nextFrame =>
+            @respondWith('<div class="container">text</div>')
 
           promise.then ->
             $modal = $('.up-modal')
@@ -103,10 +115,13 @@ describe 'up.modal', ->
 
         it "gives the scrollbar to .up-modal instead of .up-modal-viewport while animating, so we don't see scaled scrollbars in a zoom-in animation", (done) ->
           openPromise = up.modal.extract('.container', '<div class="container">text</div>', animation: 'fade-in', duration: 100)
-          $modal = $('.up-modal')
-          $viewport = $modal.find('.up-modal-viewport')
-          expect($modal.css('overflow-y')).toEqual('scroll')
-          expect($viewport.css('overflow-y')).toEqual('hidden')
+
+          u.nextFrame =>
+            $modal = $('.up-modal')
+            $viewport = $modal.find('.up-modal-viewport')
+            expect($modal.css('overflow-y')).toEqual('scroll')
+            expect($viewport.css('overflow-y')).toEqual('hidden')
+
           openPromise.then ->
             expect($modal.css('overflow-y')).not.toEqual('scroll')
             expect($viewport.css('overflow-y')).toEqual('scroll')
@@ -153,7 +168,8 @@ describe 'up.modal', ->
 
           promise = up.modal.visit('/foo', target: '.container')
 
-          @respondWith('<div class="container">text</div>')
+          u.nextFrame =>
+            @respondWith('<div class="container">text</div>')
 
           promise.then ->
             expect(parseInt($anchoredElement.css('right'))).toBeAround(30 + assumedScrollbarWidth, 10)
@@ -166,15 +182,20 @@ describe 'up.modal', ->
 
         it 'does not open multiple modals or pad the body twice if the user starts loading a second modal before the first was done loading', (done) ->
           up.modal.config.closeDuration = 10
+          # Load a first modal
           promise1 = up.modal.visit('/path1', target: '.container', animation: 'fade-in', duration: 50)
+
+          # Immediately load a second modal
           promise2 = up.modal.visit('/path2', target: '.container', animation: 'fade-in', duration: 50)
-          @respondWith('<div class="container">response1</div>')
+
+          u.nextFrame =>
+            @respondWith('<div class="container">response1</div>')
 
           u.setTimer 120, =>
             # up.modal.visit (visitAsap) will start the request only after the last modal
             # has finished opening and closing: 50 + 10 ms
             @respondWith('<div class="container">response2</div>')
-            $.when(promise1, promise2).then ->
+            Promise.all([promise1, promise2]).then ->
               expect($('.up-modal').length).toBe(1)
               expect($('.up-modal-dialog').length).toBe(1)
               expect($('.container')).toHaveText('response2')

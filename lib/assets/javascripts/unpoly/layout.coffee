@@ -454,7 +454,6 @@ up.layout = (($) ->
   @internal
   ###
   revealOrRestoreScroll = (selectorOrElement, options) ->
-    debugger
     $element = $(selectorOrElement)
 
     if options.restoreScroll

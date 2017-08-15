@@ -424,10 +424,12 @@ up.modal = (($) ->
 
   openAsap = (options) ->
     curriedOpenNow = -> openNow(options)
-    if isOpen()
-      chain.asap(closeNow, curriedOpenNow)
-    else
-      chain.asap(curriedOpenNow)
+    chain.asap ->
+      if isOpen()
+        chain.asap(closeNow, curriedOpenNow)
+      else
+        chain.asap(curriedOpenNow)
+      chain.promise()
     chain.promise()
 
   openNow = (options) ->

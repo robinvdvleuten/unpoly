@@ -1819,6 +1819,7 @@ up.util = (($) ->
       funValue = fun(args...)
       if isPromise(funValue)
         funValue.then -> deferred.resolve(funValue)
+        funValue.catch -> deferred.reject(funValue)
       else
         deferred.resolve(funValue)
       funValue

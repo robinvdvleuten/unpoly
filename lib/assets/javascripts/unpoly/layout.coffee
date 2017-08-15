@@ -453,17 +453,21 @@ up.layout = (($) ->
   ###
   revealOrRestoreScroll = (selectorOrElement, options) ->
     $element = $(selectorOrElement)
+
     if options.restoreScroll
-      restoreScroll(around: $element)
-    else if options.reveal
+      return restoreScroll(around: $element)
+
+    if options.reveal
       revealOptions = {}
       if u.isString(options.reveal)
         selector = revealSelector(options.reveal)
-        $element = up.first(selector)
+        $element = up.first(selector) || $element
         revealOptions.top = true
-      reveal($element, revealOptions) if $element
-    else
-      u.resolvedDeferred()
+        return reveal($element, revealOptions)
+
+    # If we didn't need to scroll above, just return a resolved promise
+    # to fulfill this function's signature.
+    return u.resolvedDeferred()
 
   ###*
   @internal

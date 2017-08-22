@@ -256,9 +256,11 @@ up.modal = (($) ->
     u.$createPlaceholder(target, $content)
     $modal.hide()
     $modal.appendTo(document.body)
+    console.debug('--- setting state.$modal ---')
     state.$modal = $modal
 
   unveilFrame = ->
+    console.debug('--- unveiled frame with %o ---', state.$modal.get(0))
     state.$modal.show()
 
   # Gives `<body>` a right padding in the width of a scrollbar.
@@ -429,7 +431,7 @@ up.modal = (($) ->
         chain.asap(closeNow, curriedOpenNow)
       else
         chain.asap(curriedOpenNow)
-      chain.promise()
+      u.resolvedPromise()
     chain.promise()
 
   openNow = (options) ->
@@ -519,13 +521,17 @@ up.modal = (($) ->
   @stable
   ###
   closeAsap = (options) ->
-    if isOpen()
-      chain.asap -> closeNow(options)
+    chain.asap ->
+      if isOpen()
+        chain.asap -> closeNow(options)
+      u.resolvedPromise()
     chain.promise()
 
   closeNow = (options) ->
     unless isOpen() # this can happen when a request fails and the chain proceeds to the next task
       return u.resolvedPromise()
+
+    console.debug('*** closeNow')
 
     options = u.options(options)
     viewportCloseAnimation = u.option(options.animation, flavorDefault('closeAnimation'))
@@ -541,6 +547,7 @@ up.modal = (($) ->
     )
 
     up.bus.whenEmitted('up:modal:close', $element: state.$modal, message: 'Closing modal').then ->
+      console.debug('*** closing event')
       state.phase = 'closing'
       # the current URL must be deleted *before* calling up.destroy,
       # since up.feedback listens to up:fragment:destroyed and then
@@ -548,12 +555,17 @@ up.modal = (($) ->
       state.url = null
       state.coveredUrl = null
       state.coveredTitle = null
+
+      console.debug('*** animating')
+
       promise = animate(viewportCloseAnimation, backdropCloseAnimation, animateOptions)
 
       promise = promise.then ->
+        console.debug('*** animating done, destroy')
         up.destroy(state.$modal, destroyOptions)
 
       promise = promise.then ->
+        console.debug('*** nilifying the world')
         unshiftElements()
         state.phase = 'closed'
         state.$modal = null
@@ -566,9 +578,12 @@ up.modal = (($) ->
       promise
 
   markAsAnimating = (isAnimating = true) ->
+    console.debug('markAsAnimating with %o', isAnimating)
     state.$modal.toggleClass('up-modal-animating', isAnimating)
 
   animate = (viewportAnimation, backdropAnimation, animateOptions) ->
+    console.debug('--- up.modal.animate with %o ---', animateOptions)
+
     # If we're not animating the dialog, don't animate the backdrop either
     if up.motion.isNone(viewportAnimation)
       u.resolvedPromise()

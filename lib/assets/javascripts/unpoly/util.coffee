@@ -986,9 +986,12 @@ up.util = (($) ->
       if contains(transitionProperties, completedProperty)
         deferred.resolve() # unless isDetached($element)
 
-    $element.on('transitionend', onTransitionEnd)
+    # $element.on('transitionend', onTransitionEnd)
+
+    setTimer opts.duration, => deferred.resolve()
 
     deferred.then ->
+      console.debug('*** cssAnimate thinks done for %o', $element.get(0))
       $element.removeClass('up-animating')
       $element.off('transitionend', onTransitionEnd)
 

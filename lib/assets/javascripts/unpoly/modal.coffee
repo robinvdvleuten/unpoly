@@ -425,14 +425,7 @@ up.modal = (($) ->
     openAsap(options)
 
   openAsap = (options) ->
-    curriedOpenNow = -> openNow(options)
-    chain.asap ->
-      if isOpen()
-        chain.asap(closeNow, curriedOpenNow)
-      else
-        chain.asap(curriedOpenNow)
-      u.resolvedPromise()
-    chain.promise()
+    chain.asap closeNow, (-> openNow(options))
 
   openNow = (options) ->
     options = u.options(options)
@@ -521,11 +514,7 @@ up.modal = (($) ->
   @stable
   ###
   closeAsap = (options) ->
-    chain.asap ->
-      if isOpen()
-        chain.asap -> closeNow(options)
-      u.resolvedPromise()
-    chain.promise()
+    chain.asap -> closeNow(options)
 
   closeNow = (options) ->
     unless isOpen() # this can happen when a request fails and the chain proceeds to the next task

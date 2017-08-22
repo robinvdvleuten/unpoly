@@ -1820,11 +1820,9 @@ up.util = (($) ->
     deferred = newDeferred()
     preview = (args...) ->
       funValue = fun(args...)
-      if isPromise(funValue)
-        funValue.then -> deferred.resolve(funValue)
-        funValue.catch -> deferred.reject(funValue)
-      else
-        deferred.resolve(funValue)
+      # If funValue is again a Promise, it will defer resolution of `deferred`
+      # until `funValue` is resolved.
+      deferred.resolve(funValue)
       funValue
     preview.promise = deferred.promise()
     preview
@@ -1845,8 +1843,8 @@ up.util = (($) ->
       @currentTask = undefined
 
     promise: =>
-      promises = map @allTasks(), (task) -> task.promise
-      Promise.all(promises)
+      lastTask = last(@allTasks())
+      lastTask?.promise || resolvedPromise()
 
     allTasks: =>
       tasks = []
@@ -1857,6 +1855,7 @@ up.util = (($) ->
     poke: =>
       unless @currentTask # don't start a new task while we're still running one
         if @currentTask = @queue.shift()
+          console.debug('[DivertibleChain.poke] currentTask is now %o', @currentTask)
           promise = @currentTask()
           always promise, =>
             @currentTask = undefined
@@ -1865,6 +1864,7 @@ up.util = (($) ->
     asap: (newTasks...) =>
       @queue = map(newTasks, previewable)
       @poke()
+      @promise()
 
   ###*
   @function up.util.submittedValue

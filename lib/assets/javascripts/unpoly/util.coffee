@@ -1943,7 +1943,7 @@ up.util = (($) ->
   ###*
   Like `$old.replaceWith($new)`, but keeps event handlers bound to `$old`.
 
-  Note that this is a memory leak unless you re-attach `$new` to the DOM aferwards.
+  Note that this is a memory leak unless you re-attach `$old` to the DOM aferwards.
 
   @function up.util.detachWith
   @internal

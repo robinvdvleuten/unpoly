@@ -349,6 +349,18 @@ up.syntax = (($) ->
         $element.removeData(DESTRUCTORS_KEY)
         $element.removeClass(DESTRUCTIBLE_CLASS)
 
+  destructors = ($fragment) ->
+    array = u.findWithSelf($fragment, ".#{DESTRUCTIBLE_CLASS}")
+    array = array.each(-> $element.data(DESTRUCTORS_KEY))
+    # Each element can have 0..n destructors, stored as an array.
+    array = _.flatten(array)
+    # Although destructible elements should always have an array of destructors, we might be
+    # destroying a clone of such an element. E.g. Unpoly creates a clone when keeping an
+    # [up-keep] element, and that clone still has the .up-destructible class.
+    array = _.compact(array)
+    array
+
+
   ###*
   Checks if the given element has an [`up-data`](/up-data) attribute.
   If yes, parses the attribute value as JSON and returns the parsed object.

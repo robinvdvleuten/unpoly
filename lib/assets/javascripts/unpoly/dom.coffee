@@ -474,6 +474,7 @@ up.dom = (($) ->
       promise = u.resolvedPromise()
 
     else
+
       replacement = ->
 
         options.keepPlans = transferKeepableElements($old, $new, options)
@@ -499,6 +500,8 @@ up.dom = (($) ->
         # so transitions see .up-current classes
         hello($new, options)
 
+        console.error('Calling up.morph with transition %o', transition)
+
         # Morphing will also process options.reveal
         up.morph($old, $new, transition, options)
 
@@ -510,6 +513,9 @@ up.dom = (($) ->
 
   # This is a separate method so we can mock it in specs
   swapBody = ($oldBody, $newBody) ->
+    # jQuery will actually let us .insertBefore the new <body> tag,
+    # but that's probably bad Karma.
+    $oldBody.clean()
     $oldBody.replaceWith($newBody)
 
   transferKeepableElements = ($old, $new, options) ->
@@ -830,6 +836,8 @@ up.dom = (($) ->
 
       animationDeferred = u.presence(options.animation, u.isDeferred) ||
         up.motion.animate($element, options.animation, animateOptions)
+
+      console.error('*** animationDeferred is %o, animation is %o', animationDeferred, options.animation)
 
       animationDeferred.then ->
         up.syntax.clean($element)

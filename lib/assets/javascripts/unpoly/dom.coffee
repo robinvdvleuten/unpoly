@@ -477,6 +477,7 @@ up.dom = (($) ->
 
       replacement = ->
 
+        options.destructor = up.syntax.destructor($old)
         options.keepPlans = transferKeepableElements($old, $new, options)
 
         if $old.is('body')
@@ -840,7 +841,7 @@ up.dom = (($) ->
       console.error('*** animationDeferred is %o, animation is %o', animationDeferred, options.animation)
 
       animationDeferred.then ->
-        up.syntax.clean($element)
+        up.syntax.clean($element, options)
         # Emit this while $element is still part of the DOM, so event
         # listeners bound to the document will receive the event.
         up.emit 'up:fragment:destroyed', $element: $element, message: destroyedMessage

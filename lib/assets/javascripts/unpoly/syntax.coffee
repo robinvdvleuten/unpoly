@@ -285,6 +285,12 @@ up.syntax = (($) ->
     for destructor in discoverDestructors(returnValue)
       addDestructor($jqueryElement, destructor)
 
+  ###*
+  Tries to find a list of destructors in a compiler's return value.
+
+  @return Array<Function>
+  @internal
+  ###
   discoverDestructors = (returnValue) ->
     if u.isFunction(returnValue)
       [returnValue]
@@ -337,7 +343,14 @@ up.syntax = (($) ->
   @function up.syntax.clean
   @internal
   ###
-  clean = ($fragment) ->
+  clean = ($fragment, options) ->
+    options = u.options(options)
+    destructors = options.destructors || findDestructors($fragment)
+    if destructors.length
+      destructor() for destructor in destructors
+      $element.removeData(DESTRUCTORS_KEY)
+      $element.removeClass(DESTRUCTIBLE_CLASS)
+
     u.findWithSelf($fragment, ".#{DESTRUCTIBLE_CLASS}").each ->
       $element = $(this)
       destructors = $element.data(DESTRUCTORS_KEY)
@@ -349,17 +362,15 @@ up.syntax = (($) ->
         $element.removeData(DESTRUCTORS_KEY)
         $element.removeClass(DESTRUCTIBLE_CLASS)
 
-  destructors = ($fragment) ->
-    array = u.findWithSelf($fragment, ".#{DESTRUCTIBLE_CLASS}")
-    array = array.each(-> $element.data(DESTRUCTORS_KEY))
-    # Each element can have 0..n destructors, stored as an array.
-    array = _.flatten(array)
-    # Although destructible elements should always have an array of destructors, we might be
-    # destroying a clone of such an element. E.g. Unpoly creates a clone when keeping an
-    # [up-keep] element, and that clone still has the .up-destructible class.
-    array = _.compact(array)
-    array
-
+  findDestructors = ($root) ->
+    destructors = []
+    u.findWithSelf($root, ".#{DESTRUCTIBLE_CLASS}").each ->
+      # Although destructible elements should always have an array of destructors, we might be
+      # destroying a clone of such an element. E.g. Unpoly creates a clone when keeping an
+      # [up-keep] element, and that clone still has the .up-destructible class.
+      destructors = $(this).data(DESTRUCTORS_KEY) || []
+      destructors = destructors.concat(destructors)
+    destructors
 
   ###*
   Checks if the given element has an [`up-data`](/up-data) attribute.

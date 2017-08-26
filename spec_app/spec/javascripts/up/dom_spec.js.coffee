@@ -48,6 +48,38 @@ describe 'up.dom', ->
             expect(resolution).toHaveBeenCalled()
             expect($('.middle')).toHaveText('new-middle')
 
+        describe 'cleaning up', ->
+
+          it 'calls destructors on the replaced element', asyncSpec (next) ->
+            destructor = jasmine.createSpy('destructor')
+            up.compiler '.container', -> destructor
+            $container = affix('.container')
+            up.hello($container)
+            up.replace('.container', '/path')
+
+            next =>
+              @respondWith '<div class="container">new text</div>'
+
+            next =>
+              expect('.container').toHaveText('new text')
+              expect(destructor).toHaveBeenCalled()
+
+          it 'calls destructors when the replaced element is a singleton element like <body> (bugfix)', asyncSpec (next) ->
+            # isSingletonElement() is true for body, but can't have the example replace the Jasmine test runner UI
+            up.dom.knife.mock('isSingletonElement').and.callFake ($element) -> $element.is('.container')
+            destructor = jasmine.createSpy('destructor')
+            up.compiler '.container', -> destructor
+            $container = affix('.container')
+            up.hello($container)
+            up.replace('.container', '/path')
+
+            next =>
+              @respondWith '<div class="container">new text</div>'
+
+            next =>
+              expect('.container').toHaveText('new text')
+              expect(destructor).toHaveBeenCalled()
+
         describe 'transitions', ->
 
           it 'returns a promise that will be fulfilled once the server response was received and the swap transition has completed', asyncSpec (next) ->
@@ -68,7 +100,7 @@ describe 'up.dom', ->
               expect(resolution).toHaveBeenCalled()
 
           it 'ignores a { transition } option when replacing the body element', asyncSpec (next) ->
-            up.dom.knife.mock('swapBody') # can't have the example replace the Jasmine test runner UI
+            up.dom.knife.mock('swapSingletonElement') # can't have the example replace the Jasmine test runner UI
             up.dom.knife.mock('destroy')  # if we don't swap the body, up.dom will destroy it
             replaceCallback = jasmine.createSpy()
             promise = up.replace('body', '/path', transition: 'cross-fade', duration: 50)

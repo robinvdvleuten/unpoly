@@ -485,13 +485,19 @@ up.dom = (($) ->
       promise = Promise.resolve()
 
     else
-      replacement = ->
-        options.keepPlans = transferKeepableElements($old, $new, options)
+      # This needs to happen before prepareClean() below.
+      options.keepPlans = transferKeepableElements($old, $new, options)
 
-        if $old.is('body')
+      # Collect destructor functions before swapping the elements.
+      # Detaching an element from the DOM will cause jQuery to remove the data properties
+      # where we store constructor functions.
+      clean = up.syntax.prepareClean($old)
+
+      replacement = ->
+        if isSingletonElement($old)
           # jQuery will actually let us .insertBefore the new <body> tag,
           # but that's probably bad Karma.
-          swapBody($old, $new)
+          swapSingletonElement($old, $new)
           # We cannot morph the <body> tag
           transition = false
         else
@@ -514,13 +520,18 @@ up.dom = (($) ->
 
       # Wrap the replacement as a destroy animation, so $old will
       # get marked as .up-destroying right away.
-      promise = destroy($old, beforeWipe: replacement, log: false)
+      promise = destroy($old, { clean, beforeWipe: replacement, log: true })
 
     promise
 
+  isSingletonElement = ($element) ->
+    $element.is('body')
+
   # This is a separate method so we can mock it in specs
-  swapBody = ($oldBody, $newBody) ->
-    $oldBody.replaceWith($newBody)
+  swapSingletonElement = ($old, $new) ->
+    # jQuery will actually let us .insertBefore the new <body> tag,
+    # but that's probably bad Karma.
+    $old.replaceWith($new)
 
   transferKeepableElements = ($old, $new, options) ->
     keepPlans = []
@@ -824,7 +835,6 @@ up.dom = (($) ->
   destroy = (selectorOrElement, options) ->
     $element = $(selectorOrElement)
     options = u.options(options, animation: false)
-    animateOptions = up.motion.animateOptions(options)
 
     if shouldLogDestruction($element, options)
       destroyMessage = ['Destroying fragment %o', $element.get(0)]
@@ -840,13 +850,15 @@ up.dom = (($) ->
       # new URL and can assign/remove .up-current classes accordingly.
       updateHistoryAndTitle(options)
 
+      animateOptions = up.motion.animateOptions(options)
       animate = ->
         up.motion.animate($element, options.animation, animateOptions)
 
       beforeWipe = options.beforeWipe || Promise.resolve()
 
       wipe = ->
-        up.syntax.clean($element)
+        options.clean ||= -> up.syntax.clean($element)
+        options.clean()
         # Emit this while $element is still part of the DOM, so event
         # listeners bound to the document will receive the event.
         up.emit 'up:fragment:destroyed', $element: $element, message: destroyedMessage

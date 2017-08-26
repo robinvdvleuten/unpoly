@@ -47,6 +47,30 @@ describe 'up.dom', ->
           expect(resolution).toHaveBeenCalled()
           expect($('.middle')).toHaveText('new-middle')
 
+        describe 'cleaning up', ->
+
+          it 'calls destructors on the replaced element', ->
+            destructor = jasmine.createSpy('destructor')
+            up.compiler '.container', -> destructor
+            $container = affix('.container')
+            up.hello($container)
+            up.replace('.container', '/path')
+            @respondWith '<div class="container">new text</div>'
+            expect('.container').toHaveText('new text')
+            expect(destructor).toHaveBeenCalled()
+
+          it 'calls destructors when the replaced element is a singleton element like <body> (bugfix)', ->
+            # isSingletonElement() is true for body, but can't have the example replace the Jasmine test runner UI
+            up.dom.knife.mock('isSingletonElement').and.callFake ($element) -> $element.is('.container')
+            destructor = jasmine.createSpy('destructor')
+            up.compiler '.container', -> destructor
+            $container = affix('.container')
+            up.hello($container)
+            up.replace('.container', '/path')
+            @respondWith '<div class="container">new text</div>'
+            expect('.container').toHaveText('new text')
+            expect(destructor).toHaveBeenCalled()
+
         describe 'transitions', ->
 
           it 'returns a promise that will be resolved once the server response was received and the swap transition has completed', (done) ->
@@ -64,7 +88,7 @@ describe 'up.dom', ->
                 done()
 
           it 'ignores a { transition } option when replacing the body element', (done) ->
-            up.dom.knife.mock('swapBody') # can't have the example replace the Jasmine test runner UI
+            up.dom.knife.mock('swapSingletonElement') # can't have the example replace the Jasmine test runner UI
             up.dom.knife.mock('destroy')  # if we don't swap the body, up.dom will destroy it
             replaceCallback = jasmine.createSpy()
             promise = up.replace('body', '/path', transition: 'cross-fade', duration: 50)
@@ -1200,6 +1224,50 @@ describe 'up.dom', ->
           expect($keeper).toHaveText('old-text')
           Trigger.click($keeper)
           expect(handler).toHaveBeenCalled()
+
+        it 'does not call destructors on a kept alement', ->
+          handler = jasmine.createSpy('event handler')
+          destructor = jasmine.createSpy('destructor')
+          up.compiler '.keeper', ($keeper) ->
+            return destructor
+
+          $container = affix('.container')
+          $container.html """
+            <div class="keeper" up-keep>old-text</div>
+            """
+          up.hello($container)
+
+          up.extract '.container', """
+            <div class='container'>
+              <div class="keeper" up-keep>new-text</div>
+            </div>
+            """
+
+          $keeper = $('.keeper')
+          expect($keeper).toHaveText('old-text')
+          expect(destructor).not.toHaveBeenCalled()
+
+        it 'calls destructors when a kept element is eventually removed from the DOM', ->
+          handler = jasmine.createSpy('event handler')
+          destructor = jasmine.createSpy('destructor')
+          up.compiler '.keeper', ($keeper) ->
+            return destructor
+
+          $container = affix('.container')
+          $container.html """
+            <div class="keeper" up-keep>old-text</div>
+            """
+          up.hello($container)
+
+          up.extract '.container', """
+            <div class='container'>
+              <div class="keeper">new-text</div>
+            </div>
+            """
+
+          $keeper = $('.keeper')
+          expect($keeper).toHaveText('new-text')
+          expect(destructor).toHaveBeenCalled()
 
         it 'lets listeners cancel the keeping by preventing default on an up:fragment:keep event', ->
           $keeper = affix('.keeper[up-keep]').text('old-inside')

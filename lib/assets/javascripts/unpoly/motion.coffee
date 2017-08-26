@@ -402,7 +402,6 @@ up.motion = (($) ->
         else
           up.fail("Unknown transition %o", transitionOrName)
       else
-        console.error('*** skipping morph')
         return skipMorph($old, $new, parsedOptions)
 
   ensureMorphable = ($element) ->

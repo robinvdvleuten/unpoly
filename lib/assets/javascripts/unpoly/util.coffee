@@ -1896,6 +1896,10 @@ up.util = (($) ->
 
   ###*
   @function up.util.sequence
+  @param {Array<Function>} functions...
+  @return {Function}
+    A function that will call all `functions` if called.
+
   @internal
   ###
   sequence = (functions...) ->

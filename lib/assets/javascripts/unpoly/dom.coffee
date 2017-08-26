@@ -474,16 +474,19 @@ up.dom = (($) ->
       promise = u.resolvedPromise()
 
     else
+      # This needs to happen before prepareClean() below.
+      keepPlans = transferKeepableElements($old, $new, options)
+
+      # Collect destructor functions before swapping the elements.
+      # Detaching an element from the DOM will cause jQuery to remove the data properties
+      # where we store constructor functions.
+      clean = up.syntax.prepareClean($old)
 
       replacement = ->
-
-        options.destructor = up.syntax.destructor($old)
-        options.keepPlans = transferKeepableElements($old, $new, options)
-
-        if $old.is('body')
+        if isSingletonElement($old)
           # jQuery will actually let us .insertBefore the new <body> tag,
           # but that's probably bad Karma.
-          swapBody($old, $new)
+          swapSingletonElement($old, $new)
           # We cannot morph the <body> tag
           transition = false
         else
@@ -499,25 +502,25 @@ up.dom = (($) ->
 
         # The fragment should be compiled before animating,
         # so transitions see .up-current classes
-        hello($new, options)
-
-        console.error('Calling up.morph with transition %o', transition)
+        hello($new, { keepPlans })
 
         # Morphing will also process options.reveal
         up.morph($old, $new, transition, options)
 
       # Wrap the replacement as a destroy animation, so $old will
       # get marked as .up-destroying right away.
-      promise = destroy($old, animation: replacement)
+      promise = destroy($old, { clean, animation: replacement })
 
     promise
 
+  isSingletonElement = ($element) ->
+    $element.is('body')
+
   # This is a separate method so we can mock it in specs
-  swapBody = ($oldBody, $newBody) ->
+  swapSingletonElement = ($old, $new) ->
     # jQuery will actually let us .insertBefore the new <body> tag,
     # but that's probably bad Karma.
-    $oldBody.clean()
-    $oldBody.replaceWith($newBody)
+    $old.replaceWith($new)
 
   transferKeepableElements = ($old, $new, options) ->
     keepPlans = []
@@ -819,6 +822,7 @@ up.dom = (($) ->
   @stable
   ###
   destroy = (selectorOrElement, options) ->
+    options = u.options(options, animation: false)
 
     $element = $(selectorOrElement)
     unless $element.is('.up-placeholder, .up-tooltip, .up-modal, .up-popup')
@@ -827,7 +831,6 @@ up.dom = (($) ->
     if $element.length == 0
       u.resolvedDeferred()
     else if up.bus.nobodyPrevents('up:fragment:destroy', $element: $element, message: destroyMessage)
-      options = u.options(options, animation: false)
       animateOptions = up.motion.animateOptions(options)
       $element.addClass('up-destroying')
       # If e.g. a modal or popup asks us to restore a URL, do this
@@ -838,10 +841,11 @@ up.dom = (($) ->
       animationDeferred = u.presence(options.animation, u.isDeferred) ||
         up.motion.animate($element, options.animation, animateOptions)
 
-      console.error('*** animationDeferred is %o, animation is %o', animationDeferred, options.animation)
-
       animationDeferred.then ->
-        up.syntax.clean($element, options)
+        console.error('*** given options.clean is %o', options.clean)
+        options.clean ||= -> up.syntax.clean($element)
+        console.error('*** effective options.clean is', options.clean)
+        options.clean()
         # Emit this while $element is still part of the DOM, so event
         # listeners bound to the document will receive the event.
         up.emit 'up:fragment:destroyed', $element: $element, message: destroyedMessage
@@ -850,7 +854,7 @@ up.dom = (($) ->
     else
       # Although someone prevented the destruction, keep a uniform API for
       # callers by returning a Deferred that will never be resolved.
-      $.Deferred()
+      u.unresolvableDeferred()
 
   ###*
   Before a page fragment is being [destroyed](/up.destroy), this

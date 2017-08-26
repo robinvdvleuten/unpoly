@@ -697,6 +697,17 @@ describe 'up.util', ->
       expect(object.b).toBe('b value')
       expect(object.c).toBe('a value')
 
+  describe 'up.util.findWithSelf', ->
+
+    it 'finds the selector in descendants of the given element', ->
+      throw "implement me"
+
+    it 'finds the element itself if the element matches the given selector', ->
+      throw "implement me"
+
+    it 'returns multiple matches in the same subtree', ->
+      throw "implement me"
+
   describe 'up.util.memoize', ->
 
     it 'returns a function that calls the memoized function', ->

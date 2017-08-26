@@ -1405,6 +1405,52 @@ describe 'up.dom', ->
           next =>
             expect(handler).toHaveBeenCalled()
 
+        it 'does not call destructors on a kept alement', asyncSpec (next) ->
+          handler = jasmine.createSpy('event handler')
+          destructor = jasmine.createSpy('destructor')
+          up.compiler '.keeper', ($keeper) ->
+            return destructor
+
+          $container = affix('.container')
+          $container.html """
+            <div class="keeper" up-keep>old-text</div>
+            """
+          up.hello($container)
+
+          up.extract '.container', """
+            <div class='container'>
+              <div class="keeper" up-keep>new-text</div>
+            </div>
+            """
+
+          next =>
+            $keeper = $('.keeper')
+            expect($keeper).toHaveText('old-text')
+            expect(destructor).not.toHaveBeenCalled()
+
+        it 'calls destructors when a kept element is eventually removed from the DOM', asyncSpec (next) ->
+          handler = jasmine.createSpy('event handler')
+          destructor = jasmine.createSpy('destructor')
+          up.compiler '.keeper', ($keeper) ->
+            return destructor
+
+          $container = affix('.container')
+          $container.html """
+            <div class="keeper" up-keep>old-text</div>
+            """
+          up.hello($container)
+
+          up.extract '.container', """
+            <div class='container'>
+              <div class="keeper">new-text</div>
+            </div>
+            """
+
+          next =>
+            $keeper = $('.keeper')
+            expect($keeper).toHaveText('new-text')
+            expect(destructor).toHaveBeenCalled()
+
         it 'lets listeners cancel the keeping by preventing default on an up:fragment:keep event', asyncSpec (next) ->
           $keeper = affix('.keeper[up-keep]').text('old-inside')
           $keeper.on 'up:fragment:keep', (event) -> event.preventDefault()

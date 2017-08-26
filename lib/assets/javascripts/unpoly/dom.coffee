@@ -475,7 +475,7 @@ up.dom = (($) ->
 
     else
       # This needs to happen before prepareClean() below.
-      keepPlans = transferKeepableElements($old, $new, options)
+      options.keepPlans = transferKeepableElements($old, $new, options)
 
       # Collect destructor functions before swapping the elements.
       # Detaching an element from the DOM will cause jQuery to remove the data properties
@@ -502,7 +502,7 @@ up.dom = (($) ->
 
         # The fragment should be compiled before animating,
         # so transitions see .up-current classes
-        hello($new, { keepPlans })
+        hello($new, options)
 
         # Morphing will also process options.reveal
         up.morph($old, $new, transition, options)
@@ -842,9 +842,7 @@ up.dom = (($) ->
         up.motion.animate($element, options.animation, animateOptions)
 
       animationDeferred.then ->
-        console.error('*** given options.clean is %o', options.clean)
         options.clean ||= -> up.syntax.clean($element)
-        console.error('*** effective options.clean is', options.clean)
         options.clean()
         # Emit this while $element is still part of the DOM, so event
         # listeners bound to the document will receive the event.

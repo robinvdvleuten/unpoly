@@ -364,7 +364,6 @@ up.syntax = (($) ->
       # destroying a clone of such an element. E.g. Unpoly creates a clone when keeping an
       # [up-keep] element, and that clone still has the .up-destructible class.
       if destructor = $(this).data(DESTRUCTORS_KEY)
-        console.error('*** prepareClean with destructor: %o', destructor)
         destructors.push(destructor)
     u.sequence(destructors...)
 

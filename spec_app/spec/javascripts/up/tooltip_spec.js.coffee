@@ -6,23 +6,26 @@ describe 'up.tooltip', ->
     
     describe 'up.tooltip.attach', ->
       
-      it 'opens a tooltip with the given text', ->
+      it 'opens a tooltip with the given text', (done) ->
         $link = affix('span')
-        up.tooltip.attach($link, html: 'tooltip text')
-        $tooltip = $('.up-tooltip')
-        expect($tooltip).toHaveText('tooltip text')
+        up.tooltip.attach($link, html: 'tooltip text').then ->
+          $tooltip = $('.up-tooltip')
+          expect($tooltip).toHaveText('tooltip text')
+          done()
 
-      it 'allows HTML for the tooltip text when contents are given as { html } option', ->
+      it 'allows HTML for the tooltip text when contents are given as { html } option', (done) ->
         $link = affix('span')
-        up.tooltip.attach($link, html: '<b>text</b>')
-        $tooltip = $('.up-tooltip')
-        expect($tooltip.html()).toEqual('<b>text</b>')
+        up.tooltip.attach($link, html: '<b>text</b>').then ->
+          $tooltip = $('.up-tooltip')
+          expect($tooltip.html()).toEqual('<b>text</b>')
+          done()
 
-      it 'escapes HTML for the tooltip text when contents given as { text } option', ->
+      it 'escapes HTML for the tooltip text when contents given as { text } option', (done) ->
         $link = affix('span')
-        up.tooltip.attach($link, text: '<b>text</b>')
-        $tooltip = $('.up-tooltip')
-        expect($tooltip.html()).toEqual('&lt;b&gt;text&lt;/b&gt;')
+        up.tooltip.attach($link, text: '<b>text</b>').then ->
+          $tooltip = $('.up-tooltip')
+          expect($tooltip.html()).toEqual('&lt;b&gt;text&lt;/b&gt;')
+          done()
 
       describe 'positioning', ->
 
@@ -44,58 +47,61 @@ describe 'up.tooltip', ->
 
         describe 'with { position: "top" }', ->
 
-          it 'centers the tooltip above the given element', ->
+          it 'centers the tooltip above the given element', (done) ->
             @linkBox = @$link.get(0).getBoundingClientRect()
-            up.tooltip.attach(@$link, html: 'tooltip text', position: 'top')
-            $tooltip = $('.up-tooltip')
-            tooltipBox = $tooltip.get(0).getBoundingClientRect()
-            expect(tooltipBox.top).toBeAround(@linkBox.top - tooltipBox.height, 15)
-            expect(tooltipBox.left).toBeAround(@linkBox.left + 0.5 * (@linkBox.width - tooltipBox.width), 15)
+            up.tooltip.attach(@$link, html: 'tooltip text', position: 'top').then ->
+              $tooltip = $('.up-tooltip')
+              tooltipBox = $tooltip.get(0).getBoundingClientRect()
+              expect(tooltipBox.top).toBeAround(@linkBox.top - tooltipBox.height, 15)
+              expect(tooltipBox.left).toBeAround(@linkBox.left + 0.5 * (@linkBox.width - tooltipBox.width), 15)
+              done()
 
         describe 'with { position: "right" }', ->
 
-          it 'centers the tooltip at the right side of the given element', ->
+          it 'centers the tooltip at the right side of the given element', (done) ->
             @linkBox = @$link.get(0).getBoundingClientRect()
-            up.tooltip.attach(@$link, html: 'tooltip text', position: 'right')
-            $tooltip = $('.up-tooltip')
-            tooltipBox = $tooltip.get(0).getBoundingClientRect()
-            expect(tooltipBox.top).toBeAround(@linkBox.top + 0.5 * (@linkBox.height - tooltipBox.height), 15)
-            expect(tooltipBox.left).toBeAround(@linkBox.left + @linkBox.width, 15)
+            up.tooltip.attach(@$link, html: 'tooltip text', position: 'right').then ->
+              $tooltip = $('.up-tooltip')
+              tooltipBox = $tooltip.get(0).getBoundingClientRect()
+              expect(tooltipBox.top).toBeAround(@linkBox.top + 0.5 * (@linkBox.height - tooltipBox.height), 15)
+              expect(tooltipBox.left).toBeAround(@linkBox.left + @linkBox.width, 15)
+              done()
 
         describe 'with { position: "bottom" }', ->
 
-          it 'centers the tooltip below the given element', ->
+          it 'centers the tooltip below the given element', (done) ->
             @linkBox = @$link.get(0).getBoundingClientRect()
-            up.tooltip.attach(@$link, html: 'tooltip text', position: 'bottom')
-            $tooltip = $('.up-tooltip')
-            tooltipBox = $tooltip.get(0).getBoundingClientRect()
-            expect(tooltipBox.top).toBeAround(@linkBox.top + @linkBox.height, 15)
-            expect(tooltipBox.left).toBeAround(@linkBox.left + 0.5 * (@linkBox.width - tooltipBox.width), 15)
+            up.tooltip.attach(@$link, html: 'tooltip text', position: 'bottom').then ->
+              $tooltip = $('.up-tooltip')
+              tooltipBox = $tooltip.get(0).getBoundingClientRect()
+              expect(tooltipBox.top).toBeAround(@linkBox.top + @linkBox.height, 15)
+              expect(tooltipBox.left).toBeAround(@linkBox.left + 0.5 * (@linkBox.width - tooltipBox.width), 15)
+              done()
 
         describe 'with { position: "left" }', ->
 
-          it 'centers the tooltip at the left side of the given element', ->
+          it 'centers the tooltip at the left side of the given element', (done) ->
             @linkBox = @$link.get(0).getBoundingClientRect()
-            up.tooltip.attach(@$link, html: 'tooltip text', position: 'left')
-            $tooltip = $('.up-tooltip')
-            tooltipBox = $tooltip.get(0).getBoundingClientRect()
-            expect(tooltipBox.top).toBeAround(@linkBox.top + 0.5 * (@linkBox.height - tooltipBox.height), 15)
-            expect(tooltipBox.left).toBeAround(@linkBox.left - tooltipBox.width, 15)
+            up.tooltip.attach(@$link, html: 'tooltip text', position: 'left').then ->
+              $tooltip = $('.up-tooltip')
+              tooltipBox = $tooltip.get(0).getBoundingClientRect()
+              expect(tooltipBox.top).toBeAround(@linkBox.top + 0.5 * (@linkBox.height - tooltipBox.height), 15)
+              expect(tooltipBox.left).toBeAround(@linkBox.left - tooltipBox.width, 15)
+              done()
 
-        it 'gives the tooltip { position: "fixed" } if the given link is fixed', ->
+        it 'gives the tooltip { position: "fixed" } if the given link is fixed', (done) ->
           # Let's test the harder case where the document is scrolled
           up.layout.scroll(document, 50)
           @$link.css(position: 'fixed')
           @linkBox = @$link.get(0).getBoundingClientRect()
 
-          up.tooltip.attach(@$link, html: 'tooltip text', position: 'top')
-          $tooltip = $('.up-tooltip')
-          tooltipBox = $tooltip.get(0).getBoundingClientRect()
-
-          expect($tooltip.css('position')).toEqual('fixed')
-          expect(tooltipBox.top).toBeAround(@linkBox.top - tooltipBox.height, 15)
-          expect(tooltipBox.left).toBeAround(@linkBox.left + 0.5 * (@linkBox.width - tooltipBox.width), 15)
-
+          up.tooltip.attach(@$link, html: 'tooltip text', position: 'top').then ->
+            $tooltip = $('.up-tooltip')
+            tooltipBox = $tooltip.get(0).getBoundingClientRect()
+            expect($tooltip.css('position')).toEqual('fixed')
+            expect(tooltipBox.top).toBeAround(@linkBox.top - tooltipBox.height, 15)
+            expect(tooltipBox.left).toBeAround(@linkBox.left + 0.5 * (@linkBox.width - tooltipBox.width), 15)
+            done()
 
       it 'closes an existing tooltip'
       

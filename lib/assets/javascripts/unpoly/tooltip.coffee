@@ -151,12 +151,7 @@ up.tooltip = (($) ->
   @stable
   ###
   attachAsap = (elementOrSelector, options = {}) ->
-    curriedAttachNow = -> attachNow(elementOrSelector, options)
-    if isOpen()
-      chain.asap(closeNow, curriedAttachNow)
-    else
-      chain.asap(curriedAttachNow)
-    chain.promise()
+    chain.asap closeNow, (-> attachNow(elementOrSelector, options))
 
   attachNow = (elementOrSelector, options) ->
     $anchor = $(elementOrSelector)
@@ -188,9 +183,7 @@ up.tooltip = (($) ->
   @stable
   ###
   closeAsap = (options) ->
-    if isOpen()
-      chain.asap -> closeNow(options)
-    chain.promise()
+    chain.asap -> closeNow(options)
 
   closeNow = (options) ->
     unless isOpen() # this can happen when a request fails and the chain proceeds to the next task

@@ -15,13 +15,14 @@ window.asyncSpec = (args...) ->
 
     queue = []
 
-    queuePointer = 0
+    insertCursor = 0
 
     insertAtCursor = (task) ->
+      console.debug('[asyncSequence] Inserting task at index %d: %o', insertCursor, task)
       # We insert at pointer instead of pushing to the end.
       # This way tasks can insert additional tasks at runtime.
-      queue.splice(queuePointer, 0, task)
-      queuePointer++
+      queue.splice(insertCursor, 0, task)
+      insertCursor++
 
     next = (block) ->
       insertAtCursor [0, block, 'sync']
@@ -46,21 +47,24 @@ window.asyncSpec = (args...) ->
         done.fail(e)
         throw e
 
-    runBlockAsyncThenPoke = (block) ->
+    runBlockAsyncThenPoke = (blockOrPromise) ->
       console.debug('[asyncSequence] runBlockAsync')
-      promise = block()
+      # On plan-level people will usually pass a function returning a promise.
+      # During runtime people will usually pass a promise to delay the next step.
+      promise = if u.isPromise(blockOrPromise) then blockOrPromise else blockOrPromise()
       promise.then => pokeQueue()
       promise.catch (e) => done.fail(e)
 
     pokeQueue = ->
-      if entry = queue[queuePointer]
-        queuePointer++
+      if entry = queue[runtimeCursor]
+        console.debug('[asyncSequence] Playing task at index %d', runtimeCursor)
+        runtimeCursor++
 
         timing = entry[0]
         block = entry[1]
         callStyle = entry[2]
 
-        console.debug('[asyncSequence] %s / %o / %s ---', timing, block, callStyle)
+        console.debug('[asyncSequence] Task is %s after %d ms: %o', callStyle, timing, block)
 
         switch timing
           when 'now'
@@ -84,5 +88,6 @@ window.asyncSpec = (args...) ->
         console.debug('[asyncSequence] calling done()')
         done()
 
-    queuePointer = 0
+    runtimeCursor = 0
+    insertCursor = runtimeCursor + 1
     pokeQueue()

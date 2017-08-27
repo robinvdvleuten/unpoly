@@ -87,15 +87,14 @@ describe 'up.popup', ->
 
       describe 'with { html } option', ->
 
-        it 'extracts the selector from the given HTML string', (done) ->
+        it 'extracts the selector from the given HTML string', asyncSpec (next) ->
           $span = affix('span')
-          up.popup.attach($span, target: '.container', html: "<div class='container'>container contents</div>").then ->
-            expect($('.up-popup')).toHaveText('container contents')
-            done()
+          next.await up.popup.attach($span, target: '.container', html: "<div class='container'>container contents</div>")
+          next => expect($('.up-popup')).toHaveText('container contents')
 
       describe 'opening a popup while another modal is open', ->
 
-        it 'closes the current popup and wait for its close animation to finish before starting the open animation of a second popup', (done) ->
+        it 'closes the current popup and wait for its close animation to finish before starting the open animation of a second popup', asyncSpec (next) ->
           $span = affix('span')
           up.popup.config.openAnimation = 'fade-in'
           up.popup.config.openDuration = 5
@@ -108,11 +107,12 @@ describe 'up.popup', ->
 
           up.popup.attach($span, { target: '.target', html: '<div class="target">response1</div>' })
 
-          # First popup is starting opening animation
-          expect(events).toEqual ['up:popup:open']
-          expect($('.target')).toHaveText('response1')
+          next =>
+            # First popup is starting opening animation
+            expect(events).toEqual ['up:popup:open']
+            expect($('.target')).toHaveText('response1')
 
-          u.setTimer 80, ->
+          next.after 80, ->
             # First popup has completed opening animation
             expect(events).toEqual ['up:popup:open', 'up:popup:opened']
             expect($('.target')).toHaveText('response1')
@@ -120,35 +120,35 @@ describe 'up.popup', ->
             # We open another popup, which will cause the first modal to start closing
             up.popup.attach($span, { target: '.target', html: '<div class="target">response2</div>' })
 
-            u.setTimer 20, ->
+          next.after 20, ->
+            # Second popup is still waiting for first popup's closing animation to finish.
+            expect(events).toEqual ['up:popup:open', 'up:popup:opened', 'up:popup:close']
+            expect($('.target')).toHaveText('response1')
 
-              # Second popup is still waiting for first popup's closing animation to finish.
-              expect(events).toEqual ['up:popup:open', 'up:popup:opened', 'up:popup:close']
-              expect($('.target')).toHaveText('response1')
-
-              u.setTimer 200, ->
-
-                # First popup has finished closing, second popup has finished opening.
-                expect(events).toEqual ['up:popup:open', 'up:popup:opened', 'up:popup:close', 'up:popup:closed', 'up:popup:open', 'up:popup:opened']
-                expect($('.target')).toHaveText('response2')
-
-                done()
+          next.after 200, ->
+            # First popup has finished closing, second popup has finished opening.
+            expect(events).toEqual ['up:popup:open', 'up:popup:opened', 'up:popup:close', 'up:popup:closed', 'up:popup:open', 'up:popup:opened']
+            expect($('.target')).toHaveText('response2')
 
     describe 'up.popup.coveredUrl', ->
 
       describeCapability 'canPushState', ->
 
-        it 'returns the URL behind the popup', (done) ->
+        it 'returns the URL behind the popup', asyncSpec (next) ->
           up.history.replace('/foo')
           expect(up.popup.coveredUrl()).toBeMissing()
 
           $popupLink = affix('a[href="/bar"][up-popup=".container"][up-history="true"]')
           Trigger.clickSequence($popupLink)
-          @respondWith('<div class="container">text</div>')
-          expect(up.popup.coveredUrl()).toEqualUrl('/foo')
-          up.popup.close().then ->
+
+          next =>
+            @respondWith('<div class="container">text</div>')
+            expect(up.popup.coveredUrl()).toEqualUrl('/foo')
+
+            next.await up.popup.close()
+
+          next =>
             expect(up.popup.coveredUrl()).toBeMissing()
-            done()
 
     describe 'up.popup.close', ->
 
@@ -195,7 +195,7 @@ describe 'up.popup', ->
         Trigger.click(@$link, metaKey: true)
         expect(@attachSpy).not.toHaveBeenCalled()
 
-      it 'closes an existing popup before opening the new popup', ->
+      it 'closes an existing popup before opening the new popup', asyncSpec (next) ->
 
         up.popup.config.openDuration = 0
         up.popup.config.closeDuration = 0
@@ -208,15 +208,21 @@ describe 'up.popup', ->
           up.on event, -> events.push(event)
 
         Trigger.click($link1)
-        expect(events).toEqual ['up:popup:open']
-        @respondWith('<div class="target">text1</div>')
-        expect(events).toEqual ['up:popup:open', 'up:popup:opened']
 
-        Trigger.click($link2)
-        expect(events).toEqual ['up:popup:open', 'up:popup:opened', 'up:popup:close', 'up:popup:closed', 'up:popup:open']
-        @respondWith('<div class="target">text1</div>')
+        next =>
+          expect(events).toEqual ['up:popup:open']
+          @respondWith('<div class="target">text1</div>')
 
-        expect(events).toEqual ['up:popup:open', 'up:popup:opened', 'up:popup:close', 'up:popup:closed', 'up:popup:open', 'up:popup:opened']
+        next =>
+          expect(events).toEqual ['up:popup:open', 'up:popup:opened']
+          Trigger.click($link2)
+
+        next =>
+          expect(events).toEqual ['up:popup:open', 'up:popup:opened', 'up:popup:close', 'up:popup:closed', 'up:popup:open']
+          @respondWith('<div class="target">text1</div>')
+
+        next =>
+          expect(events).toEqual ['up:popup:open', 'up:popup:opened', 'up:popup:close', 'up:popup:closed', 'up:popup:open', 'up:popup:opened']
 
 
       describe 'with [up-instant] modifier', ->
@@ -257,10 +263,12 @@ describe 'up.popup', ->
 
       describe 'with [up-method] modifier', ->
 
-        it 'honours the given method', ->
+        it 'honours the given method', asyncSpec (next) ->
           $link = affix('a[href="/path"][up-popup=".target"][up-method="post"]')
           Trigger.click($link)
-          expect(@lastRequest().method).toEqual 'POST'
+
+          next =>
+            expect(@lastRequest().method).toEqual 'POST'
 
     describe '[up-close]', ->
 
@@ -273,70 +281,83 @@ describe 'up.popup', ->
 
       describe 'when clicked inside a popup', ->
 
-        it 'closes the open popup and halts the event chain', (done) ->
+        it 'closes the open popup and halts the event chain', asyncSpec (next) ->
           $opener = affix('a')
           up.popup.attach($opener, html: '<div class="target">text</div>', target: '.target')
-          $popup = affix('.up-popup')
-          $closer = $popup.affix('a[up-close]') # link is within the popup
-          up.hello($closer)
-          Trigger.clickSequence($closer)
-          u.nextFrame ->
+
+          next =>
+            $popup = affix('.up-popup')
+            $closer = $popup.affix('a[up-close]') # link is within the popup
+            up.hello($closer)
+            Trigger.clickSequence($closer)
+
+          next =>
             expect(up.popup.isOpen()).toBe(false)
             expect(backgroundClicked).not.toHaveBeenCalled()
-            done()
 
       describe 'when clicked inside a popup when a modal is open', ->
 
-        it 'closes the popup, but not the modal', (done) ->
-
+        it 'closes the popup, but not the modal', asyncSpec (next) ->
           up.modal.extract '.modalee', '<div class="modalee"></div>'
-          $modalee = $('.up-modal .modalee')
-          $opener = $modalee.affix('a')
-          up.popup.attach($opener, html: '<div class="popupee">text</div>', target: '.popupee')
-          $popupee = $('.up-popup .popupee')
-          $closer = $popupee.affix('a[up-close]') # link is within the popup
-          up.hello($closer)
-          Trigger.clickSequence($closer)
-          u.nextFrame ->
+
+          next =>
+            $modalee = $('.up-modal .modalee')
+            $opener = $modalee.affix('a')
+            up.popup.attach($opener, html: '<div class="popupee">text</div>', target: '.popupee')
+
+          next =>
+            $popupee = $('.up-popup .popupee')
+            $closer = $popupee.affix('a[up-close]') # link is within the popup
+            up.hello($closer)
+            Trigger.clickSequence($closer)
+
+          next =>
             expect(up.popup.isOpen()).toBe(false)
             expect(up.modal.isOpen()).toBe(true)
             expect(backgroundClicked).not.toHaveBeenCalled()
-            done()
 
       describe 'when no popup is open', ->
 
-        it 'does nothing and allows the event chain to continue', (done) ->
+        it 'does nothing and allows the event chain to continue', asyncSpec (next) ->
           $link = affix('a[up-close]') # link is outside the popup
           up.hello($link)
           Trigger.clickSequence($link)
-          u.nextFrame ->
+
+          next =>
             expect(up.popup.isOpen()).toBe(false)
             expect(backgroundClicked).toHaveBeenCalled()
-            done()
 
     describe 'when replacing content', ->
 
       beforeEach ->
         up.motion.config.enabled = false
 
-      it 'prefers to replace a selector within the popup', ->
+      it 'prefers to replace a selector within the popup', asyncSpec (next) ->
         $outside = affix('.foo').text('old outside')
         $link = affix('.link')
         up.popup.attach($link, target: '.foo', html: "<div class='foo'>old inside</div>")
-        up.extract('.foo', "<div class='foo'>new text</div>")
-        expect($outside).toBeInDOM()
-        expect($outside).toHaveText('old outside')
-        expect($('.up-popup')).toHaveText('new text')
 
-      it 'auto-closes the popup when a replacement from inside the popup affects a selector behind the popup', ->
+        next =>
+          up.extract('.foo', "<div class='foo'>new text</div>")
+
+        next =>
+          expect($outside).toBeInDOM()
+          expect($outside).toHaveText('old outside')
+          expect($('.up-popup')).toHaveText('new text')
+
+      it 'auto-closes the popup when a replacement from inside the popup affects a selector behind the popup', asyncSpec (next) ->
         affix('.outside').text('old outside')
         $link = affix('.link')
         up.popup.attach($link, target: '.inside', html: "<div class='inside'>old inside</div>")
-        up.extract('.outside', "<div class='outside'>new outside</div>", origin: $('.inside'))
-        expect($('.outside')).toHaveText('new outside')
-        expect($('.up-popup')).not.toExist()
 
-      it 'does not restore the covered URL when auto-closing', (done) ->
+        next =>
+          up.extract('.outside', "<div class='outside'>new outside</div>", origin: $('.inside'))
+
+        next =>
+          expect($('.outside')).toHaveText('new outside')
+          expect($('.up-popup')).not.toExist()
+
+      it 'does not restore the covered URL when auto-closing', asyncSpec (next) ->
         up.motion.config.enabled = true
         up.popup.config.openDuration = 0
         up.popup.config.closeDuration = 20
@@ -344,108 +365,135 @@ describe 'up.popup', ->
 
         affix('.outside').text('old outside')
         $link = affix('.link')
-        whenPopupOpen = up.popup.attach($link, url: '/path', target: '.inside')
-        @respondWith("<div class='inside'>old inside</div>")
+        up.popup.attach($link, url: '/path', target: '.inside')
 
-        whenPopupOpen.then ->
+        next =>
+          @respondWith("<div class='inside'>old inside</div>")
+
+        next =>
           up.extract('.outside', "<div class='outside'>new outside</div>",
             origin: $('.inside'), history: '/new-location') # Provoke auto-close
 
-          u.setTimer 50, ->
-            expect(location.href).toEqualUrl '/new-location'
-            done()
+        next =>
+          expect(location.href).toEqualUrl '/new-location'
 
-      it 'does not auto-close the popup when a replacement from inside the popup affects a selector inside the popup', ->
+      it 'does not auto-close the popup when a replacement from inside the popup affects a selector inside the popup', asyncSpec (next) ->
         affix('.outside').text('old outside')
         $link = affix('.link')
         up.popup.attach($link, target: '.inside')
-        @respondWith("<div class='inside'>old inside</div>")
-        up.extract('.inside', "<div class='inside'>new inside</div>", origin: $('.inside'))
-        expect($('.inside')).toHaveText('new inside')
-        expect($('.up-popup')).toExist()
 
-      it 'does not auto-close the popup when a replacement from outside the popup affects a selector outside the popup', ->
+        next =>
+          @respondWith("<div class='inside'>old inside</div>")
+
+        next =>
+          up.extract('.inside', "<div class='inside'>new inside</div>", origin: $('.inside'))
+
+        next =>
+          expect($('.inside')).toHaveText('new inside')
+          expect($('.up-popup')).toExist()
+
+      it 'does not auto-close the popup when a replacement from outside the popup affects a selector outside the popup', asyncSpec (next) ->
         affix('.outside').text('old outside')
         $link = affix('.link')
         up.popup.attach($link, target: '.inside', html: "<div class='inside'>old inside</div>")
-        up.extract('.outside', "<div class='outside'>new outside</div>", origin: $('.outside'))
-        expect($('.outside')).toHaveText('new outside')
-        expect($('.up-popup')).toExist()
 
-      it 'does not auto-close the popup when a replacement from outside the popup affects a selector inside the popup', ->
+        next =>
+          up.extract('.outside', "<div class='outside'>new outside</div>", origin: $('.outside'))
+
+        next =>
+          expect($('.outside')).toHaveText('new outside')
+          expect($('.up-popup')).toExist()
+
+      it 'does not auto-close the popup when a replacement from outside the popup affects a selector inside the popup', asyncSpec (next) ->
         affix('.outside').text('old outside')
         $link = affix('.link')
         up.popup.attach($link, target: '.inside', html: "<div class='inside'>old inside</div>")
-        up.extract('.inside', "<div class='inside'>new inside</div>", origin: $('.outside'))
-        expect($('.inside')).toHaveText('new inside')
-        expect($('.up-popup')).toExist()
+
+        next =>
+          up.extract('.inside', "<div class='inside'>new inside</div>", origin: $('.outside'))
+
+        next =>
+          expect($('.inside')).toHaveText('new inside')
+          expect($('.up-popup')).toExist()
 
     describe 'when clicking on the body', ->
 
       beforeEach ->
         up.motion.config.enabled = false
 
-      it 'closes the popup', (done) ->
+      it 'closes the popup', asyncSpec (next) ->
         affix('.outside').text('old outside')
         $link = affix('.link')
         up.popup.attach($link, target: '.inside', html: "<div class='inside'>inside</div>")
-        expect(up.popup.isOpen()).toBe(true)
-        Trigger.clickSequence($('body'))
-        u.nextFrame ->
-          expect(up.popup.isOpen()).toBe(false)
-          done()
 
-      it 'closes the popup when a an [up-instant] link removes its parent (and thus a click event never bubbles up to the document)', (done) ->
+        next =>
+          expect(up.popup.isOpen()).toBe(true)
+          Trigger.clickSequence($('body'))
+
+        next =>
+          expect(up.popup.isOpen()).toBe(false)
+
+      it 'closes the popup when a an [up-instant] link removes its parent (and thus a click event never bubbles up to the document)', asyncSpec (next) ->
         $parent = affix('.parent')
         $parentReplacingLink = $parent.affix('a[href="/foo"][up-target=".parent"][up-instant]')
         $popupOpener = affix('.link')
         up.popup.attach($popupOpener, target: '.inside', html: "<div class='inside'>inside</div>")
-        expect(up.popup.isOpen()).toBe(true)
-        Trigger.clickSequence($parentReplacingLink)
-        u.nextFrame ->
-          expect(up.popup.isOpen()).toBe(false)
-          done()
 
-      it 'closes the popup when the user clicks on an [up-target] link outside the popup', (done) ->
+        next =>
+          expect(up.popup.isOpen()).toBe(true)
+          Trigger.clickSequence($parentReplacingLink)
+
+        next =>
+          expect(up.popup.isOpen()).toBe(false)
+
+      it 'closes the popup when the user clicks on an [up-target] link outside the popup', asyncSpec (next) ->
         $target = affix('.target')
         $outsideLink = affix('a[href="/foo"][up-target=".target"]')
         $popupOpener = affix('.link')
         up.popup.attach($popupOpener, target: '.inside', html: "<div class='inside'>inside</div>")
-        expect(up.popup.isOpen()).toBe(true)
-        Trigger.clickSequence($outsideLink)
-        u.nextFrame ->
-          expect(up.popup.isOpen()).toBe(false)
-          done()
 
-      it 'closes the popup when the user clicks on an [up-instant] link outside the popup', (done) ->
+        next =>
+          expect(up.popup.isOpen()).toBe(true)
+          Trigger.clickSequence($outsideLink)
+
+        next =>
+          expect(up.popup.isOpen()).toBe(false)
+
+      it 'closes the popup when the user clicks on an [up-instant] link outside the popup', asyncSpec (next) ->
         $target = affix('.target')
         $outsideLink = affix('a[href="/foo"][up-target=".target"][up-instant]')
         $popupOpener = affix('.link')
         up.popup.attach($popupOpener, target: '.inside', html: "<div class='inside'>inside</div>")
-        expect(up.popup.isOpen()).toBe(true)
-        Trigger.clickSequence($outsideLink)
-        u.nextFrame ->
-          expect(up.popup.isOpen()).toBe(false)
-          done()
 
-      it 'does not close the popup if a link outside the popup is followed with the up.follow function (bugfix)', (done) ->
+        next =>
+          expect(up.popup.isOpen()).toBe(true)
+          Trigger.clickSequence($outsideLink)
+
+        next =>
+          expect(up.popup.isOpen()).toBe(false)
+
+      it 'does not close the popup if a link outside the popup is followed with the up.follow function (bugfix)', asyncSpec (next) ->
         $target = affix('.target')
         $outsideLink = affix('a[href="/foo"][up-target=".target"]')
         $popupOpener = affix('.link')
         up.popup.attach($popupOpener, target: '.inside', html: "<div class='inside'>inside</div>")
-        expect(up.popup.isOpen()).toBe(true)
-        up.follow($outsideLink)
-        u.nextFrame ->
-          expect(up.popup.isOpen()).toBe(true)
-          done()
 
-      it 'does not close the popup if a form outside the popup is followed with the up.submit function (bugfix)', (done) ->
+        next =>
+          expect(up.popup.isOpen()).toBe(true)
+          up.follow($outsideLink)
+
+        next =>
+          expect(up.popup.isOpen()).toBe(true)
+
+      it 'does not close the popup if a form outside the popup is followed with the up.submit function (bugfix)', asyncSpec (next) ->
         $target = affix('.target')
         $outsideForm = affix('form[action="/foo"][up-target=".target"]')
         $popupOpener = affix('.link')
         up.popup.attach($popupOpener, target: '.inside', html: "<div class='inside'>inside</div>")
-        expect(up.popup.isOpen()).toBe(true)
-        up.submit($outsideForm)
-        u.nextFrame ->
+
+        next =>
           expect(up.popup.isOpen()).toBe(true)
-          done()
+          up.submit($outsideForm)
+
+        next =>
+          expect(up.popup.isOpen()).toBe(true)

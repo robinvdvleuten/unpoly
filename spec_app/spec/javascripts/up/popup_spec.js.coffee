@@ -21,7 +21,7 @@ describe 'up.popup', ->
       afterEach ->
         @restoreBodyHeight()
 
-      it "loads this link's destination in a popup positioned under the given link", ->
+      it "loads this link's destination in a popup positioned under the given link", asyncSpec (next) ->
         $container = affix('.container')
         $container.css
           position: 'absolute'
@@ -32,25 +32,24 @@ describe 'up.popup', ->
 
         up.popup.attach($link)
 
-        expect(@lastRequest().url).toMatch /\/path\/to$/
-        @respondWith """
-          <div class="before">new-before</div>
-          <div class="middle">new-middle</div>
-          <div class="after">new-after</div>
-          """
+        next =>
+          expect(@lastRequest().url).toMatch /\/path\/to$/
+          @respondWith """
+            <div class="before">new-before</div>
+            <div class="middle">new-middle</div>
+            <div class="after">new-after</div>
+            """
 
-        $popup = $('.up-popup')
+        next =>
+          $popup = $('.up-popup')
+          expect($popup).toExist()
+          expect($popup.find('.middle')).toHaveText('new-middle')
+          expect($popup.find('.before')).not.toExist()
+          expect($popup.find('.after')).not.toExist()
+          expect($popup.css('position')).toEqual('absolute')
+          expect($popup).toSitBelow($link)
 
-        expect($popup).toExist()
-        expect($popup.find('.middle')).toHaveText('new-middle')
-        expect($popup.find('.before')).not.toExist()
-        expect($popup.find('.after')).not.toExist()
-
-        expect($popup.css('position')).toEqual('absolute')
-
-        expect($popup).toSitBelow($link)
-
-      it 'gives the popup { position: "fixed" } if the given link is fixed', ->
+      it 'gives the popup { position: "fixed" } if the given link is fixed', asyncSpec (next) ->
         # Let's test the harder case where the document is scrolled
         up.layout.scroll(document, 50)
         $container = affix('.container')
@@ -61,20 +60,30 @@ describe 'up.popup', ->
         $link = $container.affix('a[href="/path/to"][up-popup=".content"]').text('link')
 
         up.popup.attach($link)
-        @respondWith('<div class="content">popup-content</div>')
-        $popup = $('.up-popup')
-        expect($popup.css('position')).toEqual('fixed')
 
-        expect($popup).toSitBelow($link)
+        next =>
+          @respondWith('<div class="content">popup-content</div>')
 
-      it 'does not explode if the popup was closed before the response was received', ->
+        next =>
+          $popup = $('.up-popup')
+          expect($popup.css('position')).toEqual('fixed')
+          expect($popup).toSitBelow($link)
+
+      it 'never resolves the open() promise and shows no error if close() was called before the response was received', asyncSpec (next) ->
         $span = affix('span')
-        up.popup.attach($span, url: '/foo', target: '.container')
-        up.popup.close()
-        respond = => @respondWith('<div class="container">text</div>')
-        expect(respond).not.toThrowError()
-        expect($('.up-toast')).not.toExist()
-        throw "rewrite the error detection in this spec"
+        openPromise = up.popup.attach($span, url: '/foo', target: '.container')
+
+        next =>
+          up.popup.close()
+
+        next =>
+          respond = => @respondWith('<div class="container">text</div>')
+          expect(respond).not.toThrowError()
+
+        next.await =>
+          expect($('.up-toast')).not.toExist()
+          promise = promiseState2(openPromise)
+          promise.then (state) => expect(state).toEqual('pending')
 
       describe 'with { html } option', ->
 

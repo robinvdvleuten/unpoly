@@ -23,119 +23,149 @@ describe 'up.dom', ->
 
           @respond = (options = {}) -> @respondWith(@responseText, options)
 
-        it 'replaces the given selector with the same selector from a freshly fetched page', (done) ->
-          promise = up.replace('.middle', '/path')
-          @respond()
-          promise.then ->
+        it 'replaces the given selector with the same selector from a freshly fetched page', asyncSpec (next) ->
+          up.replace('.middle', '/path')
+
+          next =>
+            @respond()
+
+          next =>
             expect($('.before')).toHaveText('old-before')
             expect($('.middle')).toHaveText('new-middle')
             expect($('.after')).toHaveText('old-after')
-            done()
 
-        it 'sends an X-Up-Target HTTP header along with the request', ->
+        it 'sends an X-Up-Target HTTP header along with the request', asyncSpec (next) ->
           up.replace('.middle', '/path')
-          request = @lastRequest()
-          expect(request.requestHeaders['X-Up-Target']).toEqual('.middle')
 
-        it 'returns a promise that will be resolved once the server response was received and the fragments were swapped', (done) ->
+          next =>
+            request = @lastRequest()
+            expect(request.requestHeaders['X-Up-Target']).toEqual('.middle')
+
+        it 'returns a promise that will be resolved once the server response was received and the fragments were swapped', asyncSpec (next) ->
           resolution = jasmine.createSpy()
           promise = up.replace('.middle', '/path')
           promise.then(resolution)
           expect(resolution).not.toHaveBeenCalled()
           expect($('.middle')).toHaveText('old-middle')
 
-          @respond()
-          u.inFrames 9, ->
+          next =>
+            @respond()
+
+          next =>
             expect(resolution).toHaveBeenCalled()
             expect($('.middle')).toHaveText('new-middle')
-            done()
 
         describe 'transitions', ->
 
-          it 'returns a promise that will be resolved once the server response was received and the swap transition has completed', (done) ->
+          it 'returns a promise that will be resolved once the server response was received and the swap transition has completed', asyncSpec (next) ->
             resolution = jasmine.createSpy()
             promise = up.replace('.middle', '/path', transition: 'cross-fade', duration: 50)
             promise.then(resolution)
             expect(resolution).not.toHaveBeenCalled()
             expect($('.middle')).toHaveText('old-middle')
-            @respond()
-            expect(resolution).not.toHaveBeenCalled()
-            u.setTimer 20, ->
-              expect(resolution).not.toHaveBeenCalled()
-              u.setTimer 80, ->
-                expect(resolution).toHaveBeenCalled()
-                done()
 
-          it 'ignores a { transition } option when replacing the body element', (done) ->
+            next =>
+              @respond()
+              expect(resolution).not.toHaveBeenCalled()
+
+            next.after 20, =>
+              expect(resolution).not.toHaveBeenCalled()
+
+            next.after 80, =>
+              expect(resolution).toHaveBeenCalled()
+
+          it 'ignores a { transition } option when replacing the body element', asyncSpec (next) ->
             up.dom.knife.mock('swapBody') # can't have the example replace the Jasmine test runner UI
             up.dom.knife.mock('destroy')  # if we don't swap the body, up.dom will destroy it
             replaceCallback = jasmine.createSpy()
             promise = up.replace('body', '/path', transition: 'cross-fade', duration: 50)
             promise.then(replaceCallback)
             expect(replaceCallback).not.toHaveBeenCalled()
-            @responseText = '<body>new text</body>'
-            @respond()
-            u.inFrames 8, ->
+
+            next =>
+              @responseText = '<body>new text</body>'
+              @respond()
+
+            next =>
               expect(replaceCallback).toHaveBeenCalled()
-              done()
 
         describe 'when the server signals a redirect with X-Up-Location header (bugfix, logic should be moved to up.proxy)', ->
 
-          it 'considers a redirection URL an alias for the requested URL', (done) ->
+          it 'considers a redirection URL an alias for the requested URL', asyncSpec (next) ->
             up.replace('.middle', '/foo')
-            expect(jasmine.Ajax.requests.count()).toEqual(1)
-            @respond(responseHeaders: { 'X-Up-Location': '/bar', 'X-Up-Method': 'GET' })
-            u.inFrames 7, ->
-              up.replace('.middle', '/bar')
+
+            next =>
               expect(jasmine.Ajax.requests.count()).toEqual(1)
-              done()
+              @respond(responseHeaders: { 'X-Up-Location': '/bar', 'X-Up-Method': 'GET' })
 
-          it 'does not considers a redirection URL an alias for the requested URL if the original request was never cached', (done) ->
+            next =>
+              up.replace('.middle', '/bar')
+
+            next =>
+              # See that the cached alias is used and no additional requests are made
+              expect(jasmine.Ajax.requests.count()).toEqual(1)
+
+          it 'does not considers a redirection URL an alias for the requested URL if the original request was never cached', asyncSpec (next) ->
             up.replace('.middle', '/foo', method: 'post') # POST requests are not cached
-            expect(jasmine.Ajax.requests.count()).toEqual(1)
-            @respond(responseHeaders: { 'X-Up-Location': '/bar', 'X-Up-Method': 'GET' })
 
-            u.inFrames 7, ->
+            next =>
+              expect(jasmine.Ajax.requests.count()).toEqual(1)
+              @respond(responseHeaders: { 'X-Up-Location': '/bar', 'X-Up-Method': 'GET' })
+
+            next =>
               up.replace('.middle', '/bar')
-              expect(jasmine.Ajax.requests.count()).toEqual(2)
-              done()
 
-          it 'does not considers a redirection URL an alias for the requested URL if the response returned a non-200 status code', (done) ->
+            next =>
+              # See that an additional request was made
+              expect(jasmine.Ajax.requests.count()).toEqual(2)
+
+          it 'does not considers a redirection URL an alias for the requested URL if the response returned a non-200 status code', asyncSpec (next) ->
             up.replace('.middle', '/foo', failTarget: '.middle')
-            expect(jasmine.Ajax.requests.count()).toEqual(1)
-            @respond(responseHeaders: { 'X-Up-Location': '/bar', 'X-Up-Method': 'GET' }, status: '500')
 
-            u.inFrames 7, ->
+            next =>
+              expect(jasmine.Ajax.requests.count()).toEqual(1)
+              @respond(responseHeaders: { 'X-Up-Location': '/bar', 'X-Up-Method': 'GET' }, status: '500')
+
+            next =>
               up.replace('.middle', '/bar')
+
+            next =>
+              # See that an additional request was made
               expect(jasmine.Ajax.requests.count()).toEqual(2)
-              done()
 
-          it "does not explode if the original request's { data } is a FormData object", (done) ->
+          it "does not explode if the original request's { data } is a FormData object", asyncSpec (next) ->
             up.replace('.middle', '/foo', method: 'post', data: new FormData()) # POST requests are not cached
-            expect(jasmine.Ajax.requests.count()).toEqual(1)
-            @respond(responseHeaders: { 'X-Up-Location': '/bar', 'X-Up-Method': 'GET' })
 
-            u.inFrames 7, ->
-              secondReplace = -> up.replace('.middle', '/bar')
-              expect(secondReplace).not.toThrowError()
-              done()
+            next =>
+              expect(jasmine.Ajax.requests.count()).toEqual(1)
+              @respond(responseHeaders: { 'X-Up-Location': '/bar', 'X-Up-Method': 'GET' })
+
+            next =>
+              @secondReplacePromise = up.replace('.middle', '/bar')
+
+            next.await =>
+              promiseState2(@secondReplacePromise).then (state) ->
+                # See that the promise was not rejected due to an internal error.
+                expect(state).toEqual('pending')
 
         describe 'with { data } option', ->
 
-          it "uses the given params as a non-GET request's payload", ->
+          it "uses the given params as a non-GET request's payload", asyncSpec (next) ->
             givenParams = { 'foo-key': 'foo-value', 'bar-key': 'bar-value' }
             up.replace('.middle', '/path', method: 'put', data: givenParams)
-            expect(@lastRequest().data()['foo-key']).toEqual(['foo-value'])
-            expect(@lastRequest().data()['bar-key']).toEqual(['bar-value'])
 
-          it "encodes the given params into the URL of a GET request", ->
+            next =>
+              expect(@lastRequest().data()['foo-key']).toEqual(['foo-value'])
+              expect(@lastRequest().data()['bar-key']).toEqual(['bar-value'])
+
+          it "encodes the given params into the URL of a GET request", asyncSpec (next) ->
             givenParams = { 'foo-key': 'foo-value', 'bar-key': 'bar-value' }
             up.replace('.middle', '/path', method: 'get', data: givenParams)
-            expect(@lastRequest().url).toEqualUrl('/path?foo-key=foo-value&bar-key=bar-value')
+            next => expect(@lastRequest().url).toEqualUrl('/path?foo-key=foo-value&bar-key=bar-value')
 
-        it 'uses a HTTP method given as { method } option', ->
+        it 'uses a HTTP method given as { method } option', asyncSpec (next) ->
           up.replace('.middle', '/path', method: 'put')
-          expect(@lastRequest()).toHaveRequestMethod('PUT')
+          next => expect(@lastRequest()).toHaveRequestMethod('PUT')
 
         describe 'when the server responds with a non-200 status code', ->
 
@@ -957,10 +987,12 @@ describe 'up.dom', ->
 
       describeFallback 'canPushState', ->
 
-        it 'makes a full page load', ->
+        it 'makes a full page load', asyncSpec (next) ->
           spyOn(up.browser, 'loadPage')
           up.replace('.selector', '/path')
-          expect(up.browser.loadPage).toHaveBeenCalledWith('/path', jasmine.anything())
+
+          next =>
+            expect(up.browser.loadPage).toHaveBeenCalledWith('/path', jasmine.anything())
 
     describe 'up.extract', ->
 
@@ -985,28 +1017,39 @@ describe 'up.dom', ->
           expect($('.after')).toHaveText('old-after')
 
       it "throws an error if the selector can't be found on the current page", ->
+        throw "should reject promise!"
+
+
         html = '<div class="foo-bar">text</div>'
         extract = -> up.extract('.foo-bar', html)
         expect(extract).toThrowError(/Could not find selector in current page, modal or popup/i)
 
       it "throws an error if the selector can't be found in the given HTML string", ->
+        throw "should reject promise!"
+
         affix('.foo-bar')
         extract = -> up.extract('.foo-bar', '')
         expect(extract).toThrowError(/Could not find selector in response/i)
 
       it "ignores an element that matches the selector but also matches .up-destroying", ->
+        throw "should reject promise!"
+
         html = '<div class="foo-bar">text</div>'
         affix('.foo-bar.up-destroying')
         extract = -> up.extract('.foo-bar', html)
         expect(extract).toThrowError(/Could not find selector/i)
 
       it "ignores an element that matches the selector but also matches .up-ghost", ->
+        throw "should reject promise!"
+
         html = '<div class="foo-bar">text</div>'
         affix('.foo-bar.up-ghost')
         extract = -> up.extract('.foo-bar', html)
         expect(extract).toThrowError(/Could not find selector/i)
 
       it "ignores an element that matches the selector but also has a parent matching .up-destroying", ->
+        throw "should reject promise!"
+
         html = '<div class="foo-bar">text</div>'
         $parent = affix('.up-destroying')
         $child = affix('.foo-bar').appendTo($parent)
@@ -1014,57 +1057,62 @@ describe 'up.dom', ->
         expect(extract).toThrowError(/Could not find selector/i)
 
       it "ignores an element that matches the selector but also has a parent matching .up-ghost", ->
+        throw "should reject promise!"
+
         html = '<div class="foo-bar">text</div>'
         $parent = affix('.up-ghost')
         $child = affix('.foo-bar').appendTo($parent)
         extract = -> up.extract('.foo-bar', html)
         expect(extract).toThrowError(/Could not find selector/i)
 
-      it 'only replaces the first element matching the selector', ->
+      it 'only replaces the first element matching the selector', asyncSpec (next) ->
         html = '<div class="foo-bar">text</div>'
         affix('.foo-bar')
         affix('.foo-bar')
         up.extract('.foo-bar', html)
-        elements = $('.foo-bar')
-        expect($(elements.get(0)).text()).toEqual('text')
-        expect($(elements.get(1)).text()).toEqual('')
+
+        next =>
+          elements = $('.foo-bar')
+          expect($(elements.get(0)).text()).toEqual('text')
+          expect($(elements.get(1)).text()).toEqual('')
 
       describe 'with { transition } option', ->
 
-        it 'morphs between the old and new element', (done) ->
+        it 'morphs between the old and new element', asyncSpec (next) ->
           affix('.element').text('version 1')
           up.extract('.element', '<div class="element">version 2</div>', transition: 'cross-fade', duration: 200)
 
-          $ghost1 = $('.element.up-ghost:contains("version 1")')
-          expect($ghost1).toHaveLength(1)
-          expect(u.opacity($ghost1)).toBeAround(1.0, 0.1)
+          next =>
+            @$ghost1 = $('.element.up-ghost:contains("version 1")')
+            expect(@$ghost1).toHaveLength(1)
+            expect(u.opacity(@$ghost1)).toBeAround(1.0, 0.1)
 
-          $ghost2 = $('.element.up-ghost:contains("version 2")')
-          expect($ghost2).toHaveLength(1)
-          expect(u.opacity($ghost2)).toBeAround(0.0, 0.1)
+            @$ghost2 = $('.element.up-ghost:contains("version 2")')
+            expect(@$ghost2).toHaveLength(1)
+            expect(u.opacity(@$ghost2)).toBeAround(0.0, 0.1)
 
-          u.setTimer 190, ->
-            expect(u.opacity($ghost1)).toBeAround(0.0, 0.3)
-            expect(u.opacity($ghost2)).toBeAround(1.0, 0.3)
-            done()
+          next.after 190, =>
+            expect(u.opacity(@$ghost1)).toBeAround(0.0, 0.3)
+            expect(u.opacity(@$ghost2)).toBeAround(1.0, 0.3)
 
-        it 'marks the old fragment and its ghost as .up-destroying during the transition', ->
+        it 'marks the old fragment and its ghost as .up-destroying during the transition', asyncSpec (next) ->
           affix('.element').text('version 1')
           up.extract('.element', '<div class="element">version 2</div>', transition: 'cross-fade', duration: 200)
 
-          $version1 = $('.element:not(.up-ghost):contains("version 1")')
-          $version1Ghost = $('.element.up-ghost:contains("version 1")')
-          expect($version1).toHaveLength(1)
-          expect($version1Ghost).toHaveLength(1)
-          expect($version1).toHaveClass('up-destroying')
-          expect($version1Ghost).toHaveClass('up-destroying')
+          next =>
+            $version1 = $('.element:not(.up-ghost):contains("version 1")')
+            $version1Ghost = $('.element.up-ghost:contains("version 1")')
+            expect($version1).toHaveLength(1)
+            expect($version1Ghost).toHaveLength(1)
+            expect($version1).toHaveClass('up-destroying')
+            expect($version1Ghost).toHaveClass('up-destroying')
 
-          $version2 = $('.element:not(.up-ghost):contains("version 2")')
-          $version2Ghost = $('.element.up-ghost:contains("version 2")')
-          expect($version2).toHaveLength(1)
-          expect($version2Ghost).toHaveLength(1)
-          expect($version2).not.toHaveClass('up-destroying')
-          expect($version2Ghost).not.toHaveClass('up-destroying')
+            $version2 = $('.element:not(.up-ghost):contains("version 2")')
+            $version2Ghost = $('.element.up-ghost:contains("version 2")')
+            expect($version2).toHaveLength(1)
+            expect($version2Ghost).toHaveLength(1)
+            expect($version2).not.toHaveClass('up-destroying')
+            expect($version2Ghost).not.toHaveClass('up-destroying')
 
         it 'cancels an existing transition by instantly jumping to the last frame', asyncSpec (next) ->
           affix('.element').text('version 1')
@@ -1169,12 +1217,14 @@ describe 'up.dom', ->
 
         describe 'if an [up-keep] element is itself a direct replacement target', ->
 
-          it "keeps that element", ->
+          it "keeps that element", asyncSpec (next) ->
             affix('.keeper[up-keep]').text('old-inside')
             up.extract '.keeper', "<div class='keeper' up-keep>new-inside</div>"
-            expect($('.keeper')).toHaveText('old-inside')
 
-          it "only emits an event up:fragment:kept, but not an event up:fragment:inserted", ->
+            next =>
+              expect($('.keeper')).toHaveText('old-inside')
+
+          it "only emits an event up:fragment:kept, but not an event up:fragment:inserted", asyncSpec (next) ->
             insertedListener = jasmine.createSpy('subscriber to up:fragment:inserted')
             up.on('up:fragment:inserted', insertedListener)
             keptListener = jasmine.createSpy('subscriber to up:fragment:kept')
@@ -1182,8 +1232,10 @@ describe 'up.dom', ->
             up.on 'up:fragment:inserted', insertedListener
             $keeper = affix('.keeper[up-keep]').text('old-inside')
             up.extract '.keeper', "<div class='keeper' up-keep>new-inside</div>"
-            expect(insertedListener).not.toHaveBeenCalled()
-            expect(keptListener).toHaveBeenCalledWith(jasmine.anything(), $('.keeper'), jasmine.anything())
+
+            next =>
+              expect(insertedListener).not.toHaveBeenCalled()
+              expect(keptListener).toHaveBeenCalledWith(jasmine.anything(), $('.keeper'), jasmine.anything())
 
         it "removes an [up-keep] element if no matching element is found in the response", asyncSpec (next) ->
           barCompiler = jasmine.createSpy()
@@ -1286,7 +1338,7 @@ describe 'up.dom', ->
           next =>
             expect('.keeper').toExist()
 
-        it 'does not compile a kept element a second time', ->
+        it 'does not compile a kept element a second time', asyncSpec (next) ->
           compiler = jasmine.createSpy('compiler')
           up.compiler('.keeper', compiler)
           $container = affix('.container')
@@ -1302,8 +1354,10 @@ describe 'up.dom', ->
               <div class="keeper" up-keep>new-text</div>
             </div>
             """
-          expect(compiler.calls.count()).toEqual(1)
-          expect('.keeper').toExist()
+
+          next =>
+            expect(compiler.calls.count()).toEqual(1)
+            expect('.keeper').toExist()
 
         it 'does not lose jQuery event handlers on a kept element (bugfix)', asyncSpec (next) ->
           handler = jasmine.createSpy('event handler')
@@ -1384,7 +1438,7 @@ describe 'up.dom', ->
             expect($('.keeper')).toHaveText('old-inside')
             expect(keptListener).toHaveBeenCalledWith($keeper, { 'foo': 'bar' })
 
-        it 'emits an up:fragment:kept with { newData: {} } if the discarded element had no up-data value', ->
+        it 'emits an up:fragment:kept with { newData: {} } if the discarded element had no up-data value', (next) ->
           keptListener = jasmine.createSpy()
           up.on('up:fragment:kept', keptListener)
           $container = affix('.container')
@@ -1394,27 +1448,35 @@ describe 'up.dom', ->
               <div class='keeper' up-keep>new-inside</div>
             </div>
           """
-          expect($('.keeper')).toHaveText('old-inside')
-          expect(keptListener).toEqual(jasmine.anything(), $('.keeper'), {})
 
-        it 'reuses the same element and emits up:fragment:kept during multiple extractions', ->
+          next =>
+            expect($('.keeper')).toHaveText('old-inside')
+            expect(keptListener).toEqual(jasmine.anything(), $('.keeper'), {})
+
+        it 'reuses the same element and emits up:fragment:kept during multiple extractions', asyncSpec (next) ->
           keptListener = jasmine.createSpy()
           up.on 'up:fragment:kept', (event) -> keptListener(event.$element, event.newData)
           $container = affix('.container')
           $keeper = $container.affix('.keeper[up-keep]').text('old-inside')
-          up.extract '.keeper', """
-            <div class='container'>
-              <div class='keeper' up-keep up-data='{ \"key\": \"value1\" }'>new-inside</div>
-            </div>
-          """
-          up.extract '.keeper', """
-            <div class='container'>
-              <div class='keeper' up-keep up-data='{ \"key\": \"value2\" }'>new-inside</div>
-          """
-          $keeper = $('.keeper')
-          expect($keeper).toHaveText('old-inside')
-          expect(keptListener).toHaveBeenCalledWith($keeper, { key: 'value1' })
-          expect(keptListener).toHaveBeenCalledWith($keeper, { key: 'value2' })
+
+          next =>
+            up.extract '.keeper', """
+              <div class='container'>
+                <div class='keeper' up-keep up-data='{ \"key\": \"value1\" }'>new-inside</div>
+              </div>
+            """
+
+          next =>
+            up.extract '.keeper', """
+              <div class='container'>
+                <div class='keeper' up-keep up-data='{ \"key\": \"value2\" }'>new-inside</div>
+            """
+
+          next =>
+            $keeper = $('.keeper')
+            expect($keeper).toHaveText('old-inside')
+            expect(keptListener).toHaveBeenCalledWith($keeper, { key: 'value1' })
+            expect(keptListener).toHaveBeenCalledWith($keeper, { key: 'value2' })
 
         it "doesn't let the discarded element appear in a transition", (done) ->
           oldTextDuringTransition = undefined
@@ -1473,28 +1535,33 @@ describe 'up.dom', ->
 
       describeCapability 'canPushState', ->
 
-        it 'reloads the given selector from the closest known source URL', (done) ->
+        it 'reloads the given selector from the closest known source URL', asyncSpec (next) ->
           affix('.container[up-source="/source"] .element').find('.element').text('old text')
 
-          up.reload('.element').then ->
+          next =>
+            up.reload('.element')
+
+          next =>
+            expect(@lastRequest().url).toMatch(/\/source$/)
+            @respondWith """
+              <div class="container">
+                <div class="element">new text</div>
+              </div>
+              """
+
+          next =>
             expect($('.element')).toHaveText('new text')
-            done()
 
-          expect(@lastRequest().url).toMatch(/\/source$/)
-
-          @respondWith """
-            <div class="container">
-              <div class="element">new text</div>
-            </div>
-            """
 
       describeFallback 'canPushState', ->
 
-        it 'makes a page load from the closest known source URL', ->
+        it 'makes a page load from the closest known source URL', asyncSpec (next) ->
           affix('.container[up-source="/source"] .element').find('.element').text('old text')
           spyOn(up.browser, 'loadPage')
           up.reload('.element')
-          expect(up.browser.loadPage).toHaveBeenCalledWith('/source', jasmine.anything())
+
+          next =>
+            expect(up.browser.loadPage).toHaveBeenCalledWith('/source', jasmine.anything())
 
 
     describe 'up.reset', ->

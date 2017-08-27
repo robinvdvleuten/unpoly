@@ -15,17 +15,26 @@ window.asyncSpec = (args...) ->
 
     queue = []
 
-    next = (block) ->
-      queue.push([0, block, 'sync'])
+    queuePointer = 0
 
-    next.next = next
+    insertAtCursor = (task) ->
+      # We insert at pointer instead of pushing to the end.
+      # This way tasks can insert additional tasks at runtime.
+      queue.splice(queuePointer, 0, task)
+      queuePointer++
+
+    next = (block) ->
+      insertAtCursor [0, block, 'sync']
+
+    next.next = next # alternative API
 
     next.after = (delay, block) ->
-      queue.push([delay, block, 'sync'])
+      insertAtCursor [delay, block, 'sync']
 
     next.await = (block) ->
-      queue.push([0, block, 'async'])
+      insertAtCursor  [0, block, 'async']
 
+    # Call example body
     plan.call(this, next)
 
     runBlockSyncAndPoke = (block) ->
@@ -44,12 +53,14 @@ window.asyncSpec = (args...) ->
       promise.catch (e) => done.fail(e)
 
     pokeQueue = ->
-      if entry = queue.shift()
+      if entry = queue[queuePointer]
+        queuePointer++
+
         timing = entry[0]
         block = entry[1]
-        kind = entry[2]
+        callStyle = entry[2]
 
-        console.debug('[asyncSequence] %s / %o / %s ---', timing, block, kind)
+        console.debug('[asyncSequence] %s / %o / %s ---', timing, block, callStyle)
 
         switch timing
           when 'now'
@@ -58,7 +69,7 @@ window.asyncSpec = (args...) ->
             fun = ->
               # Move the block behind the microtask queue of that frame
               Promise.resolve().then ->
-                if kind == 'sync'
+                if callStyle == 'sync'
                   runBlockSyncAndPoke(block)
                 else
                   runBlockAsyncThenPoke(block)
@@ -73,8 +84,5 @@ window.asyncSpec = (args...) ->
         console.debug('[asyncSequence] calling done()')
         done()
 
+    queuePointer = 0
     pokeQueue()
-
-
-window.asyncIt = (description, args...) ->
-  it description, asyncSpec(args...)

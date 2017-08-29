@@ -392,25 +392,31 @@ up.dom = (($) ->
 
       up.layout.saveScroll() unless options.saveScroll == false
 
-      # Allow callers to create the targeted element right before we swap.
-      options.provideTarget?()
-      response = parseResponse(html)
-      implantSteps = bestMatchingSteps(selectorOrElement, response, options)
+      try
+        # Allow callers to create the targeted element right before we swap.
+        options.provideTarget?()
+        response = parseResponse(html)
+        implantSteps = bestMatchingSteps(selectorOrElement, response, options)
 
-      if shouldExtractTitle(options) && responseTitle = response.title()
-        options.title = responseTitle
-      updateHistoryAndTitle(options)
+        if shouldExtractTitle(options) && responseTitle = response.title()
+          options.title = responseTitle
+        updateHistoryAndTitle(options)
 
-      swapPromises = []
-      for step in implantSteps
-        up.log.group 'Updating %s', step.selector, ->
-          filterScripts(step.$new, options)
-          swapPromise = swapElements(step.$old, step.$new, step.pseudoClass, step.transition, options)
-          swapPromises.push(swapPromise)
-          options.reveal = false # only reveal the first selector atom in the union
+        swapPromises = []
+        for step in implantSteps
+          up.log.group 'Updating %s', step.selector, ->
+            filterScripts(step.$new, options)
+            swapPromise = swapElements(step.$old, step.$new, step.pseudoClass, step.transition, options)
+            swapPromises.push(swapPromise)
+            options.reveal = false # only reveal the first selector atom in the union
 
-      # Delay all further links in the promise chain until all fragments have been swapped
-      Promise.all(swapPromises)
+        # Delay all further links in the promise chain until all fragments have been swapped
+        Promise.all(swapPromises)
+
+      catch e
+        # Since we're an async function, we should not throw exceptions but return a rejected promise.
+        # http://2ality.com/2016/03/promise-rejections-vs-exceptions.html
+        return Promise.reject(e)
 
   bestPreflightSelector = (selector, options) ->
     cascade = new up.dom.ExtractCascade(selector, options)

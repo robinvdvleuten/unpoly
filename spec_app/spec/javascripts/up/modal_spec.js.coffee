@@ -367,7 +367,7 @@ describe 'up.modal', ->
           next.await =>
             expect($('.up-toast')).not.toExist()
             promise = promiseState2(openPromise)
-            promise.then (state) => expect(state).toEqual('pending')
+            promise.then (result) => expect(result.state).toEqual('pending')
 
     describe 'up.modal.coveredUrl', ->
 

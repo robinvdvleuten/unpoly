@@ -22,14 +22,14 @@ function promiseState2(promise) {
 
   function notifyPendingOrResolved(value) {
     if (value === uniqueValue) {
-      return Promise.resolve('pending')
+      return Promise.resolve({ state: 'pending' })
     } else {
-      return Promise.resolve('fulfilled', value)
+      return Promise.resolve({ state: 'fulfilled', value: value })
     }
   }
 
   function notifyRejected(reason) {
-    return Promise.resolve('rejected', reason)
+    return Promise.resolve({ state: 'rejected', value: reason })
   }
 
   var race = [promise, Promise.resolve(uniqueValue)]

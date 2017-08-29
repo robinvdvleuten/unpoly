@@ -144,9 +144,9 @@ describe 'up.dom', ->
               @secondReplacePromise = up.replace('.middle', '/bar')
 
             next.await =>
-              promiseState2(@secondReplacePromise).then (state) ->
+              promiseState2(@secondReplacePromise).then (result) ->
                 # See that the promise was not rejected due to an internal error.
-                expect(state).toEqual('pending')
+                expect(result.state).toEqual('pending')
 
         describe 'with { data } option', ->
 
@@ -1016,54 +1016,59 @@ describe 'up.dom', ->
           expect($('.middle')).toHaveText('new-middle')
           expect($('.after')).toHaveText('old-after')
 
-      it "throws an error if the selector can't be found on the current page", ->
-        throw "should reject promise!"
-
-
+      it "throws an error if the selector can't be found on the current page", (done) ->
         html = '<div class="foo-bar">text</div>'
-        extract = -> up.extract('.foo-bar', html)
-        expect(extract).toThrowError(/Could not find selector in current page, modal or popup/i)
+        promise = up.extract('.foo-bar', html)
+        promiseState2(promise).then (result) =>
+          expect(result.state).toEqual('rejected')
+          expect(result.value).toMatch(/Could not find selector in current page, modal or popup/i)
+          done()
 
-      it "throws an error if the selector can't be found in the given HTML string", ->
-        throw "should reject promise!"
-
+      it "throws an error if the selector can't be found in the given HTML string", (done) ->
         affix('.foo-bar')
-        extract = -> up.extract('.foo-bar', '')
-        expect(extract).toThrowError(/Could not find selector in response/i)
+        promise = up.extract('.foo-bar', '')
+        promiseState2(promise).then (result) =>
+          expect(result.state).toEqual('rejected')
+          expect(result.value).toMatch(/Could not find selector in response/i)
+          done()
 
-      it "ignores an element that matches the selector but also matches .up-destroying", ->
-        throw "should reject promise!"
-
+      it "ignores an element that matches the selector but also matches .up-destroying", (done) ->
         html = '<div class="foo-bar">text</div>'
         affix('.foo-bar.up-destroying')
-        extract = -> up.extract('.foo-bar', html)
-        expect(extract).toThrowError(/Could not find selector/i)
+        promise = up.extract('.foo-bar', html)
+        promiseState2(promise).then (result) =>
+          expect(result.state).toEqual('rejected')
+          expect(result.value).toMatch(/Could not find selector/i)
+          done()
 
-      it "ignores an element that matches the selector but also matches .up-ghost", ->
-        throw "should reject promise!"
-
+      it "ignores an element that matches the selector but also matches .up-ghost", (done) ->
         html = '<div class="foo-bar">text</div>'
         affix('.foo-bar.up-ghost')
-        extract = -> up.extract('.foo-bar', html)
-        expect(extract).toThrowError(/Could not find selector/i)
+        promise = up.extract('.foo-bar', html)
+        promiseState2(promise).then (result) =>
+          expect(result.state).toEqual('rejected')
+          expect(result.value).toMatch(/Could not find selector/i)
+          done()
 
-      it "ignores an element that matches the selector but also has a parent matching .up-destroying", ->
-        throw "should reject promise!"
-
+      it "ignores an element that matches the selector but also has a parent matching .up-destroying", (done) ->
         html = '<div class="foo-bar">text</div>'
         $parent = affix('.up-destroying')
         $child = affix('.foo-bar').appendTo($parent)
-        extract = -> up.extract('.foo-bar', html)
-        expect(extract).toThrowError(/Could not find selector/i)
+        promise = up.extract('.foo-bar', html)
+        promiseState2(promise).then (result) =>
+          expect(result.state).toEqual('rejected')
+          expect(result.value).toMatch(/Could not find selector/i)
+          done()
 
-      it "ignores an element that matches the selector but also has a parent matching .up-ghost", ->
-        throw "should reject promise!"
-
+      it "ignores an element that matches the selector but also has a parent matching .up-ghost", (done) ->
         html = '<div class="foo-bar">text</div>'
         $parent = affix('.up-ghost')
         $child = affix('.foo-bar').appendTo($parent)
-        extract = -> up.extract('.foo-bar', html)
-        expect(extract).toThrowError(/Could not find selector/i)
+        promise = up.extract('.foo-bar', html)
+        promiseState2(promise).then (result) =>
+          expect(result.state).toEqual('rejected')
+          expect(result.value).toMatch(/Could not find selector/i)
+          done()
 
       it 'only replaces the first element matching the selector', asyncSpec (next) ->
         html = '<div class="foo-bar">text</div>'

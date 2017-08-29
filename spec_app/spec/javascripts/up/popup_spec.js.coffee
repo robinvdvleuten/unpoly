@@ -49,6 +49,14 @@ describe 'up.popup', ->
           expect($popup.css('position')).toEqual('absolute')
           expect($popup).toSitBelow($link)
 
+      it 'always makes a request for the given selector, and does not "improve" the selector with a fallback', asyncSpec (next) ->
+        $link = $container.affix('a[href="/path/to"][up-popup=".content"]').text('link')
+        up.popup.attach($link)
+        next =>
+          expect(jasmine.Ajax.requests.count()).toEqual(1)
+          headers = @lastRequest().requestHeaders
+          expect(headers['X-Up-Target']).toEqual('.content')
+
       it 'gives the popup { position: "fixed" } if the given link is fixed', asyncSpec (next) ->
         # Let's test the harder case where the document is scrolled
         up.layout.scroll(document, 50)

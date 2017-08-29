@@ -91,6 +91,13 @@ describe 'up.modal', ->
           expect('.error').toHaveText('new error')
           done()
 
+      it 'always makes a request for the given selector, and does not "improve" the selector with a fallback', asyncSpec (next) ->
+        up.modal.visit('/foo', target: '.target', failTarget: '.error')
+        next =>
+          expect(jasmine.Ajax.requests.count()).toEqual(1)
+          headers = @lastRequest().requestHeaders
+          expect(headers['X-Up-Target']).toEqual('.target')
+
       describe 'preventing elements from jumping as scrollbars change', ->
 
         it "brings its own scrollbar, padding the body on the right", (done) ->

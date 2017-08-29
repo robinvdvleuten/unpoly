@@ -347,16 +347,44 @@ describe 'up.proxy', ->
       describeCapability 'canPushState', ->
 
         it "loads and caches the given link's destination", asyncSpec (next) ->
-          next =>
-            $link = affix('a[href="/path"]')
-            up.proxy.preload($link)
-          next =>
-            expect(u.isPromise(up.proxy.get(url: '/path'))).toBe(true)
+          $link = affix('a[href="/path"]')
+          up.proxy.preload($link)
 
-        it "does not load a link whose method has side-effects", ->
+          next => expect(u.isPromise(up.proxy.get(url: '/path'))).toBe(true)
+
+        it "does not load a link whose method has side-effects", asyncSpec (next) ->
           $link = affix('a[href="/path"][data-method="post"]')
           up.proxy.preload($link)
-          expect(up.proxy.get(url: '/path')).toBeUndefined()
+
+          next => expect(up.proxy.get(url: '/path')).toBeUndefined()
+
+        describe 'X-Up-Target header', ->
+
+          beforeEach ->
+            @requestTarget = => @lastRequest().requestHeaders['X-Up-Target']
+
+          it 'includes the [up-target] selector', asyncSpec (next) ->
+            affix('.target')
+            $link = affix('a[href="/path"][up-target=".target"]')
+            up.proxy.preload($link)
+            next => expect(@requestTarget()).toEqual('.target')
+
+          it 'replaces the [up-target] selector with a fallback if the targeted element is not currently on the page', asyncSpec (next) ->
+            $link = affix('a[href="/path"][up-target=".target"]')
+            up.proxy.preload($link)
+            # The default fallback would usually be `body`, but in Jasmine specs we change
+            # it to protect the test runner during failures.
+            next => expect(@requestTarget()).toEqual('.default-fallback')
+
+          it 'includes the [up-modal] selector and does not replace it with a fallback', asyncSpec (next) ->
+            $link = affix('a[href="/path"][up-modal=".target"]')
+            up.proxy.preload($link)
+            next => expect(@requestTarget()).toEqual('.target')
+
+          it 'includes the [up-popup] selector and does not replace it with a fallback', asyncSpec (next) ->
+            $link = affix('a[href="/path"][up-popup=".target"]')
+            up.proxy.preload($link)
+            next => expect(@requestTarget()).toEqual('.target')
 
       describeFallback 'canPushState', ->
 

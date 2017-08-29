@@ -59,6 +59,7 @@ window.asyncSpec = (args...) ->
       if entry = queue[runtimeCursor]
         console.debug('[asyncSequence] Playing task at index %d', runtimeCursor)
         runtimeCursor++
+        insertCursor++
 
         timing = entry[0]
         block = entry[1]
@@ -88,6 +89,5 @@ window.asyncSpec = (args...) ->
         console.debug('[asyncSequence] calling done()')
         done()
 
-    runtimeCursor = 0
-    insertCursor = runtimeCursor + 1
+    runtimeCursor = insertCursor = 0
     pokeQueue()

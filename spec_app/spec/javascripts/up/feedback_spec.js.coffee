@@ -90,7 +90,7 @@ describe 'up.feedback', ->
           next =>
             expect($link).toHaveClass('up-current')
 
-        it 'marks a link as .up-current if it links to an URL currently shown either within or below the modal', (done) ->
+        it 'marks a link as .up-current if it links to an URL currently shown either within or below the modal', asyncSpec (next) ->
           up.history.replace('/foo')
 
           $backgroundLink = affix('a[href="/foo"]')
@@ -99,42 +99,44 @@ describe 'up.feedback', ->
 
           Trigger.clickSequence($modalLink)
 
-          u.nextFrame =>
+          next =>
             @respondWith('<div class="main">new-text</div>')
 
-            u.nextFrame =>
-              expect($backgroundLink).toHaveClass('up-current')
-              expect($modalLink).toHaveClass('up-current')
-              expect($unrelatedLink).not.toHaveClass('up-current')
+          next =>
+            expect($backgroundLink).toHaveClass('up-current')
+            expect($modalLink).toHaveClass('up-current')
+            expect($unrelatedLink).not.toHaveClass('up-current')
+            next.await up.modal.close()
 
-              up.modal.close().then ->
-                expect($backgroundLink).toHaveClass('up-current')
-                expect($modalLink).not.toHaveClass('up-current')
-                expect($unrelatedLink).not.toHaveClass('up-current')
-                done()
+          next =>
+            expect($backgroundLink).toHaveClass('up-current')
+            expect($modalLink).not.toHaveClass('up-current')
+            expect($unrelatedLink).not.toHaveClass('up-current')
 
-        it 'marks a link as .up-current if it links to the URL currently either within or below the popup', (done) ->
+        it 'marks a link as .up-current if it links to the URL currently either within or below the popup', asyncSpec (next) ->
           up.history.replace('/foo')
 
           $backgroundLink = affix('a[href="/foo"]')
           $popupLink = affix('a[href="/bar"][up-popup=".main"]')
           $unrelatedLink = affix('a[href="/baz]')
 
-          Trigger.clickSequence($popupLink)
+          next =>
+            Trigger.clickSequence($popupLink)
 
-          u.nextFrame =>
+          next =>
             @respondWith('<div class="main">new-text</div>')
 
-            u.nextFrame =>
-              expect($backgroundLink).toHaveClass('up-current')
-              expect($popupLink).toHaveClass('up-current')
-              expect($unrelatedLink).not.toHaveClass('up-current')
+          next =>
+            expect($backgroundLink).toHaveClass('up-current')
+            expect($popupLink).toHaveClass('up-current')
+            expect($unrelatedLink).not.toHaveClass('up-current')
 
-              up.popup.close().then ->
-                expect($backgroundLink).toHaveClass('up-current')
-                expect($popupLink).not.toHaveClass('up-current')
-                expect($unrelatedLink).not.toHaveClass('up-current')
-                done()
+            next.await up.popup.close()
+
+          next =>
+            expect($backgroundLink).toHaveClass('up-current')
+            expect($popupLink).not.toHaveClass('up-current')
+            expect($unrelatedLink).not.toHaveClass('up-current')
 
         it 'changes .up-current marks as the URL changes'
 
@@ -194,6 +196,7 @@ describe 'up.feedback', ->
           next => @respondWith('<div class="main">new-text</div>')
           next => Trigger.clickSequence($link)
           next =>
+            debugger
             expect('.up-modal .main').toHaveText('new-text')
             expect($link).not.toHaveClass('up-active')
 

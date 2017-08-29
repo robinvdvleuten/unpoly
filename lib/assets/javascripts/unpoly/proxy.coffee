@@ -123,12 +123,12 @@ up.proxy = (($) ->
     request = normalizeRequest(request)
     if isCachable(request)
       candidates = [request]
-      unless request.target is 'html'
+      if request.target != 'html'
         requestForHtml = u.merge(request, target: 'html')
         candidates.push(requestForHtml)
-        unless request.target is 'body'
-          requestForBody = u.merge(request, target: 'body')
-          candidates.push(requestForBody)
+      if request.target != 'body'
+        requestForBody = u.merge(request, target: 'body')
+        candidates.push(requestForBody)
       for candidate in candidates
         if response = cache.get(candidate)
           return response

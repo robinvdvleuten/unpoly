@@ -5,7 +5,33 @@
   <h2>Unit tests</h2>
 
   <ul>
-    <li><%= link_to 'Jasmine specs', '/specs' %></li>
+    <li>
+      <%= link_to 'Jasmine specs', '/specs' %>
+      <ul>
+        <% %w[
+          up.dom
+          up.feedback
+          up.form
+          up.history
+          up.layout
+          up.link
+          up.log
+          up.modal
+          up.motion
+          up.namespace.erb
+          up.popup
+          up.protocol
+          up.proxy
+          up.rails
+          up.syntax
+          up.toast
+          up.tooltip
+          up.util
+        ].each do |mod| %>
+          <li><%= link_to mod, "/specs?spec=#{mod}" %></li>
+        <% end %>
+      </ul>
+    </li>
   </ul>
 
   <h2>Integration tests</h2>

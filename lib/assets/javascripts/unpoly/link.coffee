@@ -191,6 +191,14 @@ up.link = (($) ->
       up.replace(target, url, options)
 
   ###*
+  @internal
+  ###
+  follow2 = (linkOrSelector, options) ->
+    $link = $(linkOrSelector)
+    variant = followVariantForLink($link)
+    variant.followLink($link, options)
+
+  ###*
   Returns the HTTP method that should be used when following the given link.
 
   Looks at the link's `up-method` or `data-method` attribute.
@@ -207,20 +215,6 @@ up.link = (($) ->
     u.option(options.method, $link.attr('up-method'), $link.attr('data-method'), 'get').toUpperCase()
 
   ###*
-  @function up.link.childClicked
-  @internal
-  ###
-  childClicked = (event, $link) ->
-    $target = $(event.target)
-    $targetLink = $target.closest('a, [up-href]')
-    $targetLink.length && $link.find($targetLink).length
-    
-  shouldProcessLinkEvent = (event, $link) ->
-    u.isUnmodifiedMouseEvent(event) && !childClicked(event, $link)
-
-  followVariantSelectors = []
-
-  ###*
   No-op that is called when we allow a browser's default action to go through,
   so we can spy on it in unit tests. See `link_spec.js`.
 
@@ -229,26 +223,13 @@ up.link = (($) ->
   ###
   allowDefault = (event) ->
 
-  onAction = (selector, handler) ->
-    followVariantSelectors.push(selector)
-    handlerWithActiveMark = ($link) ->
-      up.feedback.start $link, -> handler($link)
-    up.on 'click', "a#{selector}, [up-href]#{selector}", (event, $link) ->
-      if shouldProcessLinkEvent(event, $link)
-        if $link.is('[up-instant]')
-          # If the link was already processed on mousedown, we still need
-          # to prevent this later click event's chain.
-          up.bus.haltEvent(event)
-        else
-          up.bus.consumeAction(event)
-          handlerWithActiveMark($link)
-      else
-        allowDefault(event)
+  followVariants = {}
 
-    up.on 'mousedown', "a#{selector}[up-instant], [up-href]#{selector}[up-instant]", (event, $link) ->
-      if shouldProcessLinkEvent(event, $link)
-        up.bus.consumeAction(event)
-        handlerWithActiveMark($link)
+  onAction = (simplifiedSelector, handler) ->
+    variant = new up.link.FollowVariant(simplifiedSelector, handler)
+    followVariants.push(variant)
+    variant.registerEvents()
+    variant
 
   ###*
   Returns whether the given link will be handled by Unpoly instead of making a full page load.
@@ -262,8 +243,23 @@ up.link = (($) ->
   @experimental
   ###
   isFollowable = (link) ->
-    $link = $(link)
-    u.any followVariantSelectors, (selector) -> $link.is(selector)
+    !!followVariantForLink(link, default: false)
+
+  ###*
+  Returns the handler function that can be used to follow the given link.
+  E.g. it wil return a handler calling `up.modal.follow` if the link is a `[up-modal]`,
+  but a handler calling `up.link.follow` if the links is `[up-target]`.
+
+  @param {Element|jQuery|String}
+  @return {Function<jQuery>}
+  @internal
+  ###
+  followVariantForLink = (linkOrSelector, options) ->
+    options = u.options(options)
+    $link = $(linkOrSelector)
+    variant = _.detect followVariants, (variant) -> variant.matchesLink($link)
+    variant ||= DEFAULT_FOLLOW_VARIANT unless options.default is false
+    variant
 
   ###*
   Makes sure that the given link will be handled by Unpoly instead of making a full page load.
@@ -374,7 +370,7 @@ up.link = (($) ->
     Set this to a URL string to update the history with the given URL.
   @stable
   ###
-  onAction '[up-target]', ($link) ->
+  DEFAULT_FOLLOW_VARIANT = onAction '[up-target]', ($link) ->
     follow($link)
 
   ###*
@@ -551,12 +547,13 @@ up.link = (($) ->
   knife: eval(Knife?.point)
   visit: visit
   follow: follow
+  follow2: follow2
   makeFollowable: makeFollowable
   isFollowable: isFollowable
-  shouldProcessLinkEvent: shouldProcessLinkEvent
   childClicked: childClicked
   followMethod: followMethod
   onAction: onAction
+  allowDefault: allowDefault
 
 )(jQuery)
 

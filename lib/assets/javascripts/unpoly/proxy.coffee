@@ -580,7 +580,7 @@ up.proxy = (($) ->
     if isIdempotent(method: method)
       up.log.group "Preloading link %o", $link, ->
         options.preload = true
-        up.follow($link, options)
+        up.link.follow2($link, options)
     else
       up.puts("Won't preload %o due to unsafe method %s", $link, method)
       u.resolvedPromise()

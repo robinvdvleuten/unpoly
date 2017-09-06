@@ -419,12 +419,12 @@ up.dom = (($) ->
         return Promise.reject(e)
 
   bestPreflightSelector = (selector, options) ->
-    cascade = new up.dom.ExtractCascade(selector, options)
+    cascade = new up.ExtractCascade(selector, options)
     cascade.bestPreflightSelector()
 
   bestMatchingSteps = (selector, response, options) ->
     options = u.merge(options, response: response)
-    cascade = new up.dom.ExtractCascade(selector, options)
+    cascade = new up.ExtractCascade(selector, options)
     cascade.bestMatchingSteps()
 
   filterScripts = ($element, options) ->

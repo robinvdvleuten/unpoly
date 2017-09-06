@@ -196,7 +196,6 @@ describe 'up.feedback', ->
           next => @respondWith('<div class="main">new-text</div>')
           next => Trigger.clickSequence($link)
           next =>
-            debugger
             expect('.up-modal .main').toHaveText('new-text')
             expect($link).not.toHaveClass('up-active')
 

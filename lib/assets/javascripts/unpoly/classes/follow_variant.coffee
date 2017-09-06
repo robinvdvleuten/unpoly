@@ -1,10 +1,10 @@
 u = up.util
 
-class up.link.FollowVariant
+class up.FollowVariant
 
-  constructor: (@selector, @handler) ->
+  constructor: (@selector, @followNow) ->
 
-  fullHandler: =>
+  onClick: =>
     (event, $link) =>
       if @shouldProcessLinkEvent(event, $link)
         if $link.is('[up-instant]')
@@ -18,23 +18,25 @@ class up.link.FollowVariant
         # For tests
         up.link.allowDefault(event)
 
-  fullSelector: =>
-    "a#{@selector}, [up-href]#{@selector}"
+  onMousedown: =>
+    (event, $link) =>
+      if @shouldProcessLinkEvent(event, $link)
+        up.bus.consumeAction(event)
+        @followLink($link)
+
+  fullSelector: (additionalClause = '') =>
+    "a#{@selector}#{additionalClause}, [up-href]#{@selector}#{additionalClause}"
 
   registerEvents: ->
-    up.on 'click', @fullSelector(), @fullHandler()
-
-  childClicked: (event, $link) ->
-    $target = $(event.target)
-    $targetLink = $target.closest('a, [up-href]')
-    $targetLink.length && $link.find($targetLink).length
+    up.on 'click', @fullSelector(), @onClick()
+    up.on 'mousedown', @fullSelector('[up-instant]'), @onMousedown()
 
   shouldProcessLinkEvent: (event, $link) =>
-    u.isUnmodifiedMouseEvent(event) && !@childClicked(event, $link)
+    u.isUnmodifiedMouseEvent(event) && !up.link.childClicked(event, $link)
 
   followLink: ($link, options) =>
     up.feedback.start $link, =>
-      @handler($link, options)
+      @followNow($link, options)
 
   matchesLink: ($link) =>
     $link.is(@fullSelector())

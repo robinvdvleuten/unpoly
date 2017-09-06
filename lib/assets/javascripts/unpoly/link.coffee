@@ -223,10 +223,10 @@ up.link = (($) ->
   ###
   allowDefault = (event) ->
 
-  followVariants = {}
+  followVariants = []
 
   onAction = (simplifiedSelector, handler) ->
-    variant = new up.link.FollowVariant(simplifiedSelector, handler)
+    variant = new up.FollowVariant(simplifiedSelector, handler)
     followVariants.push(variant)
     variant.registerEvents()
     variant
@@ -257,7 +257,7 @@ up.link = (($) ->
   followVariantForLink = (linkOrSelector, options) ->
     options = u.options(options)
     $link = $(linkOrSelector)
-    variant = _.detect followVariants, (variant) -> variant.matchesLink($link)
+    variant = u.detect followVariants, (variant) -> variant.matchesLink($link)
     variant ||= DEFAULT_FOLLOW_VARIANT unless options.default is false
     variant
 
@@ -276,6 +276,11 @@ up.link = (($) ->
     $link = $(link)
     unless isFollowable($link)
       $link.attr('up-follow', '')
+
+  childClicked = (event, $link) ->
+    $target = $(event.target)
+    $targetLink = $target.closest('a, [up-href]')
+    $targetLink.length && $link.find($targetLink).length
 
   ###*
   Follows this link via AJAX and replaces a CSS selector in the current page

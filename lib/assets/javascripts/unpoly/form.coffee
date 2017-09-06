@@ -259,12 +259,14 @@ up.form = (($) ->
     u.sequence(destructors...)
 
   observeField = ($field, delay, callback) ->
+    scheduledValue = undefined
     processedValue = u.submittedValue($field)
     timer = undefined
     lastCallbackDone = u.resolvedPromise()
 
     runCallback = (value) ->
       processedValue = value
+      scheduledValue = undefined
       callbackReturnValue = callback.apply($field.get(0), [value, $field])
       if u.isPromise(callbackReturnValue)
         lastCallbackDone = callbackReturnValue
@@ -274,7 +276,8 @@ up.form = (($) ->
     check = ->
       value = u.submittedValue($field)
       # don't run the callback for the check during initialization
-      if processedValue != value
+      if value != processedValue && (u.isUndefined(scheduledValue) || value != scheduledValue)
+        scheduledValue = value
         nextCallback = -> runCallback(value)
         timer?.cancel()
         timer = u.promiseTimer(delay)

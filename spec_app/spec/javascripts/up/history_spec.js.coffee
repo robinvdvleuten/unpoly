@@ -44,7 +44,7 @@ describe 'up.history', ->
 
     describe 'back button', ->
 
-      it 'calls destructor functions when destroying compiled elements (bugfix)', (done) ->
+      it 'calls destructor functions when destroying compiled elements (bugfix)', asyncSpec (next) ->
         waitForBrowser = 70
 
         # By default, up.history will replace the <body> tag when
@@ -69,14 +69,13 @@ describe 'up.history', ->
         expect(constructorSpy).toHaveBeenCalled()
 
         history.back()
-        u.setTimer waitForBrowser, =>
-          expect(location.pathname).toEqual('/one')
 
+        next.after waitForBrowser, =>
+          expect(location.pathname).toEqual('/one')
           @respondWith "<div class='container'>restored container text</div>"
 
-          u.nextFrame ->
-            expect(destructorSpy).toHaveBeenCalled()
-            done()
+        next =>
+          expect(destructorSpy).toHaveBeenCalled()
 
 
     describe '[up-back]', ->
@@ -109,7 +108,7 @@ describe 'up.history', ->
         afterEach ->
           $('.viewport').remove()
 
-        it 'restores the scroll position of viewports when the user hits the back button', (done) ->
+        it 'restores the scroll position of viewports when the user hits the back button', asyncSpec (next) ->
 
           longContentHtml = """
             <div class="viewport" style="width: 100px; height: 100px; overflow-y: scroll">
@@ -125,42 +124,55 @@ describe 'up.history', ->
           up.history.config.popTargets = ['.viewport']
 
           up.replace('.content', '/one')
-          respond()
 
-          $viewport.scrollTop(50)
+          next =>
+            respond()
 
-          up.replace('.content', '/two')
-          respond()
+          next =>
+            $viewport.scrollTop(50)
+            up.replace('.content', '/two')
 
-          $('.viewport').scrollTop(150)
+          next =>
+            respond()
 
-          up.replace('.content', '/three')
-          respond()
-          $('.viewport').scrollTop(250)
+          next =>
+            $('.viewport').scrollTop(150)
+            up.replace('.content', '/three')
 
-          history.back()
-          u.setTimer 50, ->
-            respond() # we need to respond since we've never requested /two with the popTarget
-            expect($('.viewport').scrollTop()).toBe(150)
+          next =>
+            respond()
 
+          next =>
+            $('.viewport').scrollTop(250)
             history.back()
-            u.setTimer 50, ->
-              respond() # we need to respond since we've never requested /one with the popTarget
-              expect($('.viewport').scrollTop()).toBe(50)
 
-              history.forward()
-              u.setTimer 50, ->
-                # No need to respond since we requested /two with the popTarget
-                # when we went backwards
-                expect($('.viewport').scrollTop()).toBe(150)
+          next.after 50, =>
+            respond() # we need to respond since we've never requested /two with the popTarget
 
-                history.forward()
-                u.setTimer 50, ->
-                  respond() # we need to respond since we've never requested /three with the popTarget
-                  expect($('.viewport').scrollTop()).toBe(250)
-                  done()
+          next =>
+            expect($('.viewport').scrollTop()).toBe(150)
+            history.back()
 
-        it 'restores the scroll position of two viewports marked with [up-viewport], but not configured in up.layout.config (bugfix)', (done) ->
+          next.after 50, =>
+            respond() # we need to respond since we've never requested /one with the popTarget
+
+          next =>
+            expect($('.viewport').scrollTop()).toBe(50)
+            history.forward()
+
+          next.after 50, =>
+            # No need to respond since we requested /two with the popTarget
+            # when we went backwards
+            expect($('.viewport').scrollTop()).toBe(150)
+            history.forward()
+
+          next.after 50, =>
+            respond() # we need to respond since we've never requested /three with the popTarget
+
+          next =>
+            expect($('.viewport').scrollTop()).toBe(250)
+
+        it 'restores the scroll position of two viewports marked with [up-viewport], but not configured in up.layout.config (bugfix)', asyncSpec (next) ->
           up.history.config.popTargets = ['.container']
 
           html = """
@@ -180,38 +192,39 @@ describe 'up.history', ->
           $screen.html(html)
 
           up.replace('.content1, .content2', '/one', reveal: false)
-          respond()
 
-          $('.viewport1').scrollTop(3000)
-          $('.viewport2').scrollTop(3050)
+          next =>
+            respond()
 
-          expect('.viewport1').toBeScrolledTo(3000)
-          expect('.viewport2').toBeScrolledTo(3050)
+          next =>
+            $('.viewport1').scrollTop(3000)
+            $('.viewport2').scrollTop(3050)
+            expect('.viewport1').toBeScrolledTo(3000)
+            expect('.viewport2').toBeScrolledTo(3050)
 
-          up.replace('.content1, .content2', '/two', reveal: false)
-          respond()
+            up.replace('.content1, .content2', '/two', reveal: false)
 
-          u.setTimer 50, ->
+          next =>
+            respond()
 
+          next.after 50, =>
             expect(location.href).toEqualUrl('/two')
-
             history.back()
 
-            u.setTimer 50, ->
-              # we need to respond since we've never requested the original URL with the popTarget
-              respond()
+          next.after 50, =>
+            # we need to respond since we've never requested the original URL with the popTarget
+            respond()
 
-              u.nextFrame ->
-                expect('.viewport1').toBeScrolledTo(3000)
-                expect('.viewport2').toBeScrolledTo(3050)
-                done()
+          next =>
+            expect('.viewport1').toBeScrolledTo(3000)
+            expect('.viewport2').toBeScrolledTo(3050)
 
 
     describe 'events', ->
 
       describeCapability 'canPushState', ->
 
-        it 'emits up:history:* events as the user goes forwards and backwards through history', (done) ->
+        it 'emits up:history:* events as the user goes forwards and backwards through history', asyncSpec (next) ->
           up.proxy.config.cacheSize = 0
           up.history.config.popTargets = ['.viewport']
 
@@ -231,33 +244,44 @@ describe 'up.history', ->
           normalize = up.history.normalizeUrl
 
           up.replace('.content', '/one')
-          respond()
 
-          expect(events).toEqual [
-            ['up:history:pushed', normalize('/one')]
-          ]
-
-          up.replace('.content', '/two')
-          respond()
-
-          expect(events).toEqual [
-            ['up:history:pushed', normalize('/one')]
-            ['up:history:pushed', normalize('/two')]
-          ]
-
-          up.replace('.content', '/three')
-          respond()
-
-          expect(events).toEqual [
-            ['up:history:pushed', normalize('/one')]
-            ['up:history:pushed', normalize('/two')]
-            ['up:history:pushed', normalize('/three')]
-          ]
-
-          history.back()
-          u.setTimer 50, ->
+          next =>
             respond()
 
+          next =>
+            expect(events).toEqual [
+              ['up:history:pushed', normalize('/one')]
+            ]
+
+            up.replace('.content', '/two')
+
+          next =>
+            respond()
+
+          next =>
+            expect(events).toEqual [
+              ['up:history:pushed', normalize('/one')]
+              ['up:history:pushed', normalize('/two')]
+            ]
+
+            up.replace('.content', '/three')
+
+          next =>
+            respond()
+
+          next =>
+            expect(events).toEqual [
+              ['up:history:pushed', normalize('/one')]
+              ['up:history:pushed', normalize('/two')]
+              ['up:history:pushed', normalize('/three')]
+            ]
+
+            history.back()
+
+          next.after 50, =>
+            respond()
+
+          next =>
             expect(events).toEqual [
               ['up:history:pushed', normalize('/one')]
               ['up:history:pushed', normalize('/two')]
@@ -266,42 +290,46 @@ describe 'up.history', ->
             ]
 
             history.back()
-            u.setTimer 50, ->
-              respond()
 
-              expect(events).toEqual [
-                ['up:history:pushed', normalize('/one')]
-                ['up:history:pushed', normalize('/two')]
-                ['up:history:pushed', normalize('/three')]
-                ['up:history:restored', normalize('/two')]
-                ['up:history:restored', normalize('/one')]
-              ]
+          next.after 50, =>
+            respond()
 
-              history.forward()
-              u.setTimer 50, ->
-                respond()
+          next =>
+            expect(events).toEqual [
+              ['up:history:pushed', normalize('/one')]
+              ['up:history:pushed', normalize('/two')]
+              ['up:history:pushed', normalize('/three')]
+              ['up:history:restored', normalize('/two')]
+              ['up:history:restored', normalize('/one')]
+            ]
 
-                expect(events).toEqual [
-                  ['up:history:pushed', normalize('/one')]
-                  ['up:history:pushed', normalize('/two')]
-                  ['up:history:pushed', normalize('/three')]
-                  ['up:history:restored', normalize('/two')]
-                  ['up:history:restored', normalize('/one')]
-                  ['up:history:restored', normalize('/two')]
-                ]
+            history.forward()
 
-                history.forward()
-                u.setTimer 50, ->
-                  respond() # we need to respond since we've never requested /three with the popTarget
+          next.after 50, =>
+            respond()
 
-                  expect(events).toEqual [
-                    ['up:history:pushed', normalize('/one')]
-                    ['up:history:pushed', normalize('/two')]
-                    ['up:history:pushed', normalize('/three')]
-                    ['up:history:restored', normalize('/two')]
-                    ['up:history:restored', normalize('/one')]
-                    ['up:history:restored', normalize('/two')]
-                    ['up:history:restored', normalize('/three')]
-                  ]
+          next =>
+            expect(events).toEqual [
+              ['up:history:pushed', normalize('/one')]
+              ['up:history:pushed', normalize('/two')]
+              ['up:history:pushed', normalize('/three')]
+              ['up:history:restored', normalize('/two')]
+              ['up:history:restored', normalize('/one')]
+              ['up:history:restored', normalize('/two')]
+            ]
 
-                  done()
+            history.forward()
+
+          next.after 50, =>
+            respond() # we need to respond since we've never requested /three with the popTarget
+
+          next =>
+            expect(events).toEqual [
+              ['up:history:pushed', normalize('/one')]
+              ['up:history:pushed', normalize('/two')]
+              ['up:history:pushed', normalize('/three')]
+              ['up:history:restored', normalize('/two')]
+              ['up:history:restored', normalize('/one')]
+              ['up:history:restored', normalize('/two')]
+              ['up:history:restored', normalize('/three')]
+            ]

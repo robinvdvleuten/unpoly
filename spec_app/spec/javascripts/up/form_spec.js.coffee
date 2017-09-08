@@ -241,7 +241,7 @@ describe 'up.form', ->
       describeCapability 'canPushState', ->
 
         beforeEach ->
-          @$form = affix('form[action="/path/to"][method="put"][up-target=".response"]')
+          @$form = affix('form[action="/form-target"][method="put"][up-target=".response"]')
           @$form.append('<input name="field1" value="value1">')
           @$form.append('<input name="field2" value="value2">')
           affix('.response').text('old-text')
@@ -250,30 +250,33 @@ describe 'up.form', ->
           up.submit(@$form)
 
           next =>
-            expect(@lastRequest().url).toEqualUrl('/path/to')
+            expect(@lastRequest().url).toEqualUrl('/form-target')
             expect(@lastRequest()).toHaveRequestMethod('PUT')
             expect(@lastRequest().data()['field1']).toEqual(['value1'])
             expect(@lastRequest().data()['field2']).toEqual(['value2'])
             expect(@lastRequest().requestHeaders['X-Up-Target']).toEqual('.response')
 
-            @respondWith """
-              <div class='before'>
-                new-before
-              </div>
+            @respondWith
+              responseHeaders:
+                'X-Up-Location': '/redirect-target'
+                'X-Up-Method': 'GET'
+              responseText: """
+                <div class='before'>
+                  new-before
+                </div>
 
-              <div class="response">
-                new-text
-              </div>
+                <div class="response">
+                  new-text
+                </div>
 
-              <div class='after'>
-                new-after
-              </div>
-              """
+                <div class='after'>
+                  new-after
+                </div>
+                """
 
           next =>
-            expect(up.browser.url()).toEqualUrl('/path/to')
-            expect('.response').toHaveText('old-text')
-            expect('form').not.toExist()
+            expect(up.browser.url()).toEqualUrl('/redirect-target')
+            expect('.response').toHaveText('new-text')
             # See that containers outside the form have not changed
             expect('.before').not.toHaveText('old-before')
             expect('.after').not.toHaveText('old-after')
@@ -449,6 +452,8 @@ describe 'up.form', ->
           expect(submitSpy).toHaveBeenCalled()
           expect($field).toHaveClass('up-active')
           submission.resolve()
+
+        next =>
           expect($field).not.toHaveClass('up-active')
 
     describe 'form[up-autosubmit]', ->
@@ -952,4 +957,4 @@ describe 'up.form', ->
           next =>
             expect(switchTargetSpy.calls.count()).toBe(2)
             expect(switchTargetSpy.calls.argsFor(0)[0]).toEqual($existingTarget)
-            expect(switchTargetSpy.calls.argsFor(1)[0]).toEqual($lateTarget)
+            expect(switchTargetSpy.calls.argsFor(1)[0]).toEqual(@$lateTarget)

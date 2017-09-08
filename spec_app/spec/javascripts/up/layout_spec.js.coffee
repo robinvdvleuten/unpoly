@@ -334,19 +334,23 @@ describe 'up.layout', ->
         up.layout.revealHash()
         expect(revealSpy).toHaveBeenCalledWith($match)
 
-      it 'does nothing and returns a rejected promise if no element or anchor matches the hash in the location', ->
+      it 'does nothing and returns a rejected promise if no element or anchor matches the hash in the location', (done) ->
         revealSpy = up.layout.knife.mock('reveal')
         location.hash = '#hash'
         promise = up.layout.revealHash()
         expect(revealSpy).not.toHaveBeenCalled()
-        expect(promise.state()).toEqual('rejected')
+        promiseState2(promise).then (result) ->
+          expect(result.state).toEqual('rejected')
+          done()
 
-      it 'does nothing and returns a resolved promise if the location has no hash', ->
+      it 'does nothing and returns a resolved promise if the location has no hash', (done) ->
         revealSpy = up.layout.knife.mock('reveal')
         location.hash = ''
         promise = up.layout.revealHash()
         expect(revealSpy).not.toHaveBeenCalled()
-        expect(promise.state()).toEqual('resolved')
+        promiseState2(promise).then (result) ->
+          expect(result.state).toEqual('fulfilled')
+          done()
 
     describe 'up.layout.viewportsWithin', ->
 

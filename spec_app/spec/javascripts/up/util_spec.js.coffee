@@ -412,6 +412,9 @@ describe 'up.util', ->
       it 'does not strip a trailing slash by default', ->
         expect(up.util.normalizeUrl('/foo/')).toEqual("http://#{location.hostname}:#{location.port}/foo/")
 
+      it 'normalizes redundant segments', ->
+        expect(up.util.normalizeUrl('/foo/../foo')).toBe("http://#{location.hostname}:#{location.port}/foo")
+
     describe 'up.util.detect', ->
 
       it 'finds the first element in the given array that matches the given tester', ->

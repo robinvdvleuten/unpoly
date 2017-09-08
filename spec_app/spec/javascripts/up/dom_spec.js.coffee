@@ -906,23 +906,27 @@ describe 'up.dom', ->
               @revealOptions = options
               u.resolvedDeferred()
 
-          it 'reveals a new element before it is being replaced', (done) ->
-            promise = up.replace('.middle', '/path', reveal: true)
-            @respond()
-            promise.then =>
+          it 'reveals a new element before it is being replaced', asyncSpec (next) ->
+            up.replace('.middle', '/path', reveal: true)
+
+            next =>
+              @respond()
+
+            next =>
               expect(@revealMock).not.toHaveBeenCalledWith(@oldMiddle)
               expect(@revealedText).toEqual ['new-middle']
-              done()
 
           describe 'when more than one fragment is replaced', ->
 
-            it 'only reveals the first fragment', (done) ->
-              promise = up.replace('.middle, .after', '/path', reveal: true)
-              @respond()
-              promise.then =>
+            it 'only reveals the first fragment', asyncSpec (next) ->
+              up.replace('.middle, .after', '/path', reveal: true)
+
+              next =>
+                @respond()
+
+              next =>
                 expect(@revealMock).not.toHaveBeenCalledWith(@oldMiddle)
                 expect(@revealedText).toEqual ['new-middle']
-                done()
 
           describe 'when there is an anchor #hash in the URL', ->
 
@@ -944,18 +948,73 @@ describe 'up.dom', ->
                 expect(@revealedHTML).toEqual ['<div id="three">three</div>']
                 expect(@revealOptions).toEqual { top: true }
 
-            it "reveals the entire element if it has no child with the ID of that #hash", (done) ->
-              promise = up.replace('.middle', '/path#four', reveal: true)
-              @responseText =
-                """
-                <div class="middle">
-                  new-middle
-                </div>
-                """
-              @respond()
-              promise.then =>
+            it "reveals the entire element if it has no child with the ID of that #hash", asyncSpec (next) ->
+              up.replace('.middle', '/path#four', reveal: true)
+
+              next =>
+                @responseText =
+                  """
+                  <div class="middle">
+                    new-middle
+                  </div>
+                  """
+                @respond()
+
+              next =>
                 expect(@revealedText).toEqual ['new-middle']
-                done()
+
+            describe 'when the server responds with an X-Up-Location header', ->
+
+              it 'no longer reveals with the hash from the original URL', asyncSpec (next) ->
+                up.replace('.middle', '/path#hash', reveal: true)
+
+                next =>
+                  @respondWith
+                    responseText: """
+                      <div class="middle">
+                        <div id="hash">content</div>
+                      </div>
+                      """
+                    responseHeaders:
+                      'X-Up-Location': '/server-path'
+
+                next =>
+                  expect('#hash').toExist()
+                  expect(@revealedHTML).toEqual []
+
+              it 'reveals with the hash from the original URL if the response URL matches the request URL, but without hash', asyncSpec (next) ->
+                up.replace('.middle', '/path#hash', reveal: true)
+
+                next =>
+                  @respondWith
+                    responseText: """
+                      <div class="middle">
+                        <div id="hash">content</div>
+                      </div>
+                      """
+                    responseHeaders:
+                      'X-Up-Location': '/path'
+
+                next =>
+                  expect('#hash').toExist()
+                  expect(@revealedHTML).toEqual ['<div id="hash">content</div>']
+
+              it 'reveals with the hash from the original URL if the response URL normalizes to the request URL, but without the hash', asyncSpec (next) ->
+                up.replace('.middle', '/path#hash', reveal: true)
+
+                next =>
+                  @respondWith
+                    responseText: """
+                      <div class="middle">
+                        <div id="hash">content</div>
+                      </div>
+                      """
+                    responseHeaders:
+                      'X-Up-Location': '/path/../path'
+
+                next =>
+                  expect('#hash').toExist()
+                  expect(@revealedHTML).toEqual ['<div id="hash">content</div>']
 
           it 'reveals a new element that is being appended', (done) ->
             promise = up.replace('.middle:after', '/path', reveal: true)

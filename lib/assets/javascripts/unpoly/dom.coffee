@@ -257,6 +257,8 @@ up.dom = (($) ->
       # http://2ality.com/2016/03/promise-rejections-vs-exceptions.html
       return Promise.reject(e)
 
+    console.error("Request URL before is is %o", url)
+
     request =
       url: url
       method: options.method
@@ -293,7 +295,7 @@ up.dom = (($) ->
     url = request.url
     xhr = response.xhr
 
-    console.debug('processing response with %s', selector)
+    console.error("URL in processResponse is is %o, request.hash is %o", request.url, request.hash)
 
     if options.reveal == true && request.hash
       # If the request URL had a #hash and options.reveal is not given, we reveal that #hash.
@@ -317,6 +319,8 @@ up.dom = (($) ->
     else if isReloadable
       if query = u.requestDataAsQuery(options.data)
         url = "#{url}?#{query}"
+
+    console.error("URL is %o", url)
 
     if isSuccess
       if isReloadable # e.g. GET returns 200 OK

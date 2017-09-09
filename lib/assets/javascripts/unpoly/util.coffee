@@ -118,6 +118,13 @@ up.util = (($) ->
       'GET'
 
   ###*
+  @function up.util.methodAllowsPayload
+  @internal
+  ###
+  methodAllowsPayload = (method) ->
+    method != 'GET' && method != 'HEAD'
+
+  ###*
   @function $createElementFromSelector
   @internal
   ###
@@ -1620,6 +1627,8 @@ up.util = (($) ->
   ###*
   Returns an URL-encoded query string for the given params object.
 
+  The returned string does **not** include a leading `?` character.
+
   @function up.util.requestDataAsQuery
   @param {Object|Array|Undefined|Null} data
   @internal
@@ -1999,6 +2008,7 @@ up.util = (($) ->
   parseUrl: parseUrl
   normalizeUrl: normalizeUrl
   normalizeMethod: normalizeMethod
+  methodAllowsPayload: methodAllowsPayload
   createElementFromHtml: createElementFromHtml
   $createElementFromSelector: $createElementFromSelector
   $createPlaceholder: $createPlaceholder

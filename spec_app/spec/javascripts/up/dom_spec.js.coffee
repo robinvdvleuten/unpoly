@@ -34,13 +34,6 @@ describe 'up.dom', ->
             expect($('.middle')).toHaveText('new-middle')
             expect($('.after')).toHaveText('old-after')
 
-        it 'sends an X-Up-Target HTTP header along with the request', asyncSpec (next) ->
-          up.replace('.middle', '/path')
-
-          next =>
-            request = @lastRequest()
-            expect(request.requestHeaders['X-Up-Target']).toEqual('.middle')
-
         it 'returns a promise that will be resolved once the server response was received and the fragments were swapped', asyncSpec (next) ->
           resolution = jasmine.createSpy()
           promise = up.replace('.middle', '/path')
@@ -89,65 +82,6 @@ describe 'up.dom', ->
             next =>
               expect(replaceCallback).toHaveBeenCalled()
 
-        describe 'when the server signals a redirect with X-Up-Location header (bugfix, logic should be moved to up.proxy)', ->
-
-          it 'considers a redirection URL an alias for the requested URL', asyncSpec (next) ->
-            up.replace('.middle', '/foo')
-
-            next =>
-              expect(jasmine.Ajax.requests.count()).toEqual(1)
-              @respond(responseHeaders: { 'X-Up-Location': '/bar', 'X-Up-Method': 'GET' })
-
-            next =>
-              up.replace('.middle', '/bar')
-
-            next =>
-              # See that the cached alias is used and no additional requests are made
-              expect(jasmine.Ajax.requests.count()).toEqual(1)
-
-          it 'does not considers a redirection URL an alias for the requested URL if the original request was never cached', asyncSpec (next) ->
-            up.replace('.middle', '/foo', method: 'post') # POST requests are not cached
-
-            next =>
-              expect(jasmine.Ajax.requests.count()).toEqual(1)
-              @respond(responseHeaders: { 'X-Up-Location': '/bar', 'X-Up-Method': 'GET' })
-
-            next =>
-              up.replace('.middle', '/bar')
-
-            next =>
-              # See that an additional request was made
-              expect(jasmine.Ajax.requests.count()).toEqual(2)
-
-          it 'does not considers a redirection URL an alias for the requested URL if the response returned a non-200 status code', asyncSpec (next) ->
-            up.replace('.middle', '/foo', failTarget: '.middle')
-
-            next =>
-              expect(jasmine.Ajax.requests.count()).toEqual(1)
-              @respond(responseHeaders: { 'X-Up-Location': '/bar', 'X-Up-Method': 'GET' }, status: '500')
-
-            next =>
-              up.replace('.middle', '/bar')
-
-            next =>
-              # See that an additional request was made
-              expect(jasmine.Ajax.requests.count()).toEqual(2)
-
-          it "does not explode if the original request's { data } is a FormData object", asyncSpec (next) ->
-            up.replace('.middle', '/foo', method: 'post', data: new FormData()) # POST requests are not cached
-
-            next =>
-              expect(jasmine.Ajax.requests.count()).toEqual(1)
-              @respond(responseHeaders: { 'X-Up-Location': '/bar', 'X-Up-Method': 'GET' })
-
-            next =>
-              @secondReplacePromise = up.replace('.middle', '/bar')
-
-            next.await =>
-              promiseState2(@secondReplacePromise).then (result) ->
-                # See that the promise was not rejected due to an internal error.
-                expect(result.state).toEqual('pending')
-
         describe 'with { data } option', ->
 
           it "uses the given params as a non-GET request's payload", asyncSpec (next) ->
@@ -161,7 +95,7 @@ describe 'up.dom', ->
           it "encodes the given params into the URL of a GET request", asyncSpec (next) ->
             givenParams = { 'foo-key': 'foo-value', 'bar-key': 'bar-value' }
             up.replace('.middle', '/path', method: 'get', data: givenParams)
-            next => expect(@lastRequest().url).toEqualUrl('/path?foo-key=foo-value&bar-key=bar-value')
+            next => expect(@lastRequest().url).toMatchUrl('/path?foo-key=foo-value&bar-key=bar-value')
 
         it 'uses a HTTP method given as { method } option', asyncSpec (next) ->
           up.replace('.middle', '/path', method: 'put')
@@ -241,55 +175,55 @@ describe 'up.dom', ->
             promise = up.replace('.middle', '/path')
             @respond()
             promise.then ->
-              expect(location.href).toEqualUrl('/path')
+              expect(location.href).toMatchUrl('/path')
               done()
 
           it 'does not add a history entry after non-GET requests', asyncSpec (next) ->
             up.replace('.middle', '/path', method: 'post')
             next => @respond()
-            next => expect(location.href).toEqualUrl(@hrefBeforeExample)
+            next => expect(location.href).toMatchUrl(@hrefBeforeExample)
 
           it 'adds a history entry after non-GET requests if the response includes a { X-Up-Method: "get" } header (will happen after a redirect)', asyncSpec (next) ->
             up.replace('.middle', '/path', method: 'post')
             next => @respond(responseHeaders: { 'X-Up-Method': 'GET' })
-            next => expect(location.href).toEqualUrl('/path')
+            next => expect(location.href).toMatchUrl('/path')
 
           it 'does not a history entry after a failed GET-request', asyncSpec (next) ->
             up.replace('.middle', '/path', method: 'post', failTarget: '.middle')
             next => @respond(status: 500)
-            next => expect(location.href).toEqualUrl(@hrefBeforeExample)
+            next => expect(location.href).toMatchUrl(@hrefBeforeExample)
 
           it 'does not add a history entry with { history: false } option', asyncSpec (next) ->
             up.replace('.middle', '/path', history: false)
             next => @respond()
-            next => expect(location.href).toEqualUrl(@hrefBeforeExample)
+            next => expect(location.href).toMatchUrl(@hrefBeforeExample)
 
           it "detects a redirect's new URL when the server sets an X-Up-Location header", asyncSpec (next) ->
             up.replace('.middle', '/path')
             next => @respond(responseHeaders: { 'X-Up-Location': '/other-path' })
-            next => expect(location.href).toEqualUrl('/other-path')
+            next => expect(location.href).toMatchUrl('/other-path')
 
           it 'adds params from a { data } option to the URL of a GET request', asyncSpec (next) ->
             up.replace('.middle', '/path', data: { 'foo-key': 'foo value', 'bar-key': 'bar value' })
             next => @respond()
-            next => expect(location.href).toEqualUrl('/path?foo-key=foo%20value&bar-key=bar%20value')
+            next => expect(location.href).toMatchUrl('/path?foo-key=foo%20value&bar-key=bar%20value')
 
           describe 'if a URL is given as { history } option', ->
 
             it 'uses that URL as the new location after a GET request', asyncSpec (next) ->
               up.replace('.middle', '/path', history: '/given-path')
               next => @respond(failTarget: '.middle')
-              next => expect(location.href).toEqualUrl('/given-path')
+              next => expect(location.href).toMatchUrl('/given-path')
 
             it 'adds a history entry after a non-GET request', asyncSpec (next) ->
               up.replace('.middle', '/path', method: 'post', history: '/given-path')
               next => @respond(failTarget: '.middle')
-              next => expect(location.href).toEqualUrl('/given-path')
+              next => expect(location.href).toMatchUrl('/given-path')
 
             it 'does not add a history entry after a failed non-GET request', asyncSpec (next) ->
               up.replace('.middle', '/path', method: 'post', history: '/given-path', failTarget: '.middle')
               next => @respond(failTarget: '.middle', status: 500)
-              next => expect(location.href).toEqualUrl(@hrefBeforeExample)
+              next => expect(location.href).toMatchUrl(@hrefBeforeExample)
 
         describe 'source', ->
 
@@ -307,25 +241,25 @@ describe 'up.dom', ->
               @respond()
             next =>
               expect($('.middle')).toHaveText('new-middle')
-              expect(up.dom.source('.middle')).toEqualUrl('/previous-source')
+              expect(up.dom.source('.middle')).toMatchUrl('/previous-source')
 
           describe 'if a URL is given as { source } option', ->
 
             it 'uses that URL as the source for a GET request', asyncSpec (next) ->
               up.replace('.middle', '/path', source: '/given-path')
               next => @respond()
-              next => expect(up.dom.source('.middle')).toEqualUrl('/given-path')
+              next => expect(up.dom.source('.middle')).toMatchUrl('/given-path')
 
             it 'uses that URL as the source after a non-GET request', asyncSpec (next) ->
               up.replace('.middle', '/path', method: 'post', source: '/given-path')
               next => @respond()
-              next => expect(up.dom.source('.middle')).toEqualUrl('/given-path')
+              next => expect(up.dom.source('.middle')).toMatchUrl('/given-path')
 
             it 'ignores the option and reuses the previous source after a failed non-GET request', asyncSpec (next) ->
               @oldMiddle.attr('up-source', '/previous-source')
               up.replace('.middle', '/path', method: 'post', source: '/given-path', failTarget: '.middle')
               next => @respond(status: 500)
-              next => expect(up.dom.source('.middle')).toEqualUrl('/previous-source')
+              next => expect(up.dom.source('.middle')).toMatchUrl('/previous-source')
 
         describe 'document title', ->
 
@@ -963,59 +897,6 @@ describe 'up.dom', ->
               next =>
                 expect(@revealedText).toEqual ['new-middle']
 
-            describe 'when the server responds with an X-Up-Location header', ->
-
-              it 'no longer reveals with the hash from the original URL', asyncSpec (next) ->
-                up.replace('.middle', '/path#hash', reveal: true)
-
-                next =>
-                  @respondWith
-                    responseText: """
-                      <div class="middle">
-                        <div id="hash">content</div>
-                      </div>
-                      """
-                    responseHeaders:
-                      'X-Up-Location': '/server-path'
-
-                next =>
-                  expect('#hash').toExist()
-                  expect(@revealedHTML).toEqual []
-
-              it 'reveals with the hash from the original URL if the response URL matches the request URL, but without hash', asyncSpec (next) ->
-                up.replace('.middle', '/path#hash', reveal: true)
-
-                next =>
-                  @respondWith
-                    responseText: """
-                      <div class="middle">
-                        <div id="hash">content</div>
-                      </div>
-                      """
-                    responseHeaders:
-                      'X-Up-Location': '/path'
-
-                next =>
-                  expect('#hash').toExist()
-                  expect(@revealedHTML).toEqual ['<div id="hash">content</div>']
-
-              it 'reveals with the hash from the original URL if the response URL normalizes to the request URL, but without the hash', asyncSpec (next) ->
-                up.replace('.middle', '/path#hash', reveal: true)
-
-                next =>
-                  @respondWith
-                    responseText: """
-                      <div class="middle">
-                        <div id="hash">content</div>
-                      </div>
-                      """
-                    responseHeaders:
-                      'X-Up-Location': '/path/../path'
-
-                next =>
-                  expect('#hash').toExist()
-                  expect(@revealedHTML).toEqual ['<div id="hash">content</div>']
-
           it 'reveals a new element that is being appended', (done) ->
             promise = up.replace('.middle:after', '/path', reveal: true)
             @respond()
@@ -1585,7 +1466,7 @@ describe 'up.dom', ->
       it 'allows to pass a new history entry as { history } option', (done) ->
         affix('.element')
         up.destroy('.element', history: '/new-path').then ->
-          expect(location.href).toEqualUrl('/new-path')
+          expect(location.href).toMatchUrl('/new-path')
           done()
 
       it 'allows to pass a new document title as { title } option', (done) ->

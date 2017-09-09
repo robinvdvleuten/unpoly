@@ -151,7 +151,7 @@ describe 'up.popup', ->
 
           next =>
             @respondWith('<div class="container">text</div>')
-            expect(up.popup.coveredUrl()).toEqualUrl('/foo')
+            expect(up.popup.coveredUrl()).toMatchUrl('/foo')
 
             next.await up.popup.close()
 
@@ -383,7 +383,7 @@ describe 'up.popup', ->
             origin: $('.inside'), history: '/new-location') # Provoke auto-close
 
         next =>
-          expect(location.href).toEqualUrl '/new-location'
+          expect(location.href).toMatchUrl '/new-location'
 
       it 'does not auto-close the popup when a replacement from inside the popup affects a selector inside the popup', asyncSpec (next) ->
         affix('.outside').text('old outside')

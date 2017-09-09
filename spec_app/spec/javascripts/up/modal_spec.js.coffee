@@ -70,7 +70,7 @@ describe 'up.modal', ->
           expect('.up-modal-dialog .middle').toHaveText('new-middle')
           expect('.up-modal-dialog .before').not.toExist()
           expect('.up-modal-dialog .after').not.toExist()
-          expect(location.pathname).toEqualUrl('/foo')
+          expect(location.pathname).toMatchUrl('/foo')
           done()
 
       it "doesn't create an .up-modal frame and replaces { failTarget } if the server returns a non-200 response", (done) ->
@@ -203,7 +203,7 @@ describe 'up.modal', ->
 
             # The second modal has survived
             expect(jasmine.Ajax.requests.count()).toEqual(1)
-            expect(@lastRequest().url).toEqualUrl('/path2')
+            expect(@lastRequest().url).toMatchUrl('/path2')
 
             # We send the response for 2
             @respondWith('<div class="container">response2</div>')
@@ -227,7 +227,7 @@ describe 'up.modal', ->
 
                   # Now that the second modal has opened, we make the request to /path3
                   expect(jasmine.Ajax.requests.count()).toEqual(2)
-                  expect(@lastRequest().url).toEqualUrl('/path3')
+                  expect(@lastRequest().url).toMatchUrl('/path3')
 
                   @respondWith('<div class="container">response3</div>')
 
@@ -387,7 +387,7 @@ describe 'up.modal', ->
           u.nextFrame =>
             @respondWith('<div class="container">text</div>')
             visitPromise.then ->
-              expect(up.modal.coveredUrl()).toEqualUrl('/foo')
+              expect(up.modal.coveredUrl()).toMatchUrl('/foo')
               up.modal.close().then ->
                 expect(up.modal.coveredUrl()).toBeMissing()
                 done()
@@ -464,7 +464,7 @@ describe 'up.modal', ->
 
         next =>
           lastRequest = @lastRequest()
-          expect(lastRequest.url).toEqualUrl('/path')
+          expect(lastRequest.url).toMatchUrl('/path')
           @respondWith '<div class="target">new content</div>'
 
         next =>
@@ -793,7 +793,7 @@ describe 'up.modal', ->
             origin: $('.inside'), history: '/new-location') # Provoke auto-close
 
           u.setTimer 50, ->
-            expect(location.href).toEqualUrl '/new-location'
+            expect(location.href).toMatchUrl '/new-location'
             done()
 
       it 'does not auto-close the modal when a replacement from inside the modal affects a selector inside the modal', asyncSpec (next) ->

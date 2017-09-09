@@ -40,8 +40,8 @@ The **simplest implementation** is to set these headers for every request.
 
 \#\#\# Optimizing responses
 
-When [updating a fragment](/up.link), Unpoly will send
-an additional HTTP header containing the CSS selector that is being replaced:
+When [updating a fragment](/up.link), Unpoly will send an
+additional HTTP header containing the CSS selector that is being replaced:
 
 ```http
 X-Up-Target: .user-list
@@ -50,6 +50,13 @@ X-Up-Target: .user-list
 Server-side code is free to **optimize its response** by only returning HTML
 that matches the selector. For example, you might prefer to not render an
 expensive sidebar if the sidebar is not targeted.
+
+Unpoly will often update a different selector in case the request fails.
+This selector is also included as a HTTP header:
+
+```
+X-Up-Fail-Target: body
+```
 
 
 \#\#\# Pushing a document title to the client
@@ -207,6 +214,7 @@ up.protocol = (($) ->
 
   @property up.protocol.config
   @param [config.targetHeader='X-Up-Target']
+  @param [config.failTargetHeader='X-Up-Fail-Target']
   @param [config.locationHeader='X-Up-Location']
   @param [config.titleHeader='X-Up-Title']
   @param [config.validateHeader='X-Up-Validate']
@@ -219,6 +227,7 @@ up.protocol = (($) ->
   ###
   config = u.config
     targetHeader: 'X-Up-Target'
+    failTargetHeader: 'X-Up-Fail-Target'
     locationHeader: 'X-Up-Location'
     validateHeader: 'X-Up-Validate'
     titleHeader: 'X-Up-Title'

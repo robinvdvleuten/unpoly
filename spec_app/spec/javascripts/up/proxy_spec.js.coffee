@@ -9,18 +9,209 @@ describe 'up.proxy', ->
       it 'makes a request with the given URL and params', ->
         up.ajax('/foo', data: { key: 'value' }, method: 'post')
         request = @lastRequest()
-        expect(request.url).toEqualUrl('/foo')
+        expect(request.url).toMatchUrl('/foo')
         expect(request.data()).toEqual(key: ['value'])
         expect(request.method).toEqual('POST')
 
       it 'also allows to pass the URL as a { url } option instead', ->
         up.ajax(url: '/foo', data: { key: 'value' }, method: 'post')
         request = @lastRequest()
-        expect(request.url).toEqualUrl('/foo')
+        expect(request.url).toMatchUrl('/foo')
         expect(request.data()).toEqual(key: ['value'])
         expect(request.method).toEqual('POST')
 
-      it 'caches server responses for the 5 minutes', asyncSpec { mockTime: true }, (next) ->
+      it 'submits the replacement targets as HTTP headers, so the server may choose to only frender the requested fragments', asyncSpec (next) ->
+        up.ajax(url: '/foo', target: '.target', failTarget: '.fail-target')
+
+        next =>
+          request = @lastRequest()
+          expect(request.requestHeaders['X-Up-Target']).toEqual('.target')
+          expect(request.requestHeaders['X-Up-Fail-Target']).toEqual('.fail-target')
+
+      it 'resolves to a Response object that contains information about the response and request', (done) ->
+        promise = up.ajax(
+          url: '/url'
+          data: { key: 'value' }
+          method: 'post'
+          target: '.target'
+        )
+
+        u.nextFrame =>
+          @respondWith(
+            status: '201',
+            responseText: 'response-text'
+          )
+
+          promise.then (response) ->
+            expect(response.request.url).toMatchUrl('/url')
+            expect(response.request.data).toEqual(key: 'value')
+            expect(response.request.method).toEqual('POST')
+            expect(response.request.target).toEqual('.target')
+            expect(response.request.hash).toBeUndefined()
+
+            expect(response.url).toMatchUrl('/url') # If the server signaled a redirect with X-Up-Location, this would be reflected here
+            expect(response.method).toEqual('POST') # If the server sent a X-Up-Method header, this would be reflected here
+            expect(response.body).toEqual('response-text')
+            expect(response.status).toEqual('201')
+            expect(response.xhr).toBePresent()
+
+            done()
+
+      it "preserves the URL hash in a separate { hash } property, since although it isn't sent to server, code might need it to process the response", (done) ->
+        promise = up.ajax('/url#hash')
+
+        u.nextFrame =>
+          request = @lastRequest()
+          expect(request.url).toMatchUrl('/url')
+
+          @respondWith('response-text')
+
+          promise.then (response) ->
+            expect(response.request.url).toMatchUrl('/url')
+            expect(response.request.hash).toEqual('#hash')
+            expect(response.url).toEqual('/url')
+            expect(response.hash).toEqual('#hash')
+            done()
+
+      describe 'when the server responds with an X-Up-Method header', ->
+
+        it 'updates the { method } property in the response object', (done) ->
+          promise = up.ajax(
+            url: '/url'
+            data: { key: 'value' }
+            method: 'post'
+            target: '.target'
+          )
+
+          u.nextFrame =>
+            @respondWith(
+              responseHeaders:
+                'X-Up-Location': '/redirect'
+                'X-Up-Method': 'GET'
+            )
+
+            promise.then (response) ->
+              expect(response.request.url).toMatchUrl('/url')
+              expect(response.request.method).toEqual('POST')
+              expect(response.url).toMatchUrl('/redirect')
+              expect(response.method).toEqual('GET')
+              done()
+
+      describe 'when the server responds with an X-Up-Location header', ->
+
+        it 'sets the { url } property on the response object', (done) ->
+          promise = up.ajax('/request-url#request-hash')
+
+          u.nextFrame =>
+            @respondWith
+              responseHeaders:
+                'X-Up-Location': '/response-url'
+
+            promise.then (response) ->
+              expect(response.request.url).toMatchUrl('/request-url')
+              expect(response.request.hash).toEqual('#request-hash')
+              expect(response.url).toMatchUrl('/response-url')
+              done()
+
+        it 'considers a redirection URL an alias for the requested URL', asyncSpec (next) ->
+          up.ajax('/foo')
+
+          next =>
+            expect(jasmine.Ajax.requests.count()).toEqual(1)
+            @respondWith
+              responseHeaders:
+                'X-Up-Location': '/bar'
+                'X-Up-Method': 'GET'
+
+          next =>
+            up.ajax('/bar')
+
+          next =>
+            # See that the cached alias is used and no additional requests are made
+            expect(jasmine.Ajax.requests.count()).toEqual(1)
+
+        it 'does not considers a redirection URL an alias for the requested URL if the original request was never cached', asyncSpec (next) ->
+          up.ajax('/foo', method: 'post') # POST requests are not cached
+
+          next =>
+            expect(jasmine.Ajax.requests.count()).toEqual(1)
+            @respondWith
+              responseHeaders:
+                'X-Up-Location': '/bar'
+                'X-Up-Method': 'GET'
+
+          next =>
+            up.ajax('/bar')
+
+          next =>
+            # See that an additional request was made
+            expect(jasmine.Ajax.requests.count()).toEqual(2)
+
+        it 'does not considers a redirection URL an alias for the requested URL if the response returned a non-200 status code', asyncSpec (next) ->
+          up.ajax('/foo')
+
+          next =>
+            expect(jasmine.Ajax.requests.count()).toEqual(1)
+            @respondWith
+              responseHeaders:
+                'X-Up-Location': '/bar'
+                'X-Up-Method': 'GET'
+              status: '500'
+
+          next =>
+            up.ajax('/bar')
+
+          next =>
+            # See that an additional request was made
+            expect(jasmine.Ajax.requests.count()).toEqual(2)
+
+        it "does not explode if the original request's { data } is a FormData object", asyncSpec (next) ->
+          up.ajax('/foo', method: 'post', data: new FormData()) # POST requests are not cached
+
+          next =>
+            expect(jasmine.Ajax.requests.count()).toEqual(1)
+            @respondWith
+              responseHeaders:
+                'X-Up-Location': '/bar'
+                'X-Up-Method': 'GET'
+
+          next =>
+            @secondAjaxPromise = up.ajax('/bar')
+
+          next.await =>
+            promiseState2(@secondAjaxPromise).then (result) ->
+              # See that the promise was not rejected due to an internal error.
+              expect(result.state).toEqual('pending')
+
+
+      describe 'with { data } option', ->
+
+        it "uses the given params as a non-GET request's payload", asyncSpec (next) ->
+          givenParams = { 'foo-key': 'foo-value', 'bar-key': 'bar-value' }
+          up.ajax(url: '/path', method: 'put', data: givenParams)
+
+          next =>
+            expect(@lastRequest().data()['foo-key']).toEqual(['foo-value'])
+            expect(@lastRequest().data()['bar-key']).toEqual(['bar-value'])
+
+        it "encodes the given params into the URL of a GET request", (done) ->
+          givenParams = { 'foo-key': 'foo-value', 'bar-key': 'bar-value' }
+          promise = up.ajax(url: '/path', method: 'get', data: givenParams)
+
+          u.nextFrame =>
+            expect(@lastRequest().url).toMatchUrl('/path?foo-key=foo-value&bar-key=bar-value')
+            expect(@lastRequest().data()).toBeBlank()
+
+            @respondWith('response-text')
+
+            promise.then (response) ->
+              # See that the response object has been updated by moving the data options
+              # to the URL. This is important for up.dom code that works on response.request.
+              expect(response.request.url).toMatchUrl('/path?foo-key=foo-value&bar-key=bar-value')
+              expect(response.request.data).toBeBlank()
+              done()
+
+      it 'caches server responses for 5 minutes', asyncSpec { mockTime: true }, (next) ->
         responses = []
         trackResponse = (response) ->
           console.debug('Tracking response %s', response.body)

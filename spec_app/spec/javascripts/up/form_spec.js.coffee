@@ -250,7 +250,7 @@ describe 'up.form', ->
           up.submit(@$form)
 
           next =>
-            expect(@lastRequest().url).toEqualUrl('/form-target')
+            expect(@lastRequest().url).toMatchUrl('/form-target')
             expect(@lastRequest()).toHaveRequestMethod('PUT')
             expect(@lastRequest().data()['field1']).toEqual(['value1'])
             expect(@lastRequest().data()['field2']).toEqual(['value2'])
@@ -275,7 +275,7 @@ describe 'up.form', ->
                 """
 
           next =>
-            expect(up.browser.url()).toEqualUrl('/redirect-target')
+            expect(up.browser.url()).toMatchUrl('/redirect-target')
             expect('.response').toHaveText('new-text')
             # See that containers outside the form have not changed
             expect('.before').not.toHaveText('old-before')
@@ -329,14 +329,14 @@ describe 'up.form', ->
                 """
 
           next =>
-            expect(up.browser.url()).toEqualUrl('/other-path')
+            expect(up.browser.url()).toMatchUrl('/other-path')
 
         describe 'with { history } option', ->
 
           it 'uses the given URL as the new browser location if the request succeeded', asyncSpec (next) ->
             up.submit(@$form, history: '/given-path')
             next => @respondWith('<div class="response">new-text</div>')
-            next => expect(up.browser.url()).toEqualUrl('/given-path')
+            next => expect(up.browser.url()).toMatchUrl('/given-path')
 
           it 'keeps the current browser location if the request failed', asyncSpec (next) ->
             up.submit(@$form, history: '/given-path', failTarget: '.response')

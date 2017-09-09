@@ -95,7 +95,7 @@ up.proxy = (($) ->
     safeMethods: ['GET', 'OPTIONS', 'HEAD']
 
   cacheKey = (request) ->
-    normalizeRequest(request)
+    request = up.Request.normalize(request)
     [ request.url,
       request.method,
       u.requestDataAsQuery(request.data),
@@ -120,7 +120,7 @@ up.proxy = (($) ->
   @experimental
   ###
   get = (request) ->
-    request = normalizeRequest(request)
+    request = up.Request.normalize(request)
     if isCachable(request)
       candidates = [request]
       if request.target != 'html'
@@ -152,19 +152,6 @@ up.proxy = (($) ->
     queuedLoaders = []
 
   reset()
-
-  normalizeRequest = (request) ->
-    unless request._normalized
-      request.method = u.normalizeMethod(request.method)
-      if request.url
-        urlParts = u.parseUrl(request.url)
-        # Remember the #hash for later revealing.
-        # It will be lost during normalization.
-        request.hash = urlParts.hash
-        request.url = u.normalizeUrl(urlParts)
-      request.target ||= 'body'
-      request._normalized = true
-    request
 
   ###*
   Makes a request to the given URL and caches the response.
@@ -228,16 +215,17 @@ up.proxy = (($) ->
       'method',
       'data',
       'target',
+      'failTarget',
       'headers',
       'timeout',
       '_normalized'
 
-    request = normalizeRequest(request)
+    request = up.Request.normalize(request)
 
     # Non-GET requests always touch the network
     # unless `options.cache` is explicitly set to `true`.
     # These requests are never cached.
-    if !isIdempotent(request) && !forceCache
+    if !request.isIdempotent() && !forceCache
       clear()
       promise = loadOrQueue(request)
     # If we have an existing promise matching this new request,
@@ -424,7 +412,7 @@ up.proxy = (($) ->
       request.contentType = false
       request.processData = false
 
-    jqAjaxPromise = $.ajax(request)
+    jqAjaxPromise = request.submitWithJQuery()
 
     # We want to return a native promise, but jQuery's AJAX deferred pass multiple
     # arguments to callbacks. Since native promises only have a single settlement
@@ -433,8 +421,11 @@ up.proxy = (($) ->
 
   buildResponse = (request, textStatus, xhr) ->
     request: request
+    method: request.method
+    url: request.url
     body: xhr.responseText
     textStatus: textStatus
+    status: xhr.status
     xhr: xhr
 
   convertJqueryAjaxtToNativePromise = (request, jqAjaxPromise) ->
@@ -464,7 +455,7 @@ up.proxy = (($) ->
       eventProps = u.merge(response, message: emitMessage)
       up.emit('up:proxy:failed', eventProps)
     else
-      emitMessage = ['Server responded with HTTP %d (%d bytes)', response.xhr.status, response.body.length]
+      emitMessage = ['Server responded with HTTP %d (%d bytes)', response.status, response.body.length]
       eventProps = u.merge(response, message: emitMessage)
       up.emit('up:proxy:received', eventProps)
 
@@ -547,10 +538,6 @@ up.proxy = (($) ->
   @experimental
   ###
 
-  isIdempotent = (request) ->
-    normalizeRequest(request)
-    u.contains(config.safeMethods, request.method)
-
   checkPreload = ($link) ->
     delay = parseInt(u.presentAttr($link, 'up-delay')) || config.preloadDelay 
     unless $link.is($waitingLink)
@@ -577,13 +564,19 @@ up.proxy = (($) ->
     options = u.options(options)
 
     method = up.link.followMethod($link, options)
-    if isIdempotent(method: method)
+    if isIdempotentMethod(method)
       up.log.group "Preloading link %o", $link, ->
         options.preload = true
         up.link.follow2($link, options)
     else
       up.puts("Won't preload %o due to unsafe method %s", $link, method)
       u.resolvedPromise()
+
+  ###*
+  @internal
+  ###
+  isIdempotentMethod = (method) ->
+    u.contains(config.safeMethods, method)
 
   ###*
   Links with an `up-preload` attribute will silently fetch their target
@@ -617,6 +610,7 @@ up.proxy = (($) ->
   isIdle: isIdle
   isBusy: isBusy
   isCachable: isCachable
+  isIdempotentMethod: isIdempotentMethod
   config: config
   
 )(jQuery)

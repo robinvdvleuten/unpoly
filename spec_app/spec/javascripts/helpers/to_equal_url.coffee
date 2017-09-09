@@ -2,10 +2,12 @@ u = up.util
 
 beforeEach ->
   jasmine.addMatchers
-    toEqualUrl: (util, customEqualityTesters) ->
+    toMatchUrl: (util, customEqualityTesters) ->
       compare: (actual, expected, normalizeOptions = {}) ->
-        normalizedActual = u.normalizeUrl(actual, normalizeOptions)
-        normalizedExpected = u.normalizeUrl(expected, normalizeOptions)
-        pass: normalizedActual == normalizedExpected
+        pass = true
+        pass &&= u.isString(actual)
+        pass &&= u.isString(expected)
+        pass &&= u.normalizeUrl(actual, normalizeOptions) == u.normalizeUrl(expected, normalizeOptions)
+        { pass }
 
 

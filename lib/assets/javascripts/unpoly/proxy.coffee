@@ -102,10 +102,11 @@ up.proxy = (($) ->
       request.target
     ].join('|')
 
-  cache = u.cache
+  cache = u.newCache
     size: -> config.cacheSize
     expiry: -> config.cacheExpiry
     key: cacheKey
+    cachable: isCachable
     # log: 'up.proxy'
 
   ###*
@@ -121,17 +122,21 @@ up.proxy = (($) ->
   ###
   get = (request) ->
     request = up.Request.normalize(request)
-    if isCachable(request)
-      candidates = [request]
-      if request.target != 'html'
-        requestForHtml = u.merge(request, target: 'html')
-        candidates.push(requestForHtml)
-      if request.target != 'body'
-        requestForBody = u.merge(request, target: 'body')
-        candidates.push(requestForBody)
-      for candidate in candidates
-        if response = cache.get(candidate)
-          return response
+    candidates = [request]
+    # Since <html> is the root tag, a request for the `html` selector
+    # will contain all other selectors.
+    if request.target != 'html'
+      requestForHtml = request.copy(target: 'html')
+      candidates.push(requestForHtml)
+    # Although <body> is not the root tag, we consider it the selector developers
+    # will use when they want to replace the entire page. Hence we consider it
+    # a suitable match for all other selectors, including `html`.
+    if request.target != 'body'
+      requestForBody = request.copy(target: 'body')
+      candidates.push(requestForBody)
+    for candidate in candidates
+      if response = cache.get(candidate)
+        return response
 
   cancelPreloadDelay = ->
     clearTimeout(preloadDelayTimer)
@@ -207,34 +212,24 @@ up.proxy = (($) ->
     options = u.extractOptions(args)
     options.url = args[0] if u.isGiven(args[0])
 
-    forceCache = (options.cache == true)
     ignoreCache = (options.cache == false)
 
-    request = u.only options,
-      'url',
-      'method',
-      'data',
-      'target',
-      'failTarget',
-      'headers',
-      'timeout',
-      '_normalized'
-
-    request = up.Request.normalize(request)
+    request = up.Request.normalize(options)
 
     # Non-GET requests always touch the network
     # unless `options.cache` is explicitly set to `true`.
     # These requests are never cached.
-    if !request.isIdempotent() && !forceCache
+    if !request.isIdempotent()
+      # We clear the entire cache before a non-idempotent request, since we
+      # assume the user is writing a change.
       clear()
-      promise = loadOrQueue(request)
+
     # If we have an existing promise matching this new request,
     # we use it unless `options.cache` is explicitly set to `false`.
-    # The promise might still be pending.
-    else if (promise = get(request)) && !ignoreCache
+    if !ignoreCache && (promise = get(request))
       up.puts 'Re-using cached response for %s %s', request.method, request.url
-    # If no existing promise is available, we make a network request.
     else
+      # If no existing promise is available, we make a network request.
       console.debug('Calling loadOrQueue')
       promise = loadOrQueue(request)
       set(request, promise)
@@ -266,7 +261,7 @@ up.proxy = (($) ->
   @internal
   ###
   isCachable = (request) ->
-    not u.isFormData(request.data)
+    request.isIdempotent() && !u.isFormData(request.data)
 
   ###*
   Returns `true` if the proxy is not currently waiting
@@ -420,19 +415,36 @@ up.proxy = (($) ->
     convertJqueryAjaxtToNativePromise(request, jqAjaxPromise)
 
   buildResponse = (request, textStatus, xhr) ->
-    request: request
-    method: request.method
-    url: request.url
-    body: xhr.responseText
-    textStatus: textStatus
-    status: xhr.status
-    xhr: xhr
+    response =
+      method: request.method
+      url: request.url
+      body: xhr.responseText
+      status: xhr.status
+      # A String "success", "notmodified", "nocontent", "error", "timeout", "abort", or "parsererror"
+      textStatus: textStatus
+      request: request
+      xhr: xhr
+
+    if urlFromServer = up.protocol.locationFromXhr(xhr)
+      response.url = urlFromServer
+      # If the server changes a URL, it is expected to signal a new method as well.
+      response.method = up.protocol.methodFromXhr(xhr) ? 'GET'
+
+    new up.Response(response)
 
   convertJqueryAjaxtToNativePromise = (request, jqAjaxPromise) ->
     new Promise (resolve, reject) ->
 
       onSuccess = (data, textStatus, xhr) ->
         response = buildResponse(request, textStatus, xhr)
+
+        if request.url != response.url
+          newRequest = request.copy(
+            method: response.method
+            url: response.url
+          )
+          up.proxy.alias(request, newRequest)
+
         responseReceived(response)
         resolve(response)
 
@@ -444,13 +456,10 @@ up.proxy = (($) ->
 
       jqAjaxPromise.then(onSuccess, onFailure)
 
-  isMaterialError = (response) ->
-    u.isBlank(response.body)
-
   responseReceived = (response) ->
     console.debug('Response is %o', response)
 
-    if isMaterialError(response)
+    if response.isMaterialError()
       emitMessage = ['Request failed (%s)', response.textStatus]
       eventProps = u.merge(response, message: emitMessage)
       up.emit('up:proxy:failed', eventProps)

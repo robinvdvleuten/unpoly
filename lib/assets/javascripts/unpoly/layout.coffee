@@ -65,7 +65,7 @@ up.layout = (($) ->
     substance: 150
     easing: 'swing'
 
-  lastScrollTops = u.cache
+  lastScrollTops = u.newCache
     size: 30,
     key: up.history.normalizeUrl
 

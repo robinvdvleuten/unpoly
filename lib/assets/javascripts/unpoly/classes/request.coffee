@@ -1,15 +1,16 @@
+#= require ./record
+
 u = up.util
 
-class up.Request
+class up.Request extends up.Record
+
+  fields: ->
+    ['method', 'url', 'data', 'target', 'failTarget', 'headers', 'timeout']
 
   constructor: (options) ->
+    super(options)
     @method = u.normalizeMethod(options.method)
-    @data = options.data
-    @target = options.target || 'body'
-    @headers = options.headers
-    @timeout = options.timeout
-    @url = options.url
-
+    @headers ||= {}
     @extractHashFromUrl()
     if @data && !u.methodAllowsPayload(@method)
       @transferDataToUrl()
@@ -39,9 +40,8 @@ class up.Request
     # and cache key logic.
     jqRequest = u.copy(@)
 
-    jqRequest.headers ||= {}
-    jqRequest.headers[up.protocol.config.targetHeader] = @target
-    jqRequest.headers[up.protocol.config.failTargetHeader] = @failTarget
+    jqRequest.headers[up.protocol.config.targetHeader] = @target if @target
+    jqRequest.headers[up.protocol.config.failTargetHeader] = @failTarget if @failTarget
 
     if u.contains(up.proxy.config.wrapMethods, jqRequest.method)
       jqRequest.data = u.appendRequestData(jqRequest.data, up.protocol.config.methodParam, jqRequest.method)

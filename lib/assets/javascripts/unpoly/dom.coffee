@@ -292,7 +292,7 @@ up.dom = (($) ->
   ###
   processResponse = (isSuccess, selector, response, options) ->
     request = response.request
-    url = request.url
+    url = response.url
     xhr = response.xhr
 
     console.error("URL in processResponse is is %o, request.hash is %o", request.url, request.hash)
@@ -301,24 +301,7 @@ up.dom = (($) ->
       # If the request URL had a #hash and options.reveal is not given, we reveal that #hash.
       options.reveal = request.hash
 
-    options.method = u.normalizeMethod(u.option(up.protocol.methodFromXhr(xhr), options.method))
-
-    isReloadable = (options.method == 'GET')
-
-    # The server can send us the current path using a header value.
-    # This way we know the actual URL if the server has redirected.
-    # TODO: This logic should be moved to up.proxy.
-    if urlFromServer = up.protocol.locationFromXhr(xhr)
-      url = urlFromServer
-      if isSuccess && up.proxy.isCachable(request)
-        newRequest =
-          url: url
-          method: up.protocol.methodFromXhr(xhr) # If the server redirects, we must use the signaled method (should be GET)
-          target: selector
-        up.proxy.alias(request, newRequest)
-    else if isReloadable
-      if query = u.requestDataAsQuery(options.data)
-        url = "#{url}?#{query}"
+    isReloadable = (response.method == 'GET')
 
     console.error("URL is %o", url)
 
@@ -327,6 +310,7 @@ up.dom = (($) ->
         options.history = url unless options.history is false || u.isString(options.history)
         options.source  = url unless options.source  is false || u.isString(options.source)
       else # e.g. POST returns 200 OK
+        # We allow the developer to pass GETable URLs as { history } and { source } options.
         options.history = false  unless u.isString(options.history)
         options.source  = 'keep' unless u.isString(options.source)
     else
@@ -334,8 +318,8 @@ up.dom = (($) ->
         options.history = url unless options.history is false
         options.source  = url unless options.source  is false
       else # e.g. POST returns 500 Internal Server Error
-        options.source  = 'keep'
         options.history = false
+        options.source  = 'keep'
 
     if shouldExtractTitle(options) && titleFromXhr = up.protocol.titleFromXhr(xhr)
       options.title = titleFromXhr

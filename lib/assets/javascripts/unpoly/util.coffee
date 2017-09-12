@@ -1409,9 +1409,13 @@ up.util = (($) ->
   @param {Function<Object>} [config.key]
     A function that takes an argument and returns a `String` key
     for storage. If omitted, `toString()` is called on the argument.
+  @param {Function<Object>} [config.cachable]
+    A function that takes a potential cache key and returns whether
+    this key can be stored in the hash. If omitted, all keys are considered
+    cachable.
   @internal
   ###
-  cache = (config = {}) ->
+  newCache = (config = {}) ->
 
     store = undefined
 
@@ -1426,6 +1430,12 @@ up.util = (($) ->
 
     isEnabled = ->
       maxKeys() isnt 0 && expiryMillis() isnt 0
+
+    isCachable = (key) ->
+      if config.chachable
+        config.cachable(key)
+      else
+        true
 
     clear = ->
       store = {}
@@ -1463,7 +1473,7 @@ up.util = (($) ->
       (new Date()).valueOf()
 
     set = (key, value) ->
-      if isEnabled()
+      if isEnabled() && isCachable(key)
         makeRoomForAnotherKey()
         storeKey = normalizeStoreKey(key)
         store[storeKey] =
@@ -1483,8 +1493,7 @@ up.util = (($) ->
         true
 
     get = (key, options = {}) ->
-      storeKey = normalizeStoreKey(key)
-      if entry = store[storeKey]
+      if isCachable(key) && (entry = store[normalizeStoreKey(key)])
         if isFresh(entry)
           log("Cache hit for '%s'", key) unless options.silent
           entry.value
@@ -2087,7 +2096,7 @@ up.util = (($) ->
   documentHasVerticalScrollbar: documentHasVerticalScrollbar
   config: config
   openConfig: openConfig
-  cache: cache
+  newCache: newCache
   unwrapElement: unwrapElement
   multiSelector: multiSelector
   error: fail

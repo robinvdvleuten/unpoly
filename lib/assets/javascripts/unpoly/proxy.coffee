@@ -102,6 +102,17 @@ up.proxy = (($) ->
       request.target
     ].join('|')
 
+  ###*
+  Returns whether the proxy is capable of caching the given request.
+  Even if this returns `true`, only idempodent requests will be
+  cached by default.
+
+  @function up.proxy.isCachable
+  @internal
+  ###
+  isCachable = (request) ->
+    request.isIdempotent() && !u.isFormData(request.data)
+
   cache = u.newCache
     size: -> config.cacheSize
     expiry: -> config.cacheExpiry
@@ -251,17 +262,6 @@ up.proxy = (($) ->
       u.always promise, loadEnded
 
     promise
-
-  ###*
-  Returns whether the proxy is capable of caching the given request.
-  Even if this returns `true`, only idempodent requests will be
-  cached by default.
-
-  @function up.proxy.isCachable
-  @internal
-  ###
-  isCachable = (request) ->
-    request.isIdempotent() && !u.isFormData(request.data)
 
   ###*
   Returns `true` if the proxy is not currently waiting

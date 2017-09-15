@@ -1432,7 +1432,7 @@ up.util = (($) ->
       maxKeys() isnt 0 && expiryMillis() isnt 0
 
     isCachable = (key) ->
-      if config.chachable
+      if config.cachable
         config.cachable(key)
       else
         true

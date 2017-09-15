@@ -184,9 +184,12 @@ describe 'up.dom', ->
             next => expect(location.href).toMatchUrl(@hrefBeforeExample)
 
           it 'adds a history entry after non-GET requests if the response includes a { X-Up-Method: "get" } header (will happen after a redirect)', asyncSpec (next) ->
-            up.replace('.middle', '/path', method: 'post')
-            next => @respond(responseHeaders: { 'X-Up-Method': 'GET' })
-            next => expect(location.href).toMatchUrl('/path')
+            up.replace('.middle', '/requested-path', method: 'post')
+            next => @respond(responseHeaders:
+              'X-Up-Method': 'GET'
+              'X-Up-Location': '/signaled-path'
+            )
+            next => expect(location.href).toMatchUrl('/signaled-path')
 
           it 'does not a history entry after a failed GET-request', asyncSpec (next) ->
             up.replace('.middle', '/path', method: 'post', failTarget: '.middle')

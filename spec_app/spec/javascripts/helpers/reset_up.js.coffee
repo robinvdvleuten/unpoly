@@ -1,7 +1,3 @@
-afterEach ->
-  console.error('afterEach!')
-
-
 afterEach (done) ->
   # Wait one more frame so pending callbacks have a chance to run.
   # Pending callbacks might change the URL or cause errors that bleed into
@@ -14,6 +10,3 @@ afterEach (done) ->
     up.reset()
     $('.up-toast').remove()
     done()
-
-
-

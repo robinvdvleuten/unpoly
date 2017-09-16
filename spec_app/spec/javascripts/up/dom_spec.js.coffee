@@ -159,7 +159,7 @@ describe 'up.dom', ->
           it "doesn't crash and rejects the returned promise", (done) ->
             affix('.target')
             promise = up.replace('.middle', '/path')
-            
+
             u.nextFrame =>
               promiseState promise, (state) =>
                 expect(state).toEqual('pending')
@@ -825,7 +825,7 @@ describe 'up.dom', ->
             next => up.replace('.element', '/bar')
             next => respond()
             next => $viewport.scrollTop(0)
-            next => up.replace('.element', '/foo', restoreScroll: true)
+            next.await => up.replace('.element', '/foo', restoreScroll: true)
             # No need to respond because /foo has been cached before
             next => expect($viewport.scrollTop()).toEqual(65)
 
@@ -1469,8 +1469,9 @@ describe 'up.dom', ->
       it 'allows to pass a new history entry as { history } option', (done) ->
         affix('.element')
         up.destroy('.element', history: '/new-path').then ->
-          expect(location.href).toMatchUrl('/new-path')
-          done()
+          u.setTimer 100, ->
+            expect(location.href).toMatchUrl('/new-path')
+            done()
 
       it 'allows to pass a new document title as { title } option', (done) ->
         affix('.element')

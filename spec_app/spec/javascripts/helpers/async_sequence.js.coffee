@@ -76,7 +76,7 @@ window.asyncSpec = (args...) ->
               Promise.resolve().then ->
                 if callStyle == 'sync'
                   runBlockSyncAndPoke(block)
-                else
+                else # async
                   runBlockAsyncThenPoke(block)
 
             # Also move to the next frame

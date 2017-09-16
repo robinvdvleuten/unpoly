@@ -292,31 +292,30 @@ up.dom = (($) ->
   ###
   processResponse = (isSuccess, selector, response, options) ->
     request = response.request
-    url = response.url
+    sourceUrl = response.url
+    historyUrl = sourceUrl
+    hash = request.hash
     xhr = response.xhr
 
-    console.error("URL in processResponse is is %o, request.hash is %o", request.url, request.hash)
-
-    if options.reveal == true && request.hash
+    if options.reveal == true && hash
       # If the request URL had a #hash and options.reveal is not given, we reveal that #hash.
-      options.reveal = request.hash
+      options.reveal = hash
+      historyUrl += hash
 
     isReloadable = (response.method == 'GET')
 
-    console.error("URL is %o", url)
-
     if isSuccess
       if isReloadable # e.g. GET returns 200 OK
-        options.history = url unless options.history is false || u.isString(options.history)
-        options.source  = url unless options.source  is false || u.isString(options.source)
+        options.history = historyUrl unless options.history is false || u.isString(options.history)
+        options.source  = sourceUrl unless options.source  is false || u.isString(options.source)
       else # e.g. POST returns 200 OK
         # We allow the developer to pass GETable URLs as { history } and { source } options.
-        options.history = false  unless u.isString(options.history)
+        options.history = historyUrl  unless u.isString(options.history)
         options.source  = 'keep' unless u.isString(options.source)
     else
       if isReloadable # e.g. GET returns 500 Internal Server Error
-        options.history = url unless options.history is false
-        options.source  = url unless options.source  is false
+        options.history = historyUrl unless options.history is false
+        options.source  = sourceUrl unless options.source  is false
       else # e.g. POST returns 500 Internal Server Error
         options.history = false
         options.source  = 'keep'

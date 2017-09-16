@@ -251,7 +251,6 @@ describe 'up.form', ->
 
           next =>
             expect(@lastRequest().url).toMatchUrl('/form-target')
-            debugger
             expect(@lastRequest()).toHaveRequestMethod('PUT')
             expect(@lastRequest().data()['field1']).toEqual(['value1'])
             expect(@lastRequest().data()['field2']).toEqual(['value2'])

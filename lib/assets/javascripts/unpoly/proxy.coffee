@@ -389,24 +389,6 @@ up.proxy = (($) ->
   load = (request) ->
     up.emit('up:proxy:load', u.merge(request, message: ['Loading %s %s', request.method, request.url]))
 
-    # We will modify the request below for features like method wrapping.
-    # Let's not change the original request which would confuse API clients
-    # and cache key logic.
-    request = u.copy(request)
-
-    request.headers ||= {}
-    request.headers[up.protocol.config.targetHeader] = request.target
-
-    if u.contains(config.wrapMethods, request.method)
-      request.data = u.appendRequestData(request.data, up.protocol.config.methodParam, request.method)
-      request.method = 'POST'
-
-    if u.isFormData(request.data)
-      # Disable jQuery's request data processing so we can pass
-      # a FormData object (http://stackoverflow.com/a/5976031)
-      request.contentType = false
-      request.processData = false
-
     jqAjaxPromise = request.submitWithJQuery()
 
     # We want to return a native promise, but jQuery's AJAX deferred pass multiple

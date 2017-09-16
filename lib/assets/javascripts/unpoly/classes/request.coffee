@@ -39,13 +39,19 @@ class up.Request extends up.Record
     # Let's not change the original request which would confuse API clients
     # and cache key logic.
     jqRequest = u.copy(@)
+    jqRequest.data = u.copy(@data) unless u.isFormData(@data)
 
     jqRequest.headers[up.protocol.config.targetHeader] = @target if @target
     jqRequest.headers[up.protocol.config.failTargetHeader] = @failTarget if @failTarget
 
     if u.contains(up.proxy.config.wrapMethods, jqRequest.method)
+
+      console.error('request.data before is %o', u.copy(jqRequest.data))
+
       jqRequest.data = u.appendRequestData(jqRequest.data, up.protocol.config.methodParam, jqRequest.method)
       jqRequest.method = 'POST'
+
+      console.error('request.data is now %o', u.copy(jqRequest.data))
 
     if u.isFormData(jqRequest.data)
       # Disable jQuery's request data processing so we can pass

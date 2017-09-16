@@ -545,20 +545,31 @@ up.util = (($) ->
     Array.prototype.slice.call(object)
 
   ###*
-  Shallow-copies the given array or object into a new array or object.
+  Copies the given array or object into a new array or object.
+
+  Will make a shallow copy by default. You can make a deep copy by passing a `{ deep: true }` option.
 
   Returns the new array or object.
 
   @function up.util.copy
   @param {Object|Array} object
+  @param {boolean} [options.deep=false]
+    If set to `true`, recursively copies values.
   @return {Object|Array}
   @stable
   ###
-  copy = (object)  ->
+  copy = (object, options = {})  ->
     if isArray(object)
-      object.slice()
+      object = object.slice()
+      if options.deep
+        object = map object, (element) -> copy(element, options)
     else if isHash(object)
-      assign({}, object)
+      object = assign({}, object)
+      if options.deep
+        for key, value of object
+          object[key] = copy(value, options)
+    object
+
 
   ###*
   If given a jQuery collection, returns the underlying array of DOM element.

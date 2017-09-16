@@ -243,7 +243,6 @@ describe 'up.link', ->
             respondWith('text from two with hash')
 
           next =>
-            debugger
             expect($('.target')).toHaveText('text from two with hash')
             expect(location.pathname).toEqual('/two')
             expect(location.hash).toEqual('#hash')

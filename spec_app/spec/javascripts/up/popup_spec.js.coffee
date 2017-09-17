@@ -176,35 +176,34 @@ describe 'up.popup', ->
           @attachSpy = up.popup.knife.mock('attachAsap').and.returnValue(u.resolvedPromise())
           @defaultSpy = spyOn(up.link, 'allowDefault').and.callFake((event) -> event.preventDefault())
 
-      it 'opens the clicked link in a popup', ->
+      it 'opens the clicked link in a popup', asyncSpec (next) ->
         @stubAttach()
         Trigger.click(@$link)
-        expect(@attachSpy).toHaveBeenCalledWith(@$link)
+        next => expect(@attachSpy).toHaveBeenCalledWith(@$link)
 
       # IE does not call JavaScript and always performs the default action on right clicks
       unless navigator.userAgent.match(/Trident/)
-        it 'does nothing if the right mouse button is used', ->
+        it 'does nothing if the right mouse button is used', asyncSpec (next) ->
           @stubAttach()
           Trigger.click(@$link, button: 2)
-          expect(@attachSpy).not.toHaveBeenCalled()
+          next => expect(@attachSpy).not.toHaveBeenCalled()
 
-      it 'does nothing if shift is pressed during the click', ->
+      it 'does nothing if shift is pressed during the click', asyncSpec (next) ->
         @stubAttach()
         Trigger.click(@$link, shiftKey: true)
-        expect(@attachSpy).not.toHaveBeenCalled()
+        next => expect(@attachSpy).not.toHaveBeenCalled()
 
-      it 'does nothing if ctrl is pressed during the click', ->
+      it 'does nothing if ctrl is pressed during the click', asyncSpec (next) ->
         @stubAttach()
         Trigger.click(@$link, ctrlKey: true)
-        expect(@attachSpy).not.toHaveBeenCalled()
+        next => expect(@attachSpy).not.toHaveBeenCalled()
 
-      it 'does nothing if meta is pressed during the click', ->
+      it 'does nothing if meta is pressed during the click', asyncSpec (next) ->
         @stubAttach()
         Trigger.click(@$link, metaKey: true)
-        expect(@attachSpy).not.toHaveBeenCalled()
+        next => expect(@attachSpy).not.toHaveBeenCalled()
 
       it 'closes an existing popup before opening the new popup', asyncSpec (next) ->
-
         up.popup.config.openDuration = 0
         up.popup.config.closeDuration = 0
 
@@ -239,35 +238,35 @@ describe 'up.popup', ->
           @stubAttach()
           @$link.attr('up-instant', '')
 
-        it 'opens the modal on mousedown (instead of on click)', ->
+        it 'opens the modal on mousedown (instead of on click)', asyncSpec (next) ->
           Trigger.mousedown(@$link)
-          expect(@attachSpy.calls.mostRecent().args[0]).toEqual(@$link)
+          next => expect(@attachSpy.calls.mostRecent().args[0]).toEqual(@$link)
 
-        it 'does nothing on mouseup', ->
+        it 'does nothing on mouseup', asyncSpec (next) ->
           Trigger.mouseup(@$link)
-          expect(@attachSpy).not.toHaveBeenCalled()
+          next => expect(@attachSpy).not.toHaveBeenCalled()
 
-        it 'does nothing on click', ->
+        it 'does nothing on click', asyncSpec (next) ->
           Trigger.click(@$link)
-          expect(@attachSpy).not.toHaveBeenCalled()
+          next => expect(@attachSpy).not.toHaveBeenCalled()
 
         # IE does not call JavaScript and always performs the default action on right clicks
         unless navigator.userAgent.match(/Trident/)
-          it 'does nothing if the right mouse button is pressed down', ->
+          it 'does nothing if the right mouse button is pressed down', asyncSpec (next) ->
             Trigger.mousedown(@$link, button: 2)
-            expect(@attachSpy).not.toHaveBeenCalled()
+            next => expect(@attachSpy).not.toHaveBeenCalled()
 
-        it 'does nothing if shift is pressed during mousedown', ->
+        it 'does nothing if shift is pressed during mousedown', asyncSpec (next) ->
           Trigger.mousedown(@$link, shiftKey: true)
-          expect(@attachSpy).not.toHaveBeenCalled()
+          next => expect(@attachSpy).not.toHaveBeenCalled()
 
-        it 'does nothing if ctrl is pressed during mousedown', ->
+        it 'does nothing if ctrl is pressed during mousedown', asyncSpec (next) ->
           Trigger.mousedown(@$link, ctrlKey: true)
-          expect(@attachSpy).not.toHaveBeenCalled()
+          next => expect(@attachSpy).not.toHaveBeenCalled()
 
-        it 'does nothing if meta is pressed during mousedown', ->
+        it 'does nothing if meta is pressed during mousedown', asyncSpec (next) ->
           Trigger.mousedown(@$link, metaKey: true)
-          expect(@attachSpy).not.toHaveBeenCalled()
+          next => expect(@attachSpy).not.toHaveBeenCalled()
 
       describe 'with [up-method] modifier', ->
 

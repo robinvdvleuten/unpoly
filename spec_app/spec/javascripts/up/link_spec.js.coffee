@@ -630,62 +630,62 @@ describe 'up.link', ->
         @followSpy = up.link.knife.mock('follow').and.returnValue(u.resolvedPromise())
         @defaultSpy = spyOn(up.link, 'allowDefault').and.callFake((event) -> event.preventDefault())
 
-      it "calls up.follow with the clicked link", ->
+      it "calls up.follow with the clicked link", asyncSpec (next) ->
         Trigger.click(@$link)
-        expect(@followSpy).toHaveBeenCalledWith(@$link)
+        next => expect(@followSpy).toHaveBeenCalledWith(@$link)
 
       # IE does not call JavaScript and always performs the default action on right clicks
       unless navigator.userAgent.match(/Trident/)
-        it 'does nothing if the right mouse button is used', ->
+        it 'does nothing if the right mouse button is used', asyncSpec (next) ->
           Trigger.click(@$link, button: 2)
-          expect(@followSpy).not.toHaveBeenCalled()
+          next => expect(@followSpy).not.toHaveBeenCalled()
 
-      it 'does nothing if shift is pressed during the click', ->
+      it 'does nothing if shift is pressed during the click', asyncSpec (next) ->
         Trigger.click(@$link, shiftKey: true)
-        expect(@followSpy).not.toHaveBeenCalled()
+        next => expect(@followSpy).not.toHaveBeenCalled()
 
-      it 'yyy does nothing if ctrl is pressed during the click', ->
+      it 'yyy does nothing if ctrl is pressed during the click', asyncSpec (next)->
         Trigger.click(@$link, ctrlKey: true)
-        expect(@followSpy).not.toHaveBeenCalled()
+        next => expect(@followSpy).not.toHaveBeenCalled()
 
-      it 'xxx does nothing if meta is pressed during the click', ->
+      it 'does nothing if meta is pressed during the click', asyncSpec (next)->
         Trigger.click(@$link, metaKey: true)
-        expect(@followSpy).not.toHaveBeenCalled()
+        next => expect(@followSpy).not.toHaveBeenCalled()
 
       describe 'with [up-instant] modifier', ->
 
         beforeEach ->
           @$link.attr('up-instant', '')
 
-        it 'follows a link on mousedown (instead of on click)', ->
+        it 'follows a link on mousedown (instead of on click)', asyncSpec (next)->
           Trigger.mousedown(@$link)
-          expect(@followSpy.calls.mostRecent().args[0]).toEqual(@$link)
+          next => expect(@followSpy.calls.mostRecent().args[0]).toEqual(@$link)
 
-        it 'does nothing on mouseup', ->
+        it 'does nothing on mouseup', asyncSpec (next)->
           Trigger.mouseup(@$link)
-          expect(@followSpy).not.toHaveBeenCalled()
+          next => expect(@followSpy).not.toHaveBeenCalled()
 
-        it 'does nothing on click', ->
+        it 'does nothing on click', asyncSpec (next)->
           Trigger.click(@$link)
-          expect(@followSpy).not.toHaveBeenCalled()
+          next => expect(@followSpy).not.toHaveBeenCalled()
 
         # IE does not call JavaScript and always performs the default action on right clicks
         unless navigator.userAgent.match(/Trident/)
-          it 'does nothing if the right mouse button is pressed down', ->
+          it 'does nothing if the right mouse button is pressed down', asyncSpec (next)->
             Trigger.mousedown(@$link, button: 2)
-            expect(@followSpy).not.toHaveBeenCalled()
+            next => expect(@followSpy).not.toHaveBeenCalled()
 
-        it 'does nothing if shift is pressed during mousedown', ->
+        it 'does nothing if shift is pressed during mousedown', asyncSpec (next) ->
           Trigger.mousedown(@$link, shiftKey: true)
-          expect(@followSpy).not.toHaveBeenCalled()
+          next => expect(@followSpy).not.toHaveBeenCalled()
 
-        it 'does nothing if ctrl is pressed during mousedown', ->
+        it 'does nothing if ctrl is pressed during mousedown', asyncSpec (next) ->
           Trigger.mousedown(@$link, ctrlKey: true)
-          expect(@followSpy).not.toHaveBeenCalled()
+          next => expect(@followSpy).not.toHaveBeenCalled()
 
-        it 'does nothing if meta is pressed during mousedown', ->
+        it 'does nothing if meta is pressed during mousedown', asyncSpec (next) ->
           Trigger.mousedown(@$link, metaKey: true)
-          expect(@followSpy).not.toHaveBeenCalled()
+          next => expect(@followSpy).not.toHaveBeenCalled()
 
     describe '[up-dash]', ->
 
@@ -768,12 +768,13 @@ describe 'up.link', ->
         next =>
           expect(up.replace).toHaveBeenCalled()
 
-      it 'does not trigger multiple replaces when the user clicks on the expanded area of an up-instant link (bugfix)', ->
+      it 'does not trigger multiple replaces when the user clicks on the expanded area of an [up-instant] link (bugfix)', asyncSpec (next) ->
         $area = affix('div[up-expand] a[href="/path"][up-follow][up-instant]')
         up.hello($area)
         spyOn(up, 'replace')
         Trigger.clickSequence($area)
-        expect(up.replace.calls.count()).toEqual(1)
+        next =>
+          expect(up.replace.calls.count()).toEqual(1)
 
       it 'does not add an up-follow attribute if the expanded link is [up-dash] with a selector (bugfix)', ->
         $area = affix('div[up-expand] a[href="/path"][up-dash=".element"]')

@@ -475,25 +475,25 @@ describe 'up.modal', ->
 
         # IE does not call JavaScript and always performs the default action on right clicks
         unless navigator.userAgent.match(/Trident/)
-          it 'does nothing if the right mouse button is used', ->
+          it 'does nothing if the right mouse button is used', asyncSpec (next) ->
             @stubFollow()
             Trigger.click(@$link, button: 2)
-            expect(@followSpy).not.toHaveBeenCalled()
+            next => expect(@followSpy).not.toHaveBeenCalled()
 
-        it 'does nothing if shift is pressed during the click', ->
+        it 'does nothing if shift is pressed during the click', asyncSpec (next) ->
           @stubFollow()
           Trigger.click(@$link, shiftKey: true)
-          expect(@followSpy).not.toHaveBeenCalled()
+          next => expect(@followSpy).not.toHaveBeenCalled()
 
-        it 'does nothing if ctrl is pressed during the click', ->
+        it 'does nothing if ctrl is pressed during the click', asyncSpec (next) ->
           @stubFollow()
           Trigger.click(@$link, ctrlKey: true)
-          expect(@followSpy).not.toHaveBeenCalled()
+          next => expect(@followSpy).not.toHaveBeenCalled()
 
-        it 'does nothing if meta is pressed during the click', ->
+        it 'does nothing if meta is pressed during the click', asyncSpec (next) ->
           @stubFollow()
           Trigger.click(@$link, metaKey: true)
-          expect(@followSpy).not.toHaveBeenCalled()
+          next => expect(@followSpy).not.toHaveBeenCalled()
 
       describe 'with [up-instant] modifier', ->
 
@@ -569,33 +569,33 @@ describe 'up.modal', ->
           expect('.container').toHaveText('restored container content')
           expect('.up-modal').not.toExist()
 
-      it 'allows to open a modal after closing a previous modul with the escape key (bugfix)', (done) ->
+      it 'allows to open a modal after closing a previous modul with the escape key (bugfix)', asyncSpec (next) ->
         up.motion.config.enabled = false
 
         $link1 = affix('a[href="/path1"][up-modal=".target"]')
         $link2 = affix('a[href="/path2"][up-modal=".target"]')
         Trigger.clickSequence($link1)
 
-        u.nextFrame =>
+        next =>
           @respondWith('<div class="target">content 1</div>')
 
-          u.nextFrame =>
-            expect(up.modal.isOpen()).toBe(true)
+        next =>
+          expect(up.modal.isOpen()).toBe(true)
 
-            escapeEvent = $.Event('keydown', keyCode: 27)
-            $('body').trigger(escapeEvent)
+          escapeEvent = $.Event('keydown', keyCode: 27)
+          $('body').trigger(escapeEvent)
 
-            u.nextFrame =>
-              expect(up.modal.isOpen()).toBe(false)
+        next =>
+          expect(up.modal.isOpen()).toBe(false)
 
-              Trigger.clickSequence($link2)
+          Trigger.clickSequence($link2)
 
-              u.nextFrame =>
-                @respondWith('<div class="target">content 1</div>')
+        next =>
+          @respondWith('<div class="target">content 1</div>')
 
-                u.nextFrame =>
-                  expect(up.modal.isOpen()).toBe(true)
-                  done()
+        next =>
+          expect(up.modal.isOpen()).toBe(true)
+          done()
 
 
     describe '[up-drawer]', ->

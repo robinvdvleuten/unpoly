@@ -575,7 +575,10 @@ up.motion = (($) ->
     A resolved promise
   @stable
   ###
-  none = u.resolvedDeferred
+  none = ->
+    promise = u.resolvedDeferred()
+    promise.isNone = true
+    promise
 
   ###*
   Returns whether the given animation option will cause the animation
@@ -585,7 +588,7 @@ up.motion = (($) ->
   @internal
   ###
   isNone = (animation) ->
-    animation is false || animation is 'none' || u.isMissing(animation) || animation == none
+    animation is false || animation is 'none' || u.isMissing(animation) || (u.isHash(animation) && animation.isNone)
 
   animation('none', none)
 

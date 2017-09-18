@@ -257,8 +257,6 @@ up.dom = (($) ->
       # http://2ality.com/2016/03/promise-rejections-vs-exceptions.html
       return Promise.reject(e)
 
-    console.error("Request URL before is is %o", url)
-
     request =
       url: url
       method: options.method
@@ -271,11 +269,9 @@ up.dom = (($) ->
       timeout: options.timeout
 
     onSuccess = (response) ->
-      console.debug('--- onSuccess in dom')
       processResponse(true, improvedTarget, response, successOptions)
 
     onFailure = (response) ->
-      console.error('--- onFailure in dom')
       rejection = -> u.rejectedPromise(response)
       if response.body
         promise = processResponse(false, improvedFailTarget, response, failureOptions)

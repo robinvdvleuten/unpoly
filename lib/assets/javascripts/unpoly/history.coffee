@@ -148,7 +148,6 @@ up.history = (($) ->
     if up.browser.canPushState()
       state = buildState()
       window.history[method](state, '', url)
-      console.error("Called window.history.#{method}(%o, %o, %o)", state, '', url)
       observeNewUrl(currentUrl())
     else
       up.fail "This browser doesn't support history.#{method}"

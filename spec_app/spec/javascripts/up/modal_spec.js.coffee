@@ -1,7 +1,11 @@
 describe 'up.modal', ->
 
   u = up.util
-  
+
+  beforeEach ->
+    up.modal.config.openDuration = 5
+    up.modal.config.closeDuration = 5
+
   describe 'JavaScript functions', ->
 
     assumedScrollbarWidth = 15
@@ -213,9 +217,9 @@ describe 'up.modal', ->
               console.debug('-- after 10 --')
 
               # The second modal is now opening
-              # Load a third modal before the second was done opening
               up.modal.visit('/path3', target: '.container', animation: 'fade-in', duration: 50)
 
+              # Load a third modal before the second was done opening
               u.nextFrame =>
                 console.debug('-- nextFrame2 --')
 
@@ -274,14 +278,12 @@ describe 'up.modal', ->
             expect($('.target')).toHaveText('response1')
 
           # I don't know why this spec is so off with timing.
-          #  We need to add 100ms to make it pass all of the time.
+          # We need to add 100ms to make it pass all of the time.
           next.after (25 + 50 + 100), =>
             # First modal has finished closing, second modal has finished opening.
             console.debug('[spec] checking event list 1: %o', u.copy(events))
             expect(events).toEqual ['up:modal:open', 'up:modal:opened', 'up:modal:close', 'up:modal:closed', 'up:modal:open', 'up:modal:opened']
             expect($('.target')).toHaveText('response2')
-
-          console.debug('--- spec parsed')
 
         it 'closes an opening modal if a second modal starts opening before the first modal has finished its open animation', asyncSpec (next) ->
           up.modal.config.openAnimation = 'fade-in'
@@ -501,35 +503,35 @@ describe 'up.modal', ->
           @stubFollow()
           @$link.attr('up-instant', '')
 
-        it 'opens the modal on mousedown (instead of on click)', ->
+        it 'opens the modal on mousedown (instead of on click)', asyncSpec (next) ->
           Trigger.mousedown(@$link)
-          expect(@followSpy.calls.mostRecent().args[0]).toEqual(@$link)
+          next => expect(@followSpy.calls.mostRecent().args[0]).toEqual(@$link)
 
-        it 'does nothing on mouseup', ->
+        it 'does nothing on mouseup', asyncSpec (next) ->
           Trigger.mouseup(@$link)
-          expect(@followSpy).not.toHaveBeenCalled()
+          next => expect(@followSpy).not.toHaveBeenCalled()
 
-        it 'does nothing on click', ->
+        it 'does nothing on click', asyncSpec (next) ->
           Trigger.click(@$link)
-          expect(@followSpy).not.toHaveBeenCalled()
+          next => expect(@followSpy).not.toHaveBeenCalled()
 
         # IE does not call JavaScript and always performs the default action on right clicks
         unless navigator.userAgent.match(/Trident/)
-          it 'does nothing if the right mouse button is pressed down', ->
+          it 'does nothing if the right mouse button is pressed down', asyncSpec (next) ->
             Trigger.mousedown(@$link, button: 2)
-            expect(@followSpy).not.toHaveBeenCalled()
+            next => expect(@followSpy).not.toHaveBeenCalled()
 
-        it 'does nothing if shift is pressed during mousedown', ->
+        it 'does nothing if shift is pressed during mousedown', asyncSpec (next) ->
           Trigger.mousedown(@$link, shiftKey: true)
-          expect(@followSpy).not.toHaveBeenCalled()
+          next => expect(@followSpy).not.toHaveBeenCalled()
 
-        it 'does nothing if ctrl is pressed during mousedown', ->
+        it 'does nothing if ctrl is pressed during mousedown', asyncSpec (next) ->
           Trigger.mousedown(@$link, ctrlKey: true)
-          expect(@followSpy).not.toHaveBeenCalled()
+          next => expect(@followSpy).not.toHaveBeenCalled()
 
-        it 'does nothing if meta is pressed during mousedown', ->
+        it 'does nothing if meta is pressed during mousedown', asyncSpec (next) ->
           Trigger.mousedown(@$link, metaKey: true)
-          expect(@followSpy).not.toHaveBeenCalled()
+          next => expect(@followSpy).not.toHaveBeenCalled()
 
       describe 'with [up-method] modifier', ->
 
@@ -569,7 +571,7 @@ describe 'up.modal', ->
           expect('.container').toHaveText('restored container content')
           expect('.up-modal').not.toExist()
 
-      it 'allows to open a modal after closing a previous modul with the escape key (bugfix)', asyncSpec (next) ->
+      it 'allows to open a modal after closing a previous modal with the escape key (bugfix)', asyncSpec (next) ->
         up.motion.config.enabled = false
 
         $link1 = affix('a[href="/path1"][up-modal=".target"]')
@@ -595,7 +597,6 @@ describe 'up.modal', ->
 
         next =>
           expect(up.modal.isOpen()).toBe(true)
-          done()
 
 
     describe '[up-drawer]', ->

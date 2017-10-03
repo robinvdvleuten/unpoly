@@ -45,13 +45,8 @@ class up.Request extends up.Record
     jqRequest.headers[up.protocol.config.failTargetHeader] = @failTarget if @failTarget
 
     if u.contains(up.proxy.config.wrapMethods, jqRequest.method)
-
-      console.error('request.data before is %o', u.copy(jqRequest.data))
-
       jqRequest.data = u.appendRequestData(jqRequest.data, up.protocol.config.methodParam, jqRequest.method)
       jqRequest.method = 'POST'
-
-      console.error('request.data is now %o', u.copy(jqRequest.data))
 
     if u.isFormData(jqRequest.data)
       # Disable jQuery's request data processing so we can pass

@@ -413,7 +413,7 @@ up.dom = (($) ->
   filterScripts = ($element, options) ->
     runInlineScripts = u.option(options.runInlineScripts, config.runInlineScripts)
     runLinkedScripts = u.option(options.runLinkedScripts, config.runLinkedScripts)
-    $scripts = u.findWithSelf($element, 'script')
+    $scripts = u.selectInSubtree($element, 'script')
     for script in $scripts
       $script = $(script)
       isLinked = u.isPresent($script.attr('src'))
@@ -547,7 +547,7 @@ up.dom = (($) ->
         if options.descendantsOnly
           $partner = $new.find(partnerSelector)
         else
-          $partner = u.findWithSelf($new, partnerSelector)
+          $partner = u.selectInSubtree($new, partnerSelector)
         $partner = $partner.first()
         if $partner.length && $partner.is('[up-keep]')
           plan =
@@ -711,7 +711,7 @@ up.dom = (($) ->
 
   autofocus = ($element) ->
     selector = '[autofocus]:last'
-    $control = u.findWithSelf($element, selector)
+    $control = u.selectInSubtree($element, selector)
     if $control.length && $control.get(0) != document.activeElement
       $control.focus()
 

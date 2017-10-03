@@ -315,7 +315,7 @@ up.syntax = (($) ->
     up.log.group "Compiling fragment %o", $fragment.get(0), ->
       for queue in [macros, compilers]
         for compiler in queue
-          $matches = u.findWithSelf($fragment, compiler.selector)
+          $matches = u.selectInSubtree($fragment, compiler.selector)
 
           $matches = $matches.filter ->
             $match = $(this)
@@ -338,7 +338,7 @@ up.syntax = (($) ->
   @internal
   ###
   clean = ($fragment) ->
-    u.findWithSelf($fragment, ".#{DESTRUCTIBLE_CLASS}").each ->
+    u.selectInSubtree($fragment, ".#{DESTRUCTIBLE_CLASS}").each ->
       $element = $(this)
       destructors = $element.data(DESTRUCTORS_KEY)
       # Although destructible elements should always have an array of destructors, we might be

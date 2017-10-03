@@ -251,7 +251,7 @@ up.form = (($) ->
     delay = u.option(u.presentAttr($element, 'up-delay'), options.delay, config.observeDelay)
     delay = parseInt(delay)
 
-    $fields = u.multiSelector(config.fields).findWithSelf($element)
+    $fields = u.multiSelector(config.fields).selectInSubtree($element)
 
     destructors = u.map $fields, (field) ->
       observeField($(field), delay, callback)

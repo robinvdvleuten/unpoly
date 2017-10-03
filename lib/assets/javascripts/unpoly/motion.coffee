@@ -285,22 +285,26 @@ up.motion = (($) ->
     return unless isEnabled()
 
     $element = $(elementOrSelector)
-    $animatingSubtree = u.findWithSelf($element, '.up-animating')
+
+    # Fast-forward animations in all ancestors and descendants of $element
+    $animatingSubtree = u.selectInDynasty($element, '.up-animating')
     u.finishCssAnimate($animatingSubtree)
-    $ghostingSubtree = u.findWithSelf($element, ".#{GHOSTING_CLASS}")
+
+    # Remove ghosting copies in all ancestors and descendants of $element
+    $ghostingSubtree = u.selectInDynasty($element, ".#{GHOSTING_CLASS}")
     finishGhosting($ghostingSubtree)
 
   finishGhosting = ($collection) ->
     $collection.each ->
       $element = $(this)
       if existingGhosting = u.pluckData($element, GHOSTING_DEFERRED_KEY)
-        existingGhosting.resolve()
+        existingGhosting.finish()
       
-  assertIsDeferred = (object, source) ->
-    if u.isDeferred(object)
+  assertIsFinishablePromise = (object, source) ->
+    if object instanceof up.FinishablePromise
       object
     else
-      up.fail("Did not return a promise with .then and .resolve methods: %o", source)
+      up.fail("Did not return an up.FinishablePromise: %o", source)
 
   ###*
   Performs an animated transition between two elements.

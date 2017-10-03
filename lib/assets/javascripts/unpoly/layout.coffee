@@ -69,11 +69,12 @@ up.layout = (($) ->
     size: 30,
     key: up.history.normalizeUrl
 
+  scrollingDynasty = new up.ExclusiveDynasty('up-scrolling')
+
   reset = ->
     config.reset()
     lastScrollTops.clear()
-
-  SCROLL_PROMISE_KEY = 'up-scroll-promise'
+    scrollingDynasty.finishAll()
 
   ###*
   Scrolls the given viewport to the given Y-position.
@@ -109,7 +110,7 @@ up.layout = (($) ->
     The number of miliseconds for the scrolling's animation.
   @param {string}[options.easing]
     The timing function that controls the acceleration for the scrolling's animation.
-  @return {Deferred}
+  @return {FinishablePromise}
     A promise that will be fulfilled when the scrolling ends.
   @experimental
   ###
@@ -122,42 +123,36 @@ up.layout = (($) ->
     finishScrolling($viewport)
 
     if duration > 0
-      deferred = u.newDeferred()
-
       $viewport.data(SCROLL_PROMISE_KEY, deferred)
-      deferred.then ->
+
+      finish = ->
         $viewport.removeData(SCROLL_PROMISE_KEY)
         # Since we're scrolling using #animate, #finish can be
         # used to jump to the last frame:
         # https://api.jquery.com/finish/
         $viewport.finish()
 
-      targetProps =
-        scrollTop: scrollTop
-
       if $viewport.get(0) == document
         $viewport = $('html, body') # FML
 
-      $viewport.animate targetProps,
-        duration: duration,
-        easing: easing,
-        complete: -> deferred.resolve()
+      targetProps = { scrollTop: scrollTop }
+      animateOptions = { duration ,easing }
+      promise = $viewport.animate(targetProps, animateOptions).promise()
 
-      deferred
+      new FinishablePromise(promise, finish)
     else
       $viewport.scrollTop(scrollTop)
-      u.resolvedDeferred()
+      FinishablePromise.resolve()
 
   ###*
   @function up.layout.finishScrolling
-  @param {String|Element|jQuery}
+  @param {string|Element|jQuery}
     The element that might currently be scrolling.
   @internal
   ###
-  finishScrolling = (elementOrSelector) ->
-    $(elementOrSelector).each ->
-      if existingScrolling = $(this).data(SCROLL_PROMISE_KEY)
-        existingScrolling.resolve()
+  finishScrolling = ($element) ->
+    if existingScrolling = $element.data(SCROLL_PROMISE_KEY)
+      existingScrolling.finish()
 
   ###*
   @function up.layout.anchoredRight
@@ -332,7 +327,7 @@ up.layout = (($) ->
   ###
   viewportsWithin = (selectorOrElement) ->
     $element = $(selectorOrElement)
-    viewportSelector().findWithSelf($element)
+    viewportSelector().selectInSubtree($element)
 
   ###*
   Returns a jQuery collection of all the viewports on the screen.
@@ -417,6 +412,8 @@ up.layout = (($) ->
   @param {jQuery} [options.around]
     If set, only restores viewports that are either an ancestor
     or descendant of the given element.
+  @return {Promise}
+    A promise that will be fulfilled once scroll positions have been restored.
   @experimental
   ###
   restoreScroll = (options = {}) ->
@@ -435,15 +432,12 @@ up.layout = (($) ->
     scrollTopsForUrl = lastScrollTops.get(url) || {}
 
     up.log.group 'Restoring scroll positions for URL %s to %o', url, scrollTopsForUrl, ->
-      $viewports.each ->
-        $viewport = $(this)
-        key = scrollTopKey($viewport)
+      whenRestored = u.map $viewports, (viewport) ->
+        key = scrollTopKey(viewport)
         scrollTop = scrollTopsForUrl[key] || 0
-        scroll($viewport, scrollTop, duration: 0)
+        scroll(viewport, scrollTop, duration: 0)
 
-      # Since scrolling happens without animation, we don't need to
-      # join promises from the up.scroll call above
-      u.resolvedDeferred()
+      Promise.all(whenRestored)
 
   ###*
   @function up.layout.revealOrRestoreScroll
@@ -626,7 +620,6 @@ up.layout = (($) ->
   revealHash: revealHash
   firstHashTarget: firstHashTarget
   scroll: scroll
-  finishScrolling: finishScrolling
   config: config
   viewportOf: viewportOf
   viewportsWithin: viewportsWithin

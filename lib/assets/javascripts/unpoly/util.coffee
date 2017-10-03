@@ -1135,11 +1135,22 @@ up.util = (($) ->
   ###*
   Looks for the given selector in the element and its descendants.
 
-  @function up.util.findWithSelf
+  @function up.util.selectInSubtree
   @internal
   ###
-  findWithSelf = ($element, selector) ->
+  selectInSubtree = ($element, selector) ->
     $element.find(selector).addBack(selector)
+
+  ###*
+  Looks for the given selector in the element, its descendants and its ancestors.
+
+  @function up.util.selectInDynasty
+  @internal
+  ###
+  selectInDynasty = ($element, selector) ->
+    $subtree = selectInSubtree($element)
+    $ancestors = $element.parents(selector)
+    $subtree.add($ancestors)
 
   ###*
   Returns whether the given keyboard event involved the ESC key.
@@ -1372,7 +1383,7 @@ up.util = (($) ->
         $result = $result.add($matches)
       $result
 
-    obj.findWithSelf = ($start) ->
+    obj.selectInSubtree = ($start) ->
       $matches = obj.find($start)
       $matches = $matches.add($start) if obj.doesMatch($start)
       $matches
@@ -2086,7 +2097,8 @@ up.util = (($) ->
   forceRepaint: forceRepaint
   escapePressed: escapePressed
   copyAttributes: copyAttributes
-  findWithSelf: findWithSelf
+  selectInSubtree: selectInSubtree
+  selectInDynasty: selectInDynasty
   contains: contains
   toArray: toArray
   castedAttr: castedAttr

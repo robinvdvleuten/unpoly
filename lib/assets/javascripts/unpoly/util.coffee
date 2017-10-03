@@ -1148,7 +1148,7 @@ up.util = (($) ->
   @internal
   ###
   selectInDynasty = ($element, selector) ->
-    $subtree = selectInSubtree($element)
+    $subtree = selectInSubtree($element, selector)
     $ancestors = $element.parents(selector)
     $subtree.add($ancestors)
 
@@ -1292,7 +1292,7 @@ up.util = (($) ->
   @experimental
   ###
   unresolvablePromise = ->
-    unresolvableDeferred().promise()
+    new Promise(noop)
 
   ###*
   Returns an empty jQuery collection.

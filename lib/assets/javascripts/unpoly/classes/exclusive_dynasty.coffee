@@ -7,11 +7,11 @@ class up.ExclusiveDynasty
 
   ###*
   @method claim
-  @param {Function(jQuery): FinishablePromise}
+  @param {Function(jQuery): up.FinishablePromise}
   @return {Promise} A promise that will be fulfilled when the animation ends
   ###
   claim: ($element, animator) =>
-    finish($element).then =>
+    @finishDynasty($element).then =>
       finishablePromise = animator($element)
       @markElement($element, finishablePromise)
       finishablePromise.then => @unmarkElement($element)
@@ -28,7 +28,7 @@ class up.ExclusiveDynasty
   finishElement: (element) =>
     $element = $(element)
     finishablePromise = $element.data(@name)
-    @unmarkElement()
+    @unmarkElement($element)
     if finishablePromise
       # Finisher function is expected to return a promise
       return finishablePromise.finish()

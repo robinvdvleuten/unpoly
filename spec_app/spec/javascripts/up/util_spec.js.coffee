@@ -704,6 +704,24 @@ describe 'up.util', ->
       expect(object.b).toBe('b value')
       expect(object.c).toBe('a value')
 
+  describe 'up.util.selectInDynasty', ->
+
+    it 'finds the selector in both ancestors and descendants of the given element', ->
+      $grandMother = affix('.grand-mother.match')
+      $mother = $grandMother.affix('.mother')
+      $element = $mother.affix('.element')
+      $child = $element.affix('.child.match')
+      $grandChild = $element.affix('.grand-child.match')
+
+      $matches = up.util.selectInDynasty($element, '.match')
+      $expected = $grandMother.add($child).add($grandChild)
+      expect($matches).toEqual $expected
+
+    it 'finds the element itself if it matches the selector', ->
+      $element = affix('.element.match')
+      $matches = up.util.selectInDynasty($element, '.match')
+      expect($matches).toEqual $element
+
   describe 'up.util.memoize', ->
 
     it 'returns a function that calls the memoized function', ->

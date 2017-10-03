@@ -366,7 +366,7 @@ up.syntax = (($) ->
       up.syntax.data('.person') // returns { age: 18, name: 'Bob' }
 
   @function up.syntax.data
-  @param {String|Element|jQuery} elementOrSelector
+  @param {string|Element|jQuery} elementOrSelector
   @return
     The JSON-decoded value of the `up-data` attribute.
 

@@ -19,8 +19,8 @@ up.browser = (($) ->
 
   ###*
   @method up.browser.loadPage
-  @param {String} url
-  @param {String} [options.method='get']
+  @param {string} url
+  @param {string} [options.method='get']
   @param {Object|Array} [options.data]
   @internal
   ###
@@ -155,7 +155,7 @@ up.browser = (($) ->
   a request method other than GET.
 
   @function up.browser.canPushState
-  @return {Boolean}
+  @return {boolean}
   @experimental
   ###
   canPushState = u.memoize ->
@@ -186,7 +186,7 @@ up.browser = (($) ->
   animation by instantly jumping to the last frame.
 
   @function up.browser.canCssTransition
-  @return {Boolean}
+  @return {boolean}
   @internal
   ###
   canCssTransition = u.memoize ->
@@ -196,7 +196,7 @@ up.browser = (($) ->
   Returns whether this browser supports the DOM event [`input`](https://developer.mozilla.org/de/docs/Web/Events/input).
 
   @function up.browser.canInputEvent
-  @return {Boolean}
+  @return {boolean}
   @internal
   ###
   canInputEvent = u.memoize ->
@@ -207,7 +207,7 @@ up.browser = (($) ->
   interface.
 
   @function up.browser.canFormData
-  @return {Boolean}
+  @return {boolean}
   @experimental
   ###
   canFormData = u.memoize ->
@@ -218,7 +218,7 @@ up.browser = (($) ->
   interface.
 
   @function up.browser.canDomParser
-  @return {Boolean}
+  @return {boolean}
   @internal
   ###
   canDomParser = u.memoize ->
@@ -228,7 +228,7 @@ up.browser = (($) ->
   Returns whether this browser supports the [`debugging console`](https://developer.mozilla.org/en-US/docs/Web/API/Console).
 
   @function up.browser.canConsole
-  @return {Boolean}
+  @return {boolean}
   @internal
   ###
   canConsole = u.memoize ->
@@ -265,8 +265,8 @@ up.browser = (($) ->
   ###*
   @function up,browser.whenConfirmed
   @return {Promise}
-  @param {String} options.confirm
-  @param {Boolean} options.preload
+  @param {string} options.confirm
+  @param {boolean} options.preload
   @internal
   ###
   whenConfirmed = (options) ->

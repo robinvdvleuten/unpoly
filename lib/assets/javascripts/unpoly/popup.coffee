@@ -53,25 +53,25 @@ up.popup = (($) ->
   Sets default options for future popups.
 
   @property up.popup.config
-  @param {String} [config.position='bottom-right']
+  @param {string} [config.position='bottom-right']
     Defines where the popup is attached to the opening element.
 
     Valid values are `bottom-right`, `bottom-left`, `top-right` and `top-left`.
-  @param {String} [config.history=false]
+  @param {string} [config.history=false]
     Whether opening a popup will add a browser history entry.
-  @param {String} [config.openAnimation='fade-in']
+  @param {string} [config.openAnimation='fade-in']
     The animation used to open a popup.
-  @param {String} [config.closeAnimation='fade-out']
+  @param {string} [config.closeAnimation='fade-out']
     The animation used to close a popup.
-  @param {String} [config.openDuration]
+  @param {string} [config.openDuration]
     The duration of the open animation (in milliseconds).
-  @param {String} [config.closeDuration]
+  @param {string} [config.closeDuration]
     The duration of the close animation (in milliseconds).
-  @param {String} [config.openEasing]
+  @param {string} [config.openEasing]
     The timing function controlling the acceleration of the opening animation.
-  @param {String} [config.closeEasing]
+  @param {string} [config.closeEasing]
     The timing function controlling the acceleration of the closing animation.
-  @param {Boolean} [options.sticky=false]
+  @param {boolean} [options.sticky=false]
     If set to `true`, the popup remains
     open even it changes the page in the background.
   @stable
@@ -92,7 +92,7 @@ up.popup = (($) ->
   Returns `undefined` if no  popup is open.
 
   @function up.popup.url
-  @return {String}
+  @return {string}
     the source URL
   @stable
   ###
@@ -101,7 +101,7 @@ up.popup = (($) ->
   Returns the URL of the page or modal behind the popup.
 
   @function up.popup.coveredUrl
-  @return {String}
+  @return {string}
   @experimental
   ###
 
@@ -173,7 +173,7 @@ up.popup = (($) ->
   Returns whether popup modal is currently open.
 
   @function up.popup.isOpen
-  @return {Boolean}
+  @return {boolean}
   @stable
   ###
   isOpen = ->
@@ -185,39 +185,39 @@ up.popup = (($) ->
   Emits events [`up:popup:open`](/up:popup:open) and [`up:popup:opened`](/up:popup:opened).
 
   @function up.popup.attach
-  @param {Element|jQuery|String} anchor
+  @param {Element|jQuery|string} anchor
     The element to which the popup will be attached.
-  @param {String} [options.url]
+  @param {string} [options.url]
     The URL from which to fetch the popup contents.
 
     If omitted, the `href` or `up-href` attribute of the anchor element will be used.
 
     Will be ignored if `options.html` is given.
-  @param {String} [options.target]
+  @param {string} [options.target]
     A CSS selector that will be extracted from the response and placed into the popup.
-  @param {String} [options.position='bottom-right']
+  @param {string} [options.position='bottom-right']
     Defines where the popup is attached to the opening element.
 
     Valid values are `bottom-right`, `bottom-left`, `top-right` and `top-left`.
-  @param {String} [options.html]
+  @param {string} [options.html]
     A string of HTML from which to extract the popup contents. No network request will be made.
-  @param {String} [options.confirm]
+  @param {string} [options.confirm]
     A message that will be displayed in a cancelable confirmation dialog
     before the modal is being opened.
-  @param {String} [options.animation]
+  @param {string} [options.animation]
     The animation to use when opening the popup.
-  @param {Number} [options.duration]
+  @param {number} [options.duration]
     The duration of the animation. See [`up.animate()`](/up.animate).
-  @param {Number} [options.delay]
+  @param {number} [options.delay]
     The delay before the animation starts. See [`up.animate()`](/up.animate).
-  @param {String} [options.easing]
+  @param {string} [options.easing]
     The timing function that controls the animation's acceleration. [`up.animate()`](/up.animate).
-  @param {String} [options.method="GET"]
+  @param {string} [options.method="GET"]
     Override the request method.
-  @param {Boolean} [options.sticky=false]
+  @param {boolean} [options.sticky=false]
     If set to `true`, the popup remains
     open even if the page changes in the background.
-  @param {Object} [options.history=false]
+  @param {boolean} [options.history=false]
   @return {Promise}
     A promise that will be resolved when the popup has been loaded and
     the opening animation has completed.
@@ -355,9 +355,9 @@ up.popup = (($) ->
   within the current popup.
 
   @methods up.popup.contains
-  @param {String} elementOrSelector
+  @param {string} elementOrSelector
     The element to test
-  @return {Boolean}
+  @return {boolean}
   @stable
   ###
   contains = (elementOrSelector) ->
@@ -376,22 +376,22 @@ up.popup = (($) ->
       <a href="/settings" up-popup=".options" up-sticky>Settings</a>
 
   @selector [up-popup]
-  @param {String} up-popup
+  @param {string} up-popup
     The CSS selector that will be extracted from the response and
     displayed in a popup overlay.
   @param [up-position]
     Defines where the popup is attached to the opening element.
 
     Valid values are `bottom-right`, `bottom-left`, `top-right` and `top-left`.
-  @param {String} [up-confirm]
+  @param {string} [up-confirm]
     A message that will be displayed in a cancelable confirmation dialog
     before the popup is opened.
-  @param {String} [up-method='GET']
+  @param {string} [up-method='GET']
     Override the request method.
   @param [up-sticky]
     If set to `true`, the popup remains
     open even if the page changes in the background.
-  @param {String} [up-history='false']
+  @param {string} [up-history='false']
     Whether to push an entry to the browser history for the popup's source URL.
 
     Set this to `'false'` to prevent the URL bar from being updated.

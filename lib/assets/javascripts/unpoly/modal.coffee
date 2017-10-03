@@ -64,24 +64,24 @@ up.modal = (($) ->
   Sets default options for future modals.
 
   @property up.modal.config
-  @param {String} [config.history=true]
+  @param {string} [config.history=true]
     Whether opening a modal will add a browser history entry.
-  @param {Number} [config.width]
+  @param {number} [config.width]
     The width of the dialog as a CSS value like `'400px'` or `'50%'`.
 
     Defaults to `undefined`, meaning that the dialog will grow to fit its contents
     until it reaches `config.maxWidth`. Leaving this as `undefined` will
     also allow you to control the width using CSS on `.up-modal-dialog´.
-  @param {Number} [config.maxWidth]
+  @param {number} [config.maxWidth]
     The width of the dialog as a CSS value like `'400px'` or `50%`.
     You can set this to `undefined` to make the dialog fit its contents.
     Be aware however, that e.g. Bootstrap stretches input elements
     to `width: 100%`, meaning the dialog will also stretch to the full
     width of the screen.
-  @param {Number} [config.height='auto']
+  @param {number} [config.height='auto']
     The height of the dialog in pixels.
     Defaults to `undefined`, meaning that the dialog will grow to fit its contents.
-  @param {String|Function(config)} [config.template]
+  @param {string|Function(config)} [config.template]
     A string containing the HTML structure of the modal.
     You can supply an alternative template string, but make sure that it
     defines tag with the classes `up-modal`, `up-modal-dialog` and  `up-modal-content`.
@@ -89,34 +89,34 @@ up.modal = (($) ->
     You can also supply a function that returns a HTML string.
     The function will be called with the modal options (merged from these defaults
     and any per-open overrides) whenever a modal opens.
-  @param {String} [config.closeLabel='×']
+  @param {string} [config.closeLabel='×']
     The label of the button that closes the dialog.
-  @param {Boolean} [config.closable=true]
+  @param {boolean} [config.closable=true]
     When `true`, the modal will render a close icon and close when the user
     clicks on the backdrop or presses Escape.
 
     When `false`, you need to either supply an element with `[up-close]` or
     close the modal manually with `up.modal.close()`.
-  @param {String} [config.openAnimation='fade-in']
+  @param {string} [config.openAnimation='fade-in']
     The animation used to open the viewport around the dialog.
-  @param {String} [config.closeAnimation='fade-out']
+  @param {string} [config.closeAnimation='fade-out']
     The animation used to close the viewport the dialog.
-  @param {String} [config.backdropOpenAnimation='fade-in']
+  @param {string} [config.backdropOpenAnimation='fade-in']
     The animation used to open the backdrop that dims the page below the dialog.
-  @param {String} [config.backdropCloseAnimation='fade-out']
+  @param {string} [config.backdropCloseAnimation='fade-out']
     The animation used to close the backdrop that dims the page below the dialog.
-  @param {Number} [config.openDuration]
+  @param {number} [config.openDuration]
     The duration of the open animation (in milliseconds).
-  @param {Number} [config.closeDuration]
+  @param {number} [config.closeDuration]
     The duration of the close animation (in milliseconds).
-  @param {String} [config.openEasing]
+  @param {string} [config.openEasing]
     The timing function controlling the acceleration of the opening animation.
-  @param {String} [config.closeEasing]
+  @param {string} [config.closeEasing]
     The timing function controlling the acceleration of the closing animation.
-  @param {Boolean} [options.sticky=false]
+  @param {boolean} [options.sticky=false]
     If set to `true`, the modal remains
     open even it changes the page in the background.
-  @param {String} [options.flavor='default']
+  @param {string} [options.flavor='default']
     The default [flavor](/up.modal.flavors).
   @stable
   ###
@@ -197,7 +197,7 @@ up.modal = (($) ->
   or `undefined` if no modal is currently open.
 
   @function up.modal.url
-  @return {String}
+  @return {string}
     the source URL
   @stable
   ###
@@ -206,7 +206,7 @@ up.modal = (($) ->
   Returns the URL of the page behind the modal overlay.
 
   @function up.modal.coveredUrl
-  @return {String}
+  @return {string}
   @experimental
   ###
   
@@ -299,7 +299,7 @@ up.modal = (($) ->
   This also returns `true` if the modal is in an opening or closing animation.
 
   @function up.modal.isOpen
-  @return {Boolean}
+  @return {boolean}
   @stable
   ###
   isOpen = ->
@@ -316,42 +316,42 @@ up.modal = (($) ->
   Emits events [`up:modal:open`](/up:modal:open) and [`up:modal:opened`](/up:modal:opened).
 
   @function up.modal.follow
-  @param {Element|jQuery|String} linkOrSelector
+  @param {Element|jQuery|string} linkOrSelector
     The link to follow.
-  @param {String} [options.target]
+  @param {string} [options.target]
     The selector to extract from the response and open in a modal dialog.
-  @param {Number} [options.width]
+  @param {number} [options.width]
     The width of the dialog in pixels.
     By [default](/up.modal.config) the dialog will grow to fit its contents.
-  @param {Number} [options.height]
+  @param {number} [options.height]
     The width of the dialog in pixels.
     By [default](/up.modal.config) the dialog will grow to fit its contents.
-  @param {Boolean} [options.sticky=false]
+  @param {boolean} [options.sticky=false]
     If set to `true`, the modal remains
     open even it changes the page in the background.
-  @param {Boolean} [config.closable=true]
+  @param {boolean} [config.closable=true]
     When `true`, the modal will render a close icon and close when the user
     clicks on the backdrop or presses Escape.
 
     When `false`, you need to either supply an element with `[up-close]` or
     close the modal manually with `up.modal.close()`.
-  @param {String} [options.confirm]
+  @param {string} [options.confirm]
     A message that will be displayed in a cancelable confirmation dialog
     before the modal is being opened.
-  @param {String} [options.method="GET"]
+  @param {string} [options.method="GET"]
     Override the request method.
-  @param {Object} [options.history=true]
+  @param {boolean} [options.history=true]
     Whether to add a browser history entry for the modal's source URL.
-  @param {String} [options.animation]
+  @param {string} [options.animation]
     The animation to use when opening the modal.
-  @param {Number} [options.duration]
+  @param {number} [options.duration]
     The duration of the animation. See [`up.animate()`](/up.animate).
-  @param {Number} [options.delay]
+  @param {number} [options.delay]
     The delay before the animation starts. See [`up.animate()`](/up.animate).
-  @param {String} [options.easing]
+  @param {string} [options.easing]
     The timing function that controls the animation's acceleration. [`up.animate()`](/up.animate).
   @return {Promise}
-    A promise that will be resolved when the modal has been loaded and
+    A promise that will be fulfilled when the modal has been loaded and
     the opening animation has completed.
   @stable
   ###
@@ -373,15 +373,15 @@ up.modal = (($) ->
   Emits events [`up:modal:open`](/up:modal:open) and [`up:modal:opened`](/up:modal:opened).
 
   @function up.modal.visit
-  @param {String} url
+  @param {string} url
     The URL to load.
-  @param {String} options.target
+  @param {string} options.target
     The CSS selector to extract from the response.
     The extracted content will be placed into the dialog window.
   @param {Object} options
     See options for [`up.modal.follow()`](/up.modal.follow).
   @return {Promise}
-    A promise that will be resolved when the modal has been loaded and the opening
+    A promise that will be fulfilled when the modal has been loaded and the opening
     animation has completed.
   @stable
   ###
@@ -406,14 +406,14 @@ up.modal = (($) ->
   Emits events [`up:modal:open`](/up:modal:open) and [`up:modal:opened`](/up:modal:opened).
 
   @function up.modal.extract
-  @param {String} selector
+  @param {string} selector
     The CSS selector to extract from the HTML.
-  @param {String} html
+  @param {string} html
     The HTML containing the modal content.
   @param {Object} options
     See options for [`up.modal.follow()`](/up.modal.follow).
   @return {Promise}
-    A promise that will be resolved when the modal has been opened and the opening
+    A promise that will be fulfilled when the modal has been opened and the opening
     animation has completed.
   @stable
   ###
@@ -509,7 +509,7 @@ up.modal = (($) ->
   @param {Object} options
     See options for [`up.animate()`](/up.animate)
   @return {Promise}
-    A promise that will be resolved once the modal's close
+    A promise that will be fulfilled once the modal's close
     animation has finished.
   @stable
   ###
@@ -613,9 +613,9 @@ up.modal = (($) ->
   within the current modal.
 
   @function up.modal.contains
-  @param {String} elementOrSelector
+  @param {string} elementOrSelector
     The element to test
-  @return {Boolean}
+  @return {boolean}
   @stable
   ###
   contains = (elementOrSelector) ->
@@ -662,33 +662,33 @@ up.modal = (($) ->
   a modal dialog.
 
   @selector [up-modal]
-  @param {String} up-modal
+  @param {string} up-modal
     The CSS selector that will be extracted from the response and displayed in a modal dialog.
-  @param {String} [up-confirm]
+  @param {string} [up-confirm]
     A message that will be displayed in a cancelable confirmation dialog
     before the modal is opened.
-  @param {String} [up-method='GET']
+  @param {string} [up-method='GET']
     Override the request method.
-  @param {String} [up-sticky]
+  @param {string} [up-sticky]
     If set to `"true"`, the modal remains
     open even if the page changes in the background.
-  @param {Boolean} [up-closable]
+  @param {boolean} [up-closable]
     When `true`, the modal will render a close icon and close when the user
     clicks on the backdrop or presses Escape.
 
     When `false`, you need to either supply an element with `[up-close]` or
     close the modal manually with `up.modal.close()`.
-  @param {String} [up-animation]
+  @param {string} [up-animation]
     The animation to use when opening the viewport containing the dialog.
-  @param {String} [up-backdrop-animation]
+  @param {string} [up-backdrop-animation]
     The animation to use when opening the backdrop that dims the page below the dialog.
-  @param {String} [up-height]
+  @param {string} [up-height]
     The width of the dialog in pixels.
     By [default](/up.modal.config) the dialog will grow to fit its contents.
-  @param {String} [up-width]
+  @param {string} [up-width]
     The width of the dialog in pixels.
     By [default](/up.modal.config) the dialog will grow to fit its contents.
-  @param {String} [up-history]
+  @param {string} [up-history]
     Whether to push an entry to the browser history for the modal's source URL.
 
     Set this to `'false'` to prevent the URL bar from being updated.
@@ -762,9 +762,9 @@ up.modal = (($) ->
   a modal drawer.
 
   @selector [up-drawer]
-  @param {String} up-drawer
+  @param {string} up-drawer
     The CSS selector to extract from the response and open in the drawer.
-  @param {String} [up-position='auto']
+  @param {string} [up-position='auto']
     The side from which the drawer slides in.
 
     Valid values are `'left'`, `'right'` and `'auto'`. If set to `'auto'`, the

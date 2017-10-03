@@ -54,19 +54,19 @@ up.proxy = (($) ->
 
   ###*
   @property up.proxy.config
-  @param {Number} [config.preloadDelay=75]
+  @param {number} [config.preloadDelay=75]
     The number of milliseconds to wait before [`[up-preload]`](/up-preload)
     starts preloading.
-  @param {Number} [config.cacheSize=70]
+  @param {number} [config.cacheSize=70]
     The maximum number of responses to cache.
     If the size is exceeded, the oldest items will be dropped from the cache.
-  @param {Number} [config.cacheExpiry=300000]
+  @param {number} [config.cacheExpiry=300000]
     The number of milliseconds until a cache entry expires.
     Defaults to 5 minutes.
-  @param {Number} [config.slowDelay=300]
+  @param {number} [config.slowDelay=300]
     How long the proxy waits until emitting the [`up:proxy:slow` event](/up:proxy:slow).
     Use this to prevent flickering of spinners.
-  @param {Number} [config.maxRequests=4]
+  @param {number} [config.maxRequests=4]
     The maximum number of concurrent requests to allow before additional
     requests are queued. This currently ignores preloading requests.
 
@@ -75,11 +75,11 @@ up.proxy = (($) ->
 
     Note that your browser might [impose its own request limit](http://www.browserscope.org/?category=network)
     regardless of what you configure here.
-  @param {Array<String>} [config.wrapMethods]
+  @param {Array<string>} [config.wrapMethods]
     An array of uppercase HTTP method names. AJAX requests with one of these methods
     will be converted into a `POST` request and carry their original method as a `_method`
     parameter. This is to [prevent unexpected redirect behavior](https://makandracards.com/makandra/38347).
-  @param {Array<String>} [config.safeMethods]
+  @param {Array<string>} [config.safeMethods]
     An array of uppercase HTTP method names that are considered idempotent.
     The proxy cache will only cache idempotent requests and will clear the entire
     cache after a non-idempotent request.
@@ -194,10 +194,10 @@ up.proxy = (($) ->
   be emitted.
   
   @function up.ajax
-  @param {String} url
-  @param {String} [request.method='GET']
-  @param {String} [request.target='body']
-  @param {Boolean} [request.cache]
+  @param {string} url
+  @param {string} [request.method='GET']
+  @param {string} [request.target='body']
+  @param {boolean} [request.cache]
     Whether to use a cached response, if available.
     If set to `false` a network connection will always be attempted.
   @param {Object} [request.headers={}]
@@ -205,10 +205,10 @@ up.proxy = (($) ->
     with the request.
   @param {Object} [request.data={}]
     An object of request parameters.
-  @param {String} [request.url]
+  @param {string} [request.url]
     You can omit the first string argument and pass the URL as
     a `request` property instead.
-  @param {String} [request.timeout]
+  @param {string} [request.timeout]
     A timeout in milliseconds for the request.
 
     If [`up.proxy.config.maxRequests`](/up.proxy.config#config.maxRequests) is set, the timeout
@@ -268,7 +268,7 @@ up.proxy = (($) ->
   for a request to finish. Returns `false` otherwise.
 
   @function up.proxy.isIdle
-  @return {Boolean}
+  @return {boolean}
     Whether the proxy is idle
   @experimental
   ###
@@ -280,7 +280,7 @@ up.proxy = (($) ->
   for a request to finish. Returns `false` otherwise.
 
   @function up.proxy.isBusy
-  @return {Boolean}
+  @return {boolean}
     Whether the proxy is busy
   @experimental
   ###
@@ -402,7 +402,7 @@ up.proxy = (($) ->
       url: request.url
       body: xhr.responseText
       status: xhr.status
-      # A String "success", "notmodified", "nocontent", "error", "timeout", "abort", or "parsererror"
+      # A string "success", "notmodified", "nocontent", "error", "timeout", "abort", or "parsererror"
       textStatus: textStatus
       request: request
       xhr: xhr
@@ -472,9 +472,9 @@ up.proxy = (($) ->
   Manually stores a promise for the response to the given request.
 
   @function up.proxy.set
-  @param {String} request.url
-  @param {String} [request.method='GET']
-  @param {String} [request.target='body']
+  @param {string} request.url
+  @param {string} [request.method='GET']
+  @param {string} [request.target='body']
   @param {Promise} response
     A promise for the response that is API-compatible with the
     promise returned by [`jQuery.ajax`](http://api.jquery.com/jquery.ajax/).
@@ -489,9 +489,9 @@ up.proxy = (($) ->
   automatically removes cache entries.
 
   @function up.proxy.remove
-  @param {String} request.url
-  @param {String} [request.method='GET']
-  @param {String} [request.target='body']
+  @param {string} request.url
+  @param {string} [request.method='GET']
+  @param {string} [request.target='body']
   @experimental
   ###
   remove = cache.remove
@@ -544,7 +544,7 @@ up.proxy = (($) ->
 
   ###*
   @function up.proxy.preload
-  @param {String|Element|jQuery}
+  @param {string|Element|jQuery}
     The element whose destination should be preloaded.
   @return
     A promise that will be resolved when the request was loaded and cached

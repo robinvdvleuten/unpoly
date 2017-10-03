@@ -81,9 +81,9 @@ up.link = (($) ->
       up.visit('/users')
 
   @function up.visit
-  @param {String} url
+  @param {string} url
     The URL to visit.
-  @param {String} [options.target='body']
+  @param {string} [options.target='body']
     The selector to replace.
   @param {Object} [options]
     See options for [`up.replace()`](/up.replace)
@@ -110,54 +110,54 @@ up.link = (($) ->
   The unobtrusive variant of this are the [`a[up-target]`](/a-up-target) and [`a[up-follow]`](/a-up-follow) selectors.
 
   @function up.follow
-  @param {Element|jQuery|String} linkOrSelector
+  @param {Element|jQuery|string} linkOrSelector
     An element or selector which resolves to an `<a>` tag
     or any element that is marked up with an `up-href` attribute.
-  @param {String} [options.target]
+  @param {string} [options.target]
     The selector to replace.
     Defaults to the `up-target` attribute on `link`, or to `body` if such an attribute does not exist.
-  @param {String} [options.failTarget]
+  @param {string} [options.failTarget]
     The selector to replace if the server responds with a non-200 status code.
     Defaults to the `up-fail-target` attribute on `link`, or to `body` if such an attribute does not exist.
-  @param {String} [options.fallback]
+  @param {string} [options.fallback]
     The selector to update when the original target was not found in the page.
-  @param {String} [options.method='get']
+  @param {string} [options.method='get']
     The HTTP method to use for the request.
-  @param {String} [options.confirm]
+  @param {string} [options.confirm]
     A message that will be displayed in a cancelable confirmation dialog
     before the link is followed.
-  @param {Function|String} [options.transition]
+  @param {Function|string} [options.transition]
     A transition function or name.
-  @param {Function|String} [options.failTransition]
+  @param {Function|string} [options.failTransition]
     The transition to use if the server responds with a non-200 status code.
-  @param {Number} [options.duration]
+  @param {number} [options.duration]
     The duration of the transition. See [`up.morph()`](/up.morph).
-  @param {Number} [options.delay]
+  @param {number} [options.delay]
     The delay before the transition starts. See [`up.morph()`](/up.morph).
-  @param {String} [options.easing]
+  @param {string} [options.easing]
     The timing function that controls the transition's acceleration. [`up.morph()`](/up.morph).
-  @param {Element|jQuery|String} [options.reveal]
+  @param {Element|jQuery|string} [options.reveal]
     Whether to reveal the target  element within its viewport before updating.
-  @param {Boolean} [options.restoreScroll]
+  @param {boolean} [options.restoreScroll]
     If set to `true`, this will attempt to [restore scroll positions](/up.restoreScroll)
     previously seen on the destination URL.
-  @param {Boolean} [options.cache]
+  @param {boolean} [options.cache]
     Whether to force the use of a cached response (`true`)
     or never use the cache (`false`)
     or make an educated guess (`undefined`).
   @param {Object} [options.headers={}]
     An object of additional header key/value pairs to send along
     with the request.
-  @param {Object} [options.timeout={}]
+  @param {number} [options.timeout]
     A timeout in milliseconds for the request.
-  @param {String} [options.layer='auto']
+  @param {string} [options.layer='auto']
     The name of the layer that ought to be updated. Valid values are
     `auto`, `page`, `modal` and `popup`.
 
     If set to `auto` (default), Unpoly will try to find a match in the
     same layer as the given link. If no match was found in that layer,
     Unpoly will search in other layers, starting from the topmost layer.
-  @param {String} [options.failLayer='auto']
+  @param {string} [options.failLayer='auto']
     The name of the layer that ought to be updated if the server sends a non-200 status code.
 
   @return {Promise}
@@ -206,7 +206,7 @@ up.link = (($) ->
 
   @function up.link.followMethod
   @param linkOrSelector
-  @param options.method {String}
+  @param options.method {string}
   @internal
   ###
   followMethod = (linkOrSelector, options) ->
@@ -238,7 +238,7 @@ up.link = (($) ->
   like `up-target` or `up-modal`.
 
   @function up.link.isFollowable
-  @param {Element|jQuery|String} linkOrSelector
+  @param {Element|jQuery|string} linkOrSelector
     The link to check.
   @experimental
   ###
@@ -250,8 +250,8 @@ up.link = (($) ->
   E.g. it wil return a handler calling `up.modal.follow` if the link is a `[up-modal]`,
   but a handler calling `up.link.follow` if the links is `[up-target]`.
 
-  @param {Element|jQuery|String}
-  @return {Function<jQuery>}
+  @param {Element|jQuery|string}
+  @return {Function(jQuery)}
   @internal
   ###
   followVariantForLink = (linkOrSelector, options) ->
@@ -268,7 +268,7 @@ up.link = (($) ->
   unless it already have it an attribute like `up-target` or `up-modal`.
 
   @function up.link.makeFollowable
-  @param {Element|jQuery|String} linkOrSelector
+  @param {Element|jQuery|string} linkOrSelector
     The link to process.
   @experimental
   ###
@@ -330,42 +330,42 @@ up.link = (($) ->
   opening the destination in a new tab.
 
   @selector a[up-target]
-  @param {String} up-target
+  @param {string} up-target
     The CSS selector to replace
-  @param {String} [up-method='get']
+  @param {string} [up-method='get']
     The HTTP method to use for the request.
-  @param {String} [up-transition='none']
+  @param {string} [up-transition='none']
     The [transition](/up.motion) to use for morphing between the old and new elements.
   @param [up-fail-target='body']
     The selector to replace if the server responds with a non-200 status code.
-  @param {String} [up-fail-transition='none']
+  @param {string} [up-fail-transition='none']
     The [transition](/up.motion) to use for morphing between the old and new elements
     when the server responds with a non-200 status code.
-  @param {String} [up-fallback]
+  @param {string} [up-fallback]
     The selector to update when the original target was not found in the page.
-  @param {String} [up-href]
+  @param {string} [up-href]
     The destination URL to follow.
     If omitted, the the link's `href` attribute will be used.
-  @param {String} [up-confirm]
+  @param {string} [up-confirm]
     A message that will be displayed in a cancelable confirmation dialog
     before the link is followed.
-  @param {String} [up-reveal='true']
+  @param {string} [up-reveal='true']
     Whether to reveal the target element within its viewport before updating.
-  @param {String} [up-restore-scroll='false']
+  @param {string} [up-restore-scroll='false']
     Whether to restore previously known scroll position of all viewports
     within the target selector.
-  @param {String} [up-cache]
+  @param {string} [up-cache]
     Whether to force the use of a cached response (`true`)
     or never use the cache (`false`)
     or make an educated guess (default).
-  @param {String} [up-layer='auto']
+  @param {string} [up-layer='auto']
     The name of the layer that ought to be updated. Valid values are
     `auto`, `page`, `modal` and `popup`.
 
     If set to `auto` (default), Unpoly will try to find a match in the link's layer.
     If no match was found in that layer,
     Unpoly will search in other layers, starting from the topmost layer.
-  @param {String} [up-fail-layer='auto']
+  @param {string} [up-fail-layer='auto']
     The name of the layer that ought to be updated if the server sends a
     non-200 status code.
   @param [up-history]
@@ -423,24 +423,24 @@ up.link = (($) ->
 
   @selector a[up-follow]
 
-  @param {String} [up-method='get']
+  @param {string} [up-method='get']
     The HTTP method to use for the request.
   @param [up-fail-target='body']
     The selector to replace if the server responds with a non-200 status code.
-  @param {String} [up-fallback]
+  @param {string} [up-fallback]
     The selector to update when the original target was not found in the page.
-  @param {String} [up-transition='none']
+  @param {string} [up-transition='none']
     The [transition](/up.motion) to use for morphing between the old and new elements.
-  @param {String} [up-fail-transition='none']
+  @param {string} [up-fail-transition='none']
     The [transition](/up.motion) to use for morphing between the old and new elements
     when the server responds with a non-200 status code.
   @param [up-href]
     The destination URL to follow.
     If omitted, the the link's `href` attribute will be used.
-  @param {String} [up-confirm]
+  @param {string} [up-confirm]
     A message that will be displayed in a cancelable confirmation dialog
     before the link is followed.
-  @param {String} [up-history]
+  @param {string} [up-history]
     Whether to push an entry to the browser history when following the link.
 
     Set this to `'false'` to prevent the URL bar from being updated.
@@ -527,7 +527,7 @@ up.link = (($) ->
 
 
   @selector [up-expand]
-  @param {String} [up-expand]
+  @param {string} [up-expand]
     A CSS selector that defines which containing link should be expanded.
 
     If omitted, the first contained link will be expanded.

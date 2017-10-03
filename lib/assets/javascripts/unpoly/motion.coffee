@@ -44,16 +44,16 @@ up.motion = (($) ->
   Sets default options for animations and transitions.
 
   @property up.motion.config
-  @param {Number} [config.duration=300]
+  @param {number} [config.duration=300]
     The default duration for all animations and transitions (in milliseconds).
-  @param {Number} [config.delay=0]
+  @param {number} [config.delay=0]
     The default delay for all animations and transitions (in milliseconds).
-  @param {String} [config.easing='ease']
+  @param {string} [config.easing='ease']
     The default timing function that controls the acceleration of animations and transitions.
 
     See [W3C documentation](http://www.w3.org/TR/css3-transitions/#transition-timing-function)
     for a list of pre-defined timing functions.
-  @param {Boolean} [config.enabled=true]
+  @param {boolean} [config.enabled=true]
     Whether animation is enabled.
 
     Set this to `false` to disable animation globally.
@@ -81,7 +81,7 @@ up.motion = (($) ->
   Set [`up.motion.config.enabled`](/up.motion.config) `false` in order to disable animations globally.
 
   @function up.motion.isEnabled
-  @return {Boolean}
+  @return {boolean}
   @stable
   ###
   isEnabled = ->
@@ -138,19 +138,19 @@ up.motion = (($) ->
   the new animation begins.
 
   @function up.animate
-  @param {Element|jQuery|String} elementOrSelector
+  @param {Element|jQuery|string} elementOrSelector
     The element to animate.
-  @param {String|Function|Object} animation
+  @param {string|Function|Object} animation
     Can either be:
 
     - The animation's name
     - A function performing the animation
     - An object of CSS attributes describing the last frame of the animation
-  @param {Number} [options.duration=300]
+  @param {number} [options.duration=300]
     The duration of the animation, in milliseconds.
-  @param {Number} [options.delay=0]
+  @param {number} [options.delay=0]
     The delay before the animation starts, in milliseconds.
-  @param {String} [options.easing='ease']
+  @param {string} [options.easing='ease']
     The timing function that controls the animation's acceleration.
 
     See [W3C documentation](http://www.w3.org/TR/css3-transitions/#transition-timing-function)
@@ -277,7 +277,7 @@ up.motion = (($) ->
   Does nothing if there are no animation to complete.
   
   @function up.motion.finish
-  @param {Element|jQuery|String} [elementOrSelector]
+  @param {Element|jQuery|string} [elementOrSelector]
   @stable
   ###
   finish = (elementOrSelector = '.up-animating') ->
@@ -348,19 +348,19 @@ up.motion = (($) ->
     The old element remains hidden in the DOM.
 
   @function up.morph
-  @param {Element|jQuery|String} source
-  @param {Element|jQuery|String} target
-  @param {Function|String} transitionOrName
-  @param {Number} [options.duration=300]
+  @param {Element|jQuery|string} source
+  @param {Element|jQuery|string} target
+  @param {Function|string} transitionOrName
+  @param {number} [options.duration=300]
     The duration of the animation, in milliseconds.
-  @param {Number} [options.delay=0]
+  @param {number} [options.delay=0]
     The delay before the animation starts, in milliseconds.
-  @param {String} [options.easing='ease']
+  @param {string} [options.easing='ease']
     The timing function that controls the transition's acceleration.
 
     See [W3C documentation](http://www.w3.org/TR/css3-transitions/#transition-timing-function)
     for a list of pre-defined timing functions.
-  @param {Boolean} [options.reveal=false]
+  @param {boolean} [options.reveal=false]
     Whether to reveal the new element by scrolling its parent viewport.
   @return {Promise}
     A promise for the transition's end.
@@ -502,7 +502,7 @@ up.motion = (($) ->
   will take care of all these points.
 
   @function up.transition
-  @param {String} name
+  @param {string} name
   @param {Function} transition
   @stable
   ###
@@ -536,7 +536,7 @@ up.motion = (($) ->
   will take care of all these points.
 
   @function up.animation
-  @param {String} name
+  @param {string} name
   @param {Function} animation
   @stable
   ###

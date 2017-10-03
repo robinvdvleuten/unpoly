@@ -165,9 +165,9 @@ up.bus = (($) ->
       });
 
   @function up.on
-  @param {String} events
+  @param {string} events
     A space-separated list of event names to bind.
-  @param {String} [selector]
+  @param {string} [selector]
     The selector of an element on which the event must be triggered.
     Omit the selector to listen to all events with that name, regardless
     of the event target.
@@ -251,7 +251,7 @@ up.bus = (($) ->
       # Prints "bar" to the console
 
   @function up.emit
-  @param {String} eventName
+  @param {string} eventName
     The name of the event.
   @param {Object} [eventProps={}]
     A list of properties to become part of the event object
@@ -260,7 +260,7 @@ up.bus = (($) ->
     or `stopPropagation()`.
   @param {jQuery} [eventProps.$element=$(document)]
     The element on which the event is triggered.
-  @param {String|Array} [eventProps.message]
+  @param {string|Array} [eventProps.message]
     A message to print to the console when the event is emitted.
     If omitted, a default message is printed.
     Set this to `false` to prevent any console output.
@@ -303,10 +303,10 @@ up.bus = (($) ->
   has prevented the default action.
 
   @function up.bus.nobodyPrevents
-  @param {String} eventName
+  @param {string} eventName
   @param {Object} eventProps
-  @param {String|Array} [eventProps.message]
-  @return {Boolean}
+  @param {string|Array} [eventProps.message]
+  @return {boolean}
     whether no listener has prevented the default action
   @experimental
   ###
@@ -320,15 +320,15 @@ up.bus = (($) ->
 
   ###*
   [Emits](/up.emit) the given event and returns a promise
-  that will be resolved if no listener has prevented the default action.
+  that will be fulfilled if no listener has prevented the default action.
 
   If any listener prevented the default listener
   the returned promise will never be resolved.
 
   @function up.bus.whenEmitted
-  @param {String} eventName
+  @param {string} eventName
   @param {Object} eventProps
-  @param {String|Array} [eventProps.message]
+  @param {string|Array} [eventProps.message]
   @return {Promise}
   @internal
   ###

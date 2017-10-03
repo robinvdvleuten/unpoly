@@ -54,11 +54,11 @@ up.util = (($) ->
   By default hashes are ignored, search queries are included.
   
   @function up.util.normalizeUrl
-  @param {Boolean} [options.hash=false]
+  @param {boolean} [options.hash=false]
     Whether to include an `#hash` anchor in the normalized URL
-  @param {Boolean} [options.search=true]
+  @param {boolean} [options.search=true]
     Whether to include a `?query` string in the normalized URL
-  @param {Boolean} [options.stripTrailingSlash=false]
+  @param {boolean} [options.stripTrailingSlash=false]
     Whether to strip a trailing slash from the pathname
   @internal
   ###
@@ -180,7 +180,7 @@ up.util = (($) ->
   - The element's tag names
 
   @function up.util.selectorForElement
-  @param {String|Element|jQuery}
+  @param {string|Element|jQuery}
     The element for which to create a selector.
   @experimental
   ###
@@ -242,9 +242,9 @@ up.util = (($) ->
   Returns a new string with whitespace removed from the beginning
   and end of the given string.
 
-  @param {String}
+  @param {string}
     A string that might have whitespace at the beginning and end.
-  @return {String}
+  @return {string}
     The trimmed string.
   @stable
   ###
@@ -255,8 +255,8 @@ up.util = (($) ->
   of the given array.
 
   @function up.util.each
-  @param {Array} array
-  @param {Function<Object, Number>} block
+  @param {Array<T>} array
+  @param {Function(T, number)} block
     A function that will be called with each element and (optional) iteration index.
   @stable
   ###
@@ -267,8 +267,8 @@ up.util = (($) ->
   Translate all items in an array to new array of items.
 
   @function up.util.map
-  @param {Array} array
-  @param {Function<Object, Number>} block
+  @param {Array<T>} array
+  @param {Function(T, number): any} block
     A function that will be called with each element and (optional) iteration index.
   @return {Array}
     A new array containing the result of each function call.
@@ -280,7 +280,7 @@ up.util = (($) ->
   Calls the given function for the given number of times.
 
   @function up.util.times
-  @param {Number} count
+  @param {number} count
   @param {Function} block
   @stable
   ###
@@ -292,7 +292,7 @@ up.util = (($) ->
 
   @function up.util.isNull
   @param object
-  @return {Boolean}
+  @return {boolean}
   @stable
   ###
   isNull = (object) ->
@@ -303,18 +303,18 @@ up.util = (($) ->
 
   @function up.util.isUndefined
   @param object
-  @return {Boolean}
+  @return {boolean}
   @stable
   ###
   isUndefined = (object) ->
-    object == `void(0)`
+    object == undefined
 
   ###*
   Returns whether the given argument is not `undefined`.
 
   @function up.util.isDefined
   @param object
-  @return {Boolean}
+  @return {boolean}
   @stable
   ###
   isDefined = (object) ->
@@ -329,7 +329,7 @@ up.util = (($) ->
 
   @function up.util.isMissing
   @param object
-  @return {Boolean}
+  @return {boolean}
   @stable
   ###
   isMissing = (object) ->
@@ -344,7 +344,7 @@ up.util = (($) ->
 
   @function up.util.isGiven
   @param object
-  @return {Boolean}
+  @return {boolean}
   @stable
   ###
   isGiven = (object) ->
@@ -368,13 +368,13 @@ up.util = (($) ->
 
   @function up.util.isBlank
   @param object
-  @return {Boolean}
+  @return {boolean}
   @stable
   ###
   isBlank = (object) ->
     isMissing(object) ||                  # null or undefined
     (isObject(object) && Object.keys(object).length == 0) ||
-    (object.length == 0)                  # String, Array, jQuery
+    (object.length == 0)                  # string, Array, jQuery
 
   ###*
   Returns the given argument if the argument is [present](/up.util.isPresent),
@@ -382,9 +382,9 @@ up.util = (($) ->
 
   @function up.util.presence
   @param object
-  @param {Function<T>} [tester=up.util.isPresent]
+  @param {Function(T): boolean} [tester=up.util.isPresent]
     The function that will be used to test whether the argument is present.
-  @return {T|Undefined}
+  @return {T|undefined}
   @stable
   ###
   presence = (object, tester = isPresent) ->
@@ -395,7 +395,7 @@ up.util = (($) ->
 
   @function up.util.isPresent
   @param object
-  @return {Boolean}
+  @return {boolean}
   @stable
   ###
   isPresent = (object) ->
@@ -406,7 +406,7 @@ up.util = (($) ->
 
   @function up.util.isFunction
   @param object
-  @return {Boolean}
+  @return {boolean}
   @stable
   ###
   isFunction = (object) ->
@@ -417,7 +417,7 @@ up.util = (($) ->
 
   @function up.util.isString
   @param object
-  @return {Boolean}
+  @return {boolean}
   @stable
   ###
   isString = (object) ->
@@ -431,18 +431,18 @@ up.util = (($) ->
 
   @function up.util.isNumber
   @param object
-  @return {Boolean}
+  @return {boolean}
   @stable
   ###
   isNumber = (object) ->
-    typeof(object) == 'number'
+    typeof(object) == 'number' || object instanceof Number
 
   ###*
   Returns whether the given argument is an object, but not a function.
 
   @function up.util.isHash
   @param object
-  @return {Boolean}
+  @return {boolean}
   @stable
   ###
   isHash = (object) ->
@@ -456,7 +456,7 @@ up.util = (($) ->
 
   @function up.util.isObject
   @param object
-  @return {Boolean}
+  @return {boolean}
   @stable
   ###
   isObject = (object) ->
@@ -467,7 +467,7 @@ up.util = (($) ->
 
   @function up.util.isElement
   @param object
-  @return {Boolean}
+  @return {boolean}
   @stable
   ###
   isElement = (object) ->
@@ -478,7 +478,7 @@ up.util = (($) ->
 
   @function up.util.isJQuery
   @param object
-  @return {Boolean}
+  @return {boolean}
   @stable
   ###
   isJQuery = (object) ->
@@ -489,7 +489,7 @@ up.util = (($) ->
 
   @function up.util.isPromise
   @param object
-  @return {Boolean}
+  @return {boolean}
   @stable
   ###
   isPromise = (object) ->
@@ -500,7 +500,7 @@ up.util = (($) ->
 
   @function up.util.isDeferred
   @param object
-  @return {Boolean}
+  @return {boolean}
   @stable
   ###
   isDeferred = (object) ->
@@ -511,7 +511,7 @@ up.util = (($) ->
 
   @function up.util.isArray
   @param object
-  @return {Boolean}
+  @return {boolean}
   @stable
   ###
   # https://developer.mozilla.org/de/docs/Web/JavaScript/Reference/Global_Objects/Array/isArray
@@ -525,7 +525,7 @@ up.util = (($) ->
 
   @function up.util.isFormData
   @param object
-  @return {Boolean}
+  @return {boolean}
   @internal
   ###
   isFormData = (object) ->
@@ -641,8 +641,8 @@ up.util = (($) ->
 
   @function up.util.detect
   @param {Array<T>} array
-  @param {Function<T>} tester
-  @return {T|Undefined}
+  @param {Function(T): boolean} tester
+  @return {T|undefined}
   @stable
   ###
   detect = (array, tester) ->
@@ -659,8 +659,8 @@ up.util = (($) ->
 
   @function up.util.any
   @param {Array<T>} array
-  @param {Function<T>} tester
-  @return {Boolean}
+  @param {Function(T): boolean} tester
+  @return {boolean}
   @experimental
   ###
   any = (array, tester) ->
@@ -677,8 +677,8 @@ up.util = (($) ->
 
   @function up.util.all
   @param {Array<T>} array
-  @param {Function<T>} tester
-  @return {Boolean}
+  @param {Function(T): boolean} tester
+  @return {boolean}
   @experimental
   ###
   all = (array, tester) ->
@@ -775,7 +775,7 @@ up.util = (($) ->
   See [`up.util.nextFrame()`](/up.util.nextFrame) for running a function in the next executation frame.
 
   @function up.util.setTimer
-  @param {Number} millis
+  @param {number} millis
   @param {Function} callback
   @experimental
   ###
@@ -951,15 +951,15 @@ up.util = (($) ->
   the duration of the animation.
 
   @function up.util.cssAnimate
-  @param {Element|jQuery|String} elementOrSelector
+  @param {Element|jQuery|string} elementOrSelector
     The element to animate.
   @param {Object} lastFrame
     The CSS properties that should be transitioned to.
-  @param {Number} [options.duration=300]
+  @param {number} [options.duration=300]
     The duration of the animation, in milliseconds.
-  @param {Number} [options.delay=0]
+  @param {number} [options.delay=0]
     The delay before the animation starts, in milliseconds.
-  @param {String} [options.easing='ease']
+  @param {string} [options.easing='ease']
     The timing function that controls the animation's acceleration.
     See [W3C documentation](http://www.w3.org/TR/css3-transitions/#transition-timing-function)
     for a list of pre-defined timing functions.
@@ -1055,7 +1055,7 @@ up.util = (($) ->
   Also see [`up.motion.finish()`](/up.motion.finish).
   
   @function up.util.finishCssAnimate
-  @param {Element|jQuery|String} elementOrSelector
+  @param {Element|jQuery|string} elementOrSelector
   @internal
   ###
   finishCssAnimate = (elementOrSelector) ->
@@ -1154,7 +1154,7 @@ up.util = (($) ->
   Returns whether the given array or string contains the given element or substring.
 
   @function up.util.contains
-  @param {Array|String} arrayOrString
+  @param {Array|string} arrayOrString
   @param elementOrSubstring
   @stable
   ###
@@ -1230,7 +1230,7 @@ up.util = (($) ->
   already resolved.
 
   @function up.util.resolvedDeferred
-  @param {Array<Object>} [args...]
+  @param {Array} [args...]
     The resolution values that will be passed to callbacks
   @return {Deferred}
   @stable
@@ -1244,7 +1244,7 @@ up.util = (($) ->
   Returns a promise that is already resolved.
 
   @function up.util.resolvedPromise
-  @param {Array<Object>} [args...]
+  @param {Array} [args...]
     The resolution values that will be passed to callbacks
   @return {Promise}
   @stable
@@ -1256,7 +1256,7 @@ up.util = (($) ->
   Returns a promise that is already rejected.
 
   @function up.util.rejectedPromise
-  @param {Array<Object>} [args...]
+  @param {Array} [args...]
     The rejection values that will be passed to callbacks
   @return {Promise}
   @stable
@@ -1409,20 +1409,20 @@ up.util = (($) ->
 
   ###*
   @function up.util.cache
-  @param {Number|Function} [config.size]
+  @param {number|Function() :number} [config.size]
     Maximum number of cache entries.
     Set to `undefined` to not limit the cache size.
-  @param {Number|Function} [config.expiry]
+  @param {number|Function(): number} [config.expiry]
     The number of milliseconds after which a cache entry
     will be discarded.
-  @param {String} [config.log]
+  @param {string} [config.log]
     A prefix for log entries printed by this cache object.
-  @param {Function<Object>} [config.key]
-    A function that takes an argument and returns a `String` key
+  @param {Function(any): string} [config.key]
+    A function that takes an argument and returns a `string` key
     for storage. If omitted, `toString()` is called on the argument.
-  @param {Function<Object>} [config.cachable]
-    A function that takes a potential cache key and returns whether
-    this key can be stored in the hash. If omitted, all keys are considered
+  @param {Function(any): boolean} [config.cachable]
+    A function that takes a potential cache entry and returns whether
+    this entry  can be stored in the hash. If omitted, all entries are considered
     cachable.
   @internal
   ###
@@ -1624,7 +1624,7 @@ up.util = (($) ->
   [`jQuery.serializeArray`](https://api.jquery.com/serializeArray/).
 
   @function up.util.requestDataAsArray
-  @param {Object|Array|Undefined|Null} data
+  @param {Object|Array|undefined|null} data
   @internal
   ###
   requestDataAsArray = (data) ->
@@ -1650,7 +1650,7 @@ up.util = (($) ->
   The returned string does **not** include a leading `?` character.
 
   @function up.util.requestDataAsQuery
-  @param {Object|Array|Undefined|Null} data
+  @param {Object|Array|undefined|null} data
   @internal
   ###
   requestDataAsQuery = (data) ->
@@ -1702,13 +1702,13 @@ up.util = (($) ->
   Adds a key/value pair to the given request data representation.
 
   This mutates the given `data` if `data` is a `FormData`, an object
-  or an array. When `data` is `String` a new string with the appended key/value
+  or an array. When `data` is `string` a new string with the appended key/value
   pair is returned.
 
   @function up.util.appendRequestData
-  @param {FormData|Object|Array|Undefined|Null} data
-  @param {String} key
-  @param {String|Blob|File} value
+  @param {FormData|Object|Array|undefined|null} data
+  @param {string} key
+  @param {string|Blob|File} value
   @internal
   ###
   appendRequestData = (data, name, value) ->
@@ -1740,12 +1740,12 @@ up.util = (($) ->
       up.fail('Unexpected result %o', result)
 
   @function up.fail
-  @param {String} message
+  @param {string} message
     A message with details about the error.
 
     The message can contain [substitution marks](https://developer.mozilla.org/en-US/docs/Web/API/console#Using_string_substitutions)
     like `%s` or `%o`.
-  @param {Array<String>} vars...
+  @param {Array<string>} vars...
     A list of variables to replace any substitution marks in the error message.
   @experimental
   ###
@@ -1774,7 +1774,7 @@ up.util = (($) ->
   Escapes the given string of HTML by replacing control chars with their HTML entities.
 
   @function up.util.escapeHtml
-  @param {String} string
+  @param {string} string
     The text that should be escaped
   @experimental
   ###

@@ -22,7 +22,7 @@ up.history = (($) ->
   @param {Array} [config.popTargets=['body']]
     An array of CSS selectors to replace when the user goes
     back in history.
-  @param {Boolean} [config.restoreScroll=true]
+  @param {boolean} [config.restoreScroll=true]
     Whether to restore the known scroll positions
     when the user goes back or forward in history.
   @stable
@@ -92,7 +92,7 @@ up.history = (($) ->
   browser's location bar for you.
 
   @function up.history.replace
-  @param {String} url
+  @param {string} url
   @experimental
   ###
   replace = (url) ->
@@ -113,7 +113,7 @@ up.history = (($) ->
   Emits events [`up:history:push`](/up:history:push) and [`up:history:pushed`](/up:history:pushed).
 
   @function up.history.push
-  @param {String} url
+  @param {string} url
     The URL for the history entry to be added.
   @experimental
   ###
@@ -128,7 +128,7 @@ up.history = (($) ->
   This event is [emitted](/up.emit) before a new history entry is added.
 
   @event up:history:push
-  @param {String} event.url
+  @param {string} event.url
     The URL for the history entry that is going to be added.
   @param event.preventDefault()
     Event listeners may call this method to prevent the history entry from being added.
@@ -139,7 +139,7 @@ up.history = (($) ->
   This event is [emitted](/up.emit) after a new history entry has been added.
 
   @event up:history:pushed
-  @param {String} event.url
+  @param {string} event.url
     The URL for the history entry that has been added.
   @experimental
   ###
@@ -189,7 +189,7 @@ up.history = (($) ->
   History entries are restored when the user uses the *Back* or *Forward* button.
 
   @event up:history:restore
-  @param {String} event.url
+  @param {string} event.url
     The URL for the history entry that has been restored.
   @internal
   ###
@@ -200,7 +200,7 @@ up.history = (($) ->
   History entries are restored when the user uses the *Back* or *Forward* button.
 
   @event up:history:restored
-  @param {String} event.url
+  @param {string} event.url
     The URL for the history entry that has been restored.
   @experimental
   ###

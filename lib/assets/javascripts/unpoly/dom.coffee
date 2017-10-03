@@ -19,12 +19,12 @@ up.dom = (($) ->
   Configures defaults for fragment insertion.
 
   @property up.dom.config
-  @param {Boolean} [options.runInlineScripts=true]
+  @param {boolean} [options.runInlineScripts=true]
     Whether inline `<script>` tags inside inserted HTML fragments will be executed.
-  @param {Boolean} [options.runLinkedScripts=false]
+  @param {boolean} [options.runLinkedScripts=false]
     Whether `<script src='...'>` tags inside inserted HTML fragments will fetch and execute
     the linked JavaScript file.
-  @param {String} [options.fallbacks=['body']]
+  @param {string} [options.fallbacks=['body']]
     When a fragment updates cannot find the requested element, Unpoly will try this list of alternative selectors.
 
     The first selector that matches an element in the current page (or response) will be used.
@@ -33,7 +33,7 @@ up.dom = (($) ->
     It is recommend to always keep `'body'` as the last selector in the last in the case
     your server or load balancer renders an error message that does not contain your
     application layout.
-  @param {String} [options.fallbackTransition='none']
+  @param {string} [options.fallbackTransition='none']
     The transition to use when using a fallback target.
   @stable
   ###
@@ -55,7 +55,7 @@ up.dom = (($) ->
   Returns the URL the given element was retrieved from.
 
   @method up.dom.source
-  @param {String|Element|jQuery} selectorOrElement
+  @param {string|Element|jQuery} selectorOrElement
   @experimental
   ###
   source = (selectorOrElement) ->
@@ -67,8 +67,8 @@ up.dom = (($) ->
   to an absolute selector.
 
   @function up.dom.resolveSelector
-  @param {String|Element|jQuery} selectorOrElement
-  @param {String|Element|jQuery} origin
+  @param {string|Element|jQuery} selectorOrElement
+  @param {string|Element|jQuery} origin
     The element that this selector resolution is relative to.
     That element's selector will be substituted for `&`.
   @internal
@@ -164,21 +164,21 @@ up.dom = (($) ->
   element that replaces it.
 
   @function up.replace
-  @param {String|Element|jQuery} selectorOrElement
+  @param {string|Element|jQuery} selectorOrElement
     The CSS selector to update. You can also pass a DOM element or jQuery element
     here, in which case a selector will be inferred from the element's class and ID.
-  @param {String} url
+  @param {string} url
     The URL to fetch from the server.
-  @param {String} [options.failTarget='body']
+  @param {string} [options.failTarget='body']
     The CSS selector to update if the server sends a non-200 status code.
-  @param {String} [options.fallback]
+  @param {string} [options.fallback]
     The selector to update when the original target was not found in the page.
-  @param {String} [options.title]
+  @param {string} [options.title]
     The document title after the replacement.
 
     If the call pushes an history entry and this option is missing, the title is extracted from the response's `<title>` tag.
     You can also pass `false` to explicitly prevent the title from being updated.
-  @param {String} [options.method='get']
+  @param {string} [options.method='get']
     The HTTP method to use for the request.
   @param {Object|Array} [options.data]
     Parameters that should be sent as the request's payload.
@@ -187,36 +187,36 @@ up.dom = (($) ->
     the param names and the property values become the param values) or as
     an array of `{ name: 'param-name', value: 'param-value' }` objects
     (compare to jQuery's [`serializeArray`](https://api.jquery.com/serializeArray/)).
-  @param {String} [options.transition='none']
-  @param {String|Boolean} [options.history=true]
-    If a `String` is given, it is used as the URL the browser's location bar and history.
+  @param {string} [options.transition='none']
+  @param {string|boolean} [options.history=true]
+    If a `string` is given, it is used as the URL the browser's location bar and history.
     If omitted or true, the `url` argument will be used.
     If set to `false`, the history will remain unchanged.
-  @param {Boolean|String} [options.source=true]
-  @param {Boolean|String} [options.reveal=false]
+  @param {boolean|string} [options.source=true]
+  @param {boolean|string} [options.reveal=false]
     Whether to [reveal](/up.reveal) the element being updated, by
     scrolling its containing viewport.
 
     You can also pass a CSS selector for the element to reveal.
-  @param {Boolean} [options.restoreScroll=false]
+  @param {boolean} [options.restoreScroll=false]
     If set to true, Unpoly will try to restore the scroll position
     of all the viewports around or below the updated element. The position
     will be reset to the last known top position before a previous
     history change for the current URL.
-  @param {Boolean} [options.cache]
+  @param {boolean} [options.cache]
     Whether to use a [cached response](/up.proxy) if available.
-  @param {String} [options.historyMethod='push']
+  @param {string} [options.historyMethod='push']
   @param {Object} [options.headers={}]
     An object of additional header key/value pairs to send along
     with the request.
-  @param {Boolean} [options.requireMatch=true]
+  @param {boolean} [options.requireMatch=true]
     Whether to raise an error if the given selector is missing in
     either the current page or in the response.
   @param {Element|jQuery} [options.origin]
     The element that triggered the replacement.
 
     The element's selector will be substituted for the `&` shorthand in the target selector.
-  @param {String} [options.layer='auto']
+  @param {string} [options.layer='auto']
     The name of the layer that ought to be updated. Valid values are
     `auto`, `page`, `modal` and `popup`.
 
@@ -224,7 +224,7 @@ up.dom = (($) ->
     same layer as the element that triggered the replacement (see `options.origin`).
     If that element is not known, or no match was found in that layer,
     Unpoly will search in other layers, starting from the topmost layer.
-  @param {String} [options.failLayer='auto']
+  @param {string} [options.failLayer='auto']
     The name of the layer that ought to be updated if the server sends a non-200 status code.
 
   @return {Promise}
@@ -356,8 +356,8 @@ up.dom = (($) ->
   discarded, since it didn't match the selector.
 
   @function up.extract
-  @param {String|Element|jQuery} selectorOrElement
-  @param {String} html
+  @param {string|Element|jQuery} selectorOrElement
+  @param {string} html
   @param {Object} [options]
     See options for [`up.replace()`](/up.replace).
   @return {Promise}
@@ -621,9 +621,9 @@ up.dom = (($) ->
     Event listeners may call this method to prevent the element from being preserved.
   @param {jQuery} event.$element
     The fragment that will be kept.
-  @param {jqQuery} event.$newElement
+  @param {jQuery} event.$newElement
     The discarded element.
-  @param {jQuery} event.newData
+  @param {Object} event.newData
     The value of the [`up-data`](/up-data) attribute of the discarded element,
     parsed as a JSON object.
   @stable
@@ -639,9 +639,9 @@ up.dom = (($) ->
   @event up:fragment:kept
   @param {jQuery} event.$element
     The fragment that has been kept.
-  @param {jqQuery} event.$newElement
+  @param {jQuery} event.$newElement
     The discarded element.
-  @param {jQuery} event.newData
+  @param {Object} event.newData
     The value of the [`up-data`](/up-data) attribute of the discarded element,
     parsed as a JSON object.
   @stable
@@ -665,9 +665,9 @@ up.dom = (($) ->
   event.
 
   @function up.hello
-  @param {String|Element|jQuery} selectorOrElement
-  @param {String|Element|jQuery} [options.origin]
-  @param {String|Element|jQuery} [options.kept]
+  @param {string|Element|jQuery} selectorOrElement
+  @param {string|Element|jQuery} [options.origin]
+  @param {string|Element|jQuery} [options.kept]
   @return {jQuery}
     The compiled element
   @stable
@@ -732,16 +732,16 @@ up.dom = (($) ->
   Returns `undefined` if no element matches these conditions.
 
   @function up.first
-  @param {String|Element|jQuery|Array<Element>} selectorOrElement
-  @param {String} options.layer
+  @param {string|Element|jQuery|Array<Element>} selectorOrElement
+  @param {string} options.layer
     The name of the layer in which to find the element. Valid values are
     `auto`, `page`, `modal` and `popup`.
-  @param {String|Element|jQuery} [options.origin]
+  @param {string|Element|jQuery} [options.origin]
     An second element or selector that can be referenced as `&` in the first selector:
 
         $input = $('input.email');
         up.first('.field:has(&)', $input); // returns the .field containing $input
-  @return {jQuery|Undefined}
+  @return {jQuery|undefined}
     The first element that is neither a ghost or being destroyed,
     or `undefined` if no such element was found.
   @experimental
@@ -801,18 +801,18 @@ up.dom = (($) ->
   Emits events [`up:fragment:destroy`](/up:fragment:destroy) and [`up:fragment:destroyed`](/up:fragment:destroyed).
   
   @function up.destroy
-  @param {String|Element|jQuery} selectorOrElement 
-  @param {String} [options.history]
+  @param {string|Element|jQuery} selectorOrElement
+  @param {string} [options.history]
     A URL that will be pushed as a new history entry when the element begins destruction.
-  @param {String} [options.title]
+  @param {string} [options.title]
     The document title to set when the element begins destruction.
-  @param {String|Function} [options.animation='none']
+  @param {string|Function} [options.animation='none']
     The animation to use before the element is removed from the DOM.
-  @param {Number} [options.duration]
+  @param {number} [options.duration]
     The duration of the animation. See [`up.animate()`](/up.animate).
-  @param {Number} [options.delay]
+  @param {number} [options.delay]
     The delay before the animation starts. See [`up.animate()`](/up.animate).
-  @param {String} [options.easing]
+  @param {string} [options.easing]
     The timing function that controls the animation's acceleration. [`up.animate()`](/up.animate).
   @return {Deferred}
     A promise that will be resolved once the element has been removed from the DOM.
@@ -891,10 +891,10 @@ up.dom = (($) ->
   don't usually need to give an URL when reloading.
 
   @function up.reload
-  @param {String|Element|jQuery} selectorOrElement
+  @param {string|Element|jQuery} selectorOrElement
   @param {Object} [options]
     See options for [`up.replace()`](/up.replace)
-  @param {String} [options.url]
+  @param {string} [options.url]
     The URL from which to reload the fragment.
     This defaults to the URL from which the fragment was originally loaded.
   @stable

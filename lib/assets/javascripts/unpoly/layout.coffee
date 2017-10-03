@@ -41,17 +41,17 @@ up.layout = (($) ->
     An array of CSS selectors that find elements anchored to the
     right edge of the screen (using `right:0` with `position: fixed` or `position: absolute`).
     See [`[up-anchored="right"]`](/up-anchored-right) for details.
-  @param {Number} [config.duration=0]
+  @param {number} [config.duration=0]
     The duration of the scrolling animation in milliseconds.
     Setting this to `0` will disable scrolling animations.
-  @param {String} [config.easing='swing']
+  @param {string} [config.easing='swing']
     The timing function that controls the animation's acceleration.
     See [W3C documentation](http://www.w3.org/TR/css3-transitions/#transition-timing-function)
     for a list of pre-defined timing functions.
-  @param {Number} [config.snap=50]
+  @param {number} [config.snap=50]
     When [revealing](/up.reveal) elements, Unpoly will scroll an viewport
     to the top when the revealed element is closer to the top than `config.snap`.
-  @param {Number} [config.substance=150]
+  @param {number} [config.substance=150]
     A number indicating how many top pixel rows of an element to [reveal](/up.reveal).
   @stable
   ###
@@ -101,13 +101,13 @@ up.layout = (($) ->
   last frame before the next animation is started.
 
   @function up.scroll
-  @param {String|Element|jQuery} viewport
+  @param {string|Element|jQuery} viewport
     The container element to scroll.
-  @param {Number} scrollPos
+  @param {number} scrollPos
     The absolute number of pixels to set the scroll position to.
-  @param {Number}[options.duration]
+  @param {number}[options.duration]
     The number of miliseconds for the scrolling's animation.
-  @param {String}[options.easing]
+  @param {string}[options.easing]
     The timing function that controls the acceleration for the scrolling's animation.
   @return {Deferred}
     A promise that will be resolved when the scrolling ends.
@@ -215,12 +215,12 @@ up.layout = (($) ->
   - [configure default options](/up.layout.config) for `fixedTop` or `fixedBottom`
 
   @function up.reveal
-  @param {String|Element|jQuery} element
-  @param {Number} [options.duration]
-  @param {String} [options.easing]
-  @param {String} [options.snap]
-  @param {String|Element|jQuery} [options.viewport]
-  @param {Boolean} [options.top=false]
+  @param {string|Element|jQuery} element
+  @param {number} [options.duration]
+  @param {string} [options.easing]
+  @param {string} [options.snap]
+  @param {string|Element|jQuery} [options.viewport]
+  @param {boolean} [options.top=false]
     Whether to scroll the viewport so that the first element row aligns
     with the top edge of the viewport.
   @return {Deferred}
@@ -311,7 +311,7 @@ up.layout = (($) ->
   Throws an error if no viewport could be found.
 
   @function up.layout.viewportOf
-  @param {String|Element|jQuery} selectorOrElement
+  @param {string|Element|jQuery} selectorOrElement
   @internal
   ###
   viewportOf = (selectorOrElement, options = {}) ->
@@ -326,7 +326,7 @@ up.layout = (($) ->
   given selector or element.
 
   @function up.layout.viewportsWithin
-  @param {String|Element|jQuery} selectorOrElement
+  @param {string|Element|jQuery} selectorOrElement
   @return jQuery
   @internal
   ###
@@ -360,7 +360,7 @@ up.layout = (($) ->
       => { '.main': 0, '.sidebar': 73 }
 
   @function up.layout.scrollTops
-  @return Object<String, Number>
+  @return Object<string, number>
   @internal
   ###
   scrollTops = ->
@@ -396,8 +396,8 @@ up.layout = (($) ->
   Unpoly automatically saves scroll positions whenever a fragment was updated on the page.
 
   @function up.layout.saveScroll
-  @param {String} [options.url]
-  @param {Object<String, Number>} [options.tops]
+  @param {string} [options.url]
+  @param {Object<string, number>} [options.tops]
   @experimental
   ###
   saveScroll = (options = {}) ->
@@ -447,8 +447,8 @@ up.layout = (($) ->
 
   ###*
   @function up.layout.revealOrRestoreScroll
-  @param {Boolean} [options.restoreScroll]
-  @param {Boolean|String} [options.reveal]
+  @param {boolean} [options.restoreScroll]
+  @param {boolean|string} [options.reveal]
   @return {Deferred}
     A promise for when the revealing or scroll restoration ends
   @internal

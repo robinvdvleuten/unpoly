@@ -421,7 +421,7 @@ up.util = (($) ->
   @stable
   ###
   isString = (object) ->
-    typeof(object) == 'string'
+    typeof(object) == 'string' || object instanceof String
 
   ###*
   Returns whether the given argument is a number.

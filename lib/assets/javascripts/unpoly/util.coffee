@@ -3,7 +3,7 @@ Utility functions
 =================
   
 Unpoly comes with a number of utility functions
-that might save you from loading something like [Underscore.js](http://underscorejs.org/).
+that might save you from loading something like [Lodash](https://lodash.com/).
 
 @class up.util
 ###

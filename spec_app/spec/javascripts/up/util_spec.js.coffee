@@ -212,16 +212,18 @@ describe 'up.util', ->
 
     describe 'up.util.setTimer', ->
 
-      it 'calls the given function after waiting the given milliseconds', ->
-        jasmine.clock().install()
-        jasmine.clock().mockDate()
+      it 'calls the given function after waiting the given milliseconds', asyncSpec { mockTime: true }, (next) ->
         callback = jasmine.createSpy()
-        up.util.setTimer(2000, callback)
-        expect(callback).not.toHaveBeenCalled()
-        jasmine.clock().tick(1500)
-        expect(callback).not.toHaveBeenCalled()
-        jasmine.clock().tick(1500)
-        expect(callback).toHaveBeenCalled()
+
+        next =>
+          up.util.setTimer(2000, callback)
+          expect(callback).not.toHaveBeenCalled()
+
+        next.after 1500, =>
+          expect(callback).not.toHaveBeenCalled()
+
+        next.after 1000, =>
+          expect(callback).toHaveBeenCalled()
 
       describe 'if the delay is zero', ->
 

@@ -147,7 +147,7 @@ up.tooltip = (($) ->
   @param {string} [options.animation]
     The [animation](/up.motion) to use when opening the tooltip.
   @return {Promise}
-    A promise that will be resolved when the tooltip's opening animation has finished.
+    A promise that will be fulfilled when the tooltip's opening animation has finished.
   @stable
   ###
   attachAsap = (elementOrSelector, options = {}) ->

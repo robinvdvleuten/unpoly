@@ -161,7 +161,7 @@ up.link = (($) ->
     The name of the layer that ought to be updated if the server sends a non-200 status code.
 
   @return {Promise}
-    A promise that will be resolved when the link destination
+    A promise that will be fulfilled when the link destination
     has been loaded and rendered.
   @stable
   ###

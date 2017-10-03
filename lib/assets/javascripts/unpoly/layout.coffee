@@ -110,7 +110,7 @@ up.layout = (($) ->
   @param {string}[options.easing]
     The timing function that controls the acceleration for the scrolling's animation.
   @return {Deferred}
-    A promise that will be resolved when the scrolling ends.
+    A promise that will be fulfilled when the scrolling ends.
   @experimental
   ###
   scroll = (viewport, scrollTop, options) ->
@@ -224,7 +224,7 @@ up.layout = (($) ->
     Whether to scroll the viewport so that the first element row aligns
     with the top edge of the viewport.
   @return {Deferred}
-    A promise that will be resolved when the element is revealed.
+    A promise that will be fulfilled when the element is revealed.
   @stable
   ###
   reveal = (elementOrSelector, options) ->

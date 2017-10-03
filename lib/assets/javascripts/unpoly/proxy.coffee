@@ -547,7 +547,7 @@ up.proxy = (($) ->
   @param {string|Element|jQuery}
     The element whose destination should be preloaded.
   @return
-    A promise that will be resolved when the request was loaded and cached
+    A promise that will be fulfilled when the request was loaded and cached
   @experimental
   ###
   preload = (linkOrSelector, options) ->

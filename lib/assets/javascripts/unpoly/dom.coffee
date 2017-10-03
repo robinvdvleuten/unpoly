@@ -228,7 +228,7 @@ up.dom = (($) ->
     The name of the layer that ought to be updated if the server sends a non-200 status code.
 
   @return {Promise}
-    A promise that will be resolved when the page has been updated.
+    A promise that will be fulfilled when the page has been updated.
   @stable
   ###
   replace = (selectorOrElement, url, options) ->
@@ -361,7 +361,7 @@ up.dom = (($) ->
   @param {Object} [options]
     See options for [`up.replace()`](/up.replace).
   @return {Promise}
-    A promise that will be resolved then the selector was updated
+    A promise that will be fulfilled then the selector was updated
     and all animation has finished.
   @stable
   ###
@@ -815,7 +815,7 @@ up.dom = (($) ->
   @param {string} [options.easing]
     The timing function that controls the animation's acceleration. [`up.animate()`](/up.animate).
   @return {Deferred}
-    A promise that will be resolved once the element has been removed from the DOM.
+    A promise that will be fulfilled once the element has been removed from the DOM.
   @stable
   ###
   destroy = (selectorOrElement, options) ->

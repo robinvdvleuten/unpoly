@@ -219,7 +219,7 @@ up.popup = (($) ->
     open even if the page changes in the background.
   @param {boolean} [options.history=false]
   @return {Promise}
-    A promise that will be resolved when the popup has been loaded and
+    A promise that will be fulfilled when the popup has been loaded and
     the opening animation has completed.
   @stable
   ###
@@ -295,7 +295,7 @@ up.popup = (($) ->
   @param {Object} options
     See options for [`up.animate()`](/up.animate).
   @return {Promise}
-    A promise that will be resolved once the modal's close
+    A promise that will be fulfilled once the modal's close
     animation has finished.
   @stable
   ###

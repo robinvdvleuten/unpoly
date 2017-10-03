@@ -34,7 +34,7 @@ describe 'up.dom', ->
             expect($('.middle')).toHaveText('new-middle')
             expect($('.after')).toHaveText('old-after')
 
-        it 'returns a promise that will be resolved once the server response was received and the fragments were swapped', asyncSpec (next) ->
+        it 'returns a promise that will be fulfilled once the server response was received and the fragments were swapped', asyncSpec (next) ->
           resolution = jasmine.createSpy()
           promise = up.replace('.middle', '/path')
           promise.then(resolution)
@@ -50,7 +50,7 @@ describe 'up.dom', ->
 
         describe 'transitions', ->
 
-          it 'returns a promise that will be resolved once the server response was received and the swap transition has completed', asyncSpec (next) ->
+          it 'returns a promise that will be fulfilled once the server response was received and the swap transition has completed', asyncSpec (next) ->
             resolution = jasmine.createSpy()
             promise = up.replace('.middle', '/path', transition: 'cross-fade', duration: 50)
             promise.then(resolution)

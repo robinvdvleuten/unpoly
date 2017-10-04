@@ -43,22 +43,22 @@ describe 'up.util', ->
 
       it "instantiates a task queue whose (2..n)th tasks can be changed by calling '.asap'", (done) ->
         chain = new up.util.DivertibleChain()
-        
+
         timer1Spy = jasmine.createSpy('timer1 has been called')
         timer1 = ->
           timer1Spy()
           u.promiseTimer(50)
-        
+
         timer2Spy = jasmine.createSpy('timer2 has been called')
         timer2 = ->
           timer2Spy()
           u.promiseTimer(50)
-        
+
         timer3Spy = jasmine.createSpy('timer3 has been called')
         timer3 = ->
           timer3Spy()
           u.promiseTimer(50)
-        
+
         timer4Spy = jasmine.createSpy('timer4 has been called')
         timer4 = ->
           timer4Spy()
@@ -212,18 +212,17 @@ describe 'up.util', ->
 
     describe 'up.util.setTimer', ->
 
-      it 'calls the given function after waiting the given milliseconds', asyncSpec { mockTime: true }, (next) ->
+      it 'calls the given function after waiting the given milliseconds', (done) ->
         callback = jasmine.createSpy()
+        expectNotCalled = -> expect(callback).not.toHaveBeenCalled()
+        expectCalled = -> expect(callback).toHaveBeenCalled()
 
-        next =>
-          up.util.setTimer(2000, callback)
-          expect(callback).not.toHaveBeenCalled()
+        up.util.setTimer(100, callback)
 
-        next.after 1500, =>
-          expect(callback).not.toHaveBeenCalled()
-
-        next.after 1000, =>
-          expect(callback).toHaveBeenCalled()
+        expectNotCalled()
+        setTimeout(expectNotCalled, 50)
+        setTimeout(expectCalled, 50 + 75)
+        setTimeout(done, 50 + 75)
 
       describe 'if the delay is zero', ->
 
@@ -363,28 +362,28 @@ describe 'up.util', ->
         expect(count).toBe(3)
 
     describe 'up.util.isBlank', ->
-  
+
       it 'returns false for false', ->
         expect(up.util.isBlank(false)).toBe(false)
-        
+
       it 'returns false for true', ->
         expect(up.util.isBlank(true)).toBe(false)
-  
+
       it 'returns true for null', ->
         expect(up.util.isBlank(null)).toBe(true)
-        
+
       it 'returns true for undefined', ->
         expect(up.util.isBlank(undefined)).toBe(true)
-        
+
       it 'returns true for an empty String', ->
         expect(up.util.isBlank('')).toBe(true)
-        
+
       it 'returns false for a String with at least one character', ->
         expect(up.util.isBlank('string')).toBe(false)
-        
+
       it 'returns true for an empty array', ->
         expect(up.util.isBlank([])).toBe(true)
-        
+
       it 'returns false for an array with at least one element', ->
         expect(up.util.isBlank(['element'])).toBe(false)
 
@@ -515,14 +514,14 @@ describe 'up.util', ->
         expect(string).toEqual('my%2Bkey=my%2Bvalue')
 
     describe 'up.util.unresolvableDeferred', ->
-      
+
       it 'returns a different object every time (to prevent memory leaks)', ->
         one = up.util.unresolvableDeferred()
         two = up.util.unresolvableDeferred()
         expect(one).not.toBe(two)
 
     describe 'up.util.unresolvablePromise', ->
-      
+
       it 'returns a different object every time (to prevent memory leaks)', ->
         one = up.util.unresolvablePromise()
         two = up.util.unresolvablePromise()
@@ -687,105 +686,105 @@ describe 'up.util', ->
           { name: 'my=key', value: 'my=value' },
         ])
 
-  describe 'up.util.flatten', ->
+    describe 'up.util.flatten', ->
 
-    it 'flattens the given array', ->
-      array = [1, [2, 3], 4]
-      expect(u.flatten(array)).toEqual([1, 2, 3, 4])
+      it 'flattens the given array', ->
+        array = [1, [2, 3], 4]
+        expect(u.flatten(array)).toEqual([1, 2, 3, 4])
 
-    it 'only flattens one level deep for performance reasons', ->
-      array = [1, [2, [3,4]], 5]
-      expect(u.flatten(array)).toEqual([1, 2, [3, 4], 5])
+      it 'only flattens one level deep for performance reasons', ->
+        array = [1, [2, [3,4]], 5]
+        expect(u.flatten(array)).toEqual([1, 2, [3, 4], 5])
 
-  describe 'up.util.renameKey', ->
+    describe 'up.util.renameKey', ->
 
-    it 'renames a key in the given property', ->
-      object = { a: 'a value', b: 'b value'}
-      u.renameKey(object, 'a', 'c')
-      expect(object.a).toBeUndefined()
-      expect(object.b).toBe('b value')
-      expect(object.c).toBe('a value')
+      it 'renames a key in the given property', ->
+        object = { a: 'a value', b: 'b value'}
+        u.renameKey(object, 'a', 'c')
+        expect(object.a).toBeUndefined()
+        expect(object.b).toBe('b value')
+        expect(object.c).toBe('a value')
 
-  describe 'up.util.selectInDynasty', ->
+    describe 'up.util.selectInDynasty', ->
 
-    it 'finds the selector in both ancestors and descendants of the given element', ->
-      $grandMother = affix('.grand-mother.match')
-      $mother = $grandMother.affix('.mother')
-      $element = $mother.affix('.element')
-      $child = $element.affix('.child.match')
-      $grandChild = $element.affix('.grand-child.match')
+      it 'finds the selector in both ancestors and descendants of the given element', ->
+        $grandMother = affix('.grand-mother.match')
+        $mother = $grandMother.affix('.mother')
+        $element = $mother.affix('.element')
+        $child = $element.affix('.child.match')
+        $grandChild = $element.affix('.grand-child.match')
 
-      $matches = up.util.selectInDynasty($element, '.match')
-      $expected = $grandMother.add($child).add($grandChild)
-      expect($matches).toEqual $expected
+        $matches = up.util.selectInDynasty($element, '.match')
+        $expected = $grandMother.add($child).add($grandChild)
+        expect($matches).toEqual $expected
 
-    it 'finds the element itself if it matches the selector', ->
-      $element = affix('.element.match')
-      $matches = up.util.selectInDynasty($element, '.match')
-      expect($matches).toEqual $element
+      it 'finds the element itself if it matches the selector', ->
+        $element = affix('.element.match')
+        $matches = up.util.selectInDynasty($element, '.match')
+        expect($matches).toEqual $element
 
-  describe 'up.util.memoize', ->
+    describe 'up.util.memoize', ->
 
-    it 'returns a function that calls the memoized function', ->
-      fun = (a, b) -> a + b
-      memoized = u.memoize(fun)
-      expect(memoized(2, 3)).toEqual(5)
+      it 'returns a function that calls the memoized function', ->
+        fun = (a, b) -> a + b
+        memoized = u.memoize(fun)
+        expect(memoized(2, 3)).toEqual(5)
 
-    it 'returns the cached return value of the first call when called again', ->
-      spy = jasmine.createSpy().and.returnValue(5)
-      memoized = u.memoize(spy)
-      expect(memoized(2, 3)).toEqual(5)
-      expect(memoized(2, 3)).toEqual(5)
-      expect(spy.calls.count()).toEqual(1)
+      it 'returns the cached return value of the first call when called again', ->
+        spy = jasmine.createSpy().and.returnValue(5)
+        memoized = u.memoize(spy)
+        expect(memoized(2, 3)).toEqual(5)
+        expect(memoized(2, 3)).toEqual(5)
+        expect(spy.calls.count()).toEqual(1)
 
-  ['assign', 'assignPolyfill'].forEach (assignVariant) ->
+    ['assign', 'assignPolyfill'].forEach (assignVariant) ->
 
-    describe "up.util.#{assignVariant}", ->
+      describe "up.util.#{assignVariant}", ->
 
-      assign = up.util[assignVariant]
+        assign = up.util[assignVariant]
 
-      it 'copies the second object into the first object', ->
-        target = { a: 1 }
-        source = { b: 2, c: 3 }
+        it 'copies the second object into the first object', ->
+          target = { a: 1 }
+          source = { b: 2, c: 3 }
 
-        assign(target, source)
+          assign(target, source)
 
-        expect(target).toEqual { a: 1, b: 2, c: 3 }
+          expect(target).toEqual { a: 1, b: 2, c: 3 }
 
-        # Source is unchanged
-        expect(source).toEqual { b: 2, c: 3 }
+          # Source is unchanged
+          expect(source).toEqual { b: 2, c: 3 }
 
-      it 'copies null property values', ->
-        target = { a: 1, b: 2 }
-        source = { b: null }
+        it 'copies null property values', ->
+          target = { a: 1, b: 2 }
+          source = { b: null }
 
-        assign(target, source)
+          assign(target, source)
 
-        expect(target).toEqual { a: 1, b: null }
+          expect(target).toEqual { a: 1, b: null }
 
-      it 'copies undefined property values', ->
-        target = { a: 1, b: 2 }
-        source = { b: undefined }
+        it 'copies undefined property values', ->
+          target = { a: 1, b: 2 }
+          source = { b: undefined }
 
-        assign(target, source)
+          assign(target, source)
 
-        expect(target).toEqual { a: 1, b: undefined }
+          expect(target).toEqual { a: 1, b: undefined }
 
-      it 'returns the first object', ->
-        target = { a: 1 }
-        source = { b: 2 }
+        it 'returns the first object', ->
+          target = { a: 1 }
+          source = { b: 2 }
 
-        result = assign(target, source)
+          result = assign(target, source)
 
-        expect(result).toBe(target)
+          expect(result).toBe(target)
 
-      it 'takes multiple sources to copy from', ->
-        target = { a: 1 }
-        source1 = { b: 2, c: 3 }
-        source2 = { d: 4, e: 5 }
+        it 'takes multiple sources to copy from', ->
+          target = { a: 1 }
+          source1 = { b: 2, c: 3 }
+          source2 = { d: 4, e: 5 }
 
-        assign(target, source1, source2)
+          assign(target, source1, source2)
 
-        expect(target).toEqual { a: 1, b: 2, c: 3, d: 4, e: 5 }
+          expect(target).toEqual { a: 1, b: 2, c: 3, d: 4, e: 5 }
 
 

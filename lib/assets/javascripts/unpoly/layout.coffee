@@ -110,49 +110,49 @@ up.layout = (($) ->
     The number of miliseconds for the scrolling's animation.
   @param {string}[options.easing]
     The timing function that controls the acceleration for the scrolling's animation.
-  @return {FinishablePromise}
+  @return {Promise}
     A promise that will be fulfilled when the scrolling ends.
   @experimental
   ###
   scroll = (viewport, scrollTop, options) ->
     $viewport = $(viewport)
     options = u.options(options)
-    duration = u.option(options.duration, config.duration)
-    easing = u.option(options.easing, config.easing)
+    options.duration = u.option(options.duration, config.duration)
+    options.easing = u.option(options.easing, config.easing)
 
-    finishScrolling($viewport)
-
-    if duration > 0
-      $viewport.data(SCROLL_PROMISE_KEY, deferred)
-
-      finish = ->
-        $viewport.removeData(SCROLL_PROMISE_KEY)
-        # Since we're scrolling using #animate, #finish can be
-        # used to jump to the last frame:
-        # https://api.jquery.com/finish/
-        $viewport.finish()
-
-      if $viewport.get(0) == document
-        $viewport = $('html, body') # FML
-
-      targetProps = { scrollTop: scrollTop }
-      animateOptions = { duration ,easing }
-      promise = $viewport.animate(targetProps, animateOptions).promise()
-
-      new FinishablePromise(promise, finish)
+    if shouldAnimateScroll(options)
+      scrollWithAnimate($viewport, scrollTop, options)
     else
-      $viewport.scrollTop(scrollTop)
-      FinishablePromise.resolve()
+      scrollAbruptly($viewport, scrollTop)
+
+  shouldAnimateScroll = (options) ->
+    up.motion.isEnabled() && options.duration > 0
+
+  scrollWithAnimate = ($viewport, scrollTop, animateOptions) ->
+    start = ->
+      if $viewport.get(0) == document then $viewport = $('html, body') # FML
+      jqAnimatePromise = $viewport.animate({ scrollTop }, animateOptions).promise()
+      finish = -> $viewport.finish() # https://api.jquery.com/finish/
+      new FinishablePromise(jqAnimatePromise, finish)
+
+    # Dynasty will finish previous scrolling animations before starting
+    scrollingDynasty.claim($viewport, start)
+
+  scrollAbruptly = ($viewport, scrollTop) ->
+    finishScrolling($viewport)
+    $viewport.scrollTop(scrollTop)
+    FinishablePromise.resolve()
 
   ###*
+  Finishes scrolling animations in the given element, its ancestors or its descendants.
+
   @function up.layout.finishScrolling
   @param {string|Element|jQuery}
-    The element that might currently be scrolling.
+  @return {Promise}
   @internal
   ###
-  finishScrolling = ($element) ->
-    if existingScrolling = $element.data(SCROLL_PROMISE_KEY)
-      existingScrolling.finish()
+  finishScrolling = (element) ->
+    scrollDynasty.finishAll($(element))
 
   ###*
   @function up.layout.anchoredRight
@@ -161,8 +161,11 @@ up.layout = (($) ->
   anchoredRight = ->
     u.multiSelector(config.anchoredRight).select()
 
+  ###*
+  @function measureObstruction
+  @return {Object}
+  ###
   measureObstruction = ->
-
     measurePosition = (obstructor, cssAttr) ->
       $obstructor = $(obstructor)
       anchorPosition = $obstructor.css(cssAttr)
@@ -417,7 +420,6 @@ up.layout = (($) ->
   @experimental
   ###
   restoreScroll = (options = {}) ->
-
     url = up.history.url()
 
     $viewports = undefined

@@ -12,18 +12,21 @@ class up.ExclusiveDynasty
   ###
   claim: ($element, animator) =>
     @finishDynasty($element).then =>
-      finishablePromise = animator($element)
-      @markElement($element, finishablePromise)
-      finishablePromise.then => @unmarkElement($element)
-      finishablePromise
+      @start($element, animator)
+
+  start: ($element, animator) ->
+    finishablePromise = animator($element)
+    @markElement($element, finishablePromise)
+    finishablePromise.then => @unmarkElement($element)
+    finishablePromise
+
+  finishDynasty: ($element) =>
+    @finishAll u.selectInDynasty($element, @selector)
 
   finishAll: ($elements) =>
     $elements ||= $(@selector)
     allFinished = u.map($elements, @finishElement)
     return Promise.all(allFinished)
-
-  finishDynasty: ($element) =>
-    @finishAll u.selectInDynasty($element, @selector)
 
   finishElement: (element) =>
     $element = $(element)

@@ -204,7 +204,6 @@ up.motion = (($) ->
   GHOSTING_CLASS = 'up-ghosting'
 
   withGhosts = ($old, $new, options, block) ->
-
     # Don't create ghosts of ghosts in case a transition function is itself calling `morph`
     if options.copy == false || $old.is('.up-ghost') || $new.is('.up-ghost')
       return block($old, $new)

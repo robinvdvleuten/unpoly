@@ -963,7 +963,7 @@ up.util = (($) ->
     The timing function that controls the animation's acceleration.
     See [W3C documentation](http://www.w3.org/TR/css3-transitions/#transition-timing-function)
     for a list of pre-defined timing functions.
-  @return {Deferred}
+  @return {FinishablePromise}
     A promise for the animation's end.
   @internal
   ###
@@ -980,14 +980,10 @@ up.util = (($) ->
 
     if opts.duration == 0
       # In case the duration is zero we 1) spare ourselves all the trouble below,
-      # and 2) return a deferred that actually resolve, since a CSS transition with
+      # and 2) return a promise that actually settled, since a CSS transition with
       # a zero duration never fires a transitionEnd event.
       $element.css(lastFrame)
-      return resolvedDeferred()
-
-    # We don't finish an existing animation here, since the public API
-    # we expose as `up.motion.animate()` already does this.
-    deferred = newDeferred()
+      return up.FinishablePromise.resolve()
 
     transitionProperties = Object.keys(lastFrame)
     transition =
@@ -997,24 +993,26 @@ up.util = (($) ->
       'transition-timing-function': opts.easing
     oldTransition = $element.css(Object.keys(transition))
 
+    # We don't finish an existing animation here, since the public API
+    # we expose as `up.motion.animate()` already does this.
+    deferred = newDeferred()
+
+    finish = -> deferred.resolve()
+
     onTransitionEnd = (event) ->
-      completedProperty = event.originalEvent.propertyName
       # Check if the transitionend event was caused by our own transition,
       # and not by some other transition that happens to live on the same element.
-      if contains(transitionProperties, completedProperty)
-        deferred.resolve() # unless isDetached($element)
+      completedProperty = event.originalEvent.propertyName
+      finish() if contains(transitionProperties, completedProperty)
 
-    # $element.on('transitionend', onTransitionEnd)
+    $element.on('transitionend', onTransitionEnd)
 
-    setTimer opts.duration, => deferred.resolve()
+    setTimer opts.duration, finish
 
     deferred.then ->
-      console.debug('*** cssAnimate thinks done for %o', $element.get(0))
-      $element.removeClass('up-animating')
       $element.off('transitionend', onTransitionEnd)
 
-      $element.removeData(ANIMATION_DEFERRED_KEY)
-      withoutCompositing()
+      undoCompositing()
 
       # To interrupt the running transition we *must* set it to 'none' exactly.
       # We cannot simply restore the old transition properties because browsers
@@ -1032,36 +1030,11 @@ up.util = (($) ->
         forceRepaint($element) # :(
         $element.css(oldTransition)
 
-    $element.addClass('up-animating')
-    withoutCompositing = forceCompositing($element)
+    undoCompositing = forceCompositing($element)
     $element.css(transition)
-    $element.data(ANIMATION_DEFERRED_KEY, deferred)
     $element.css(lastFrame)
 
-    # Return the whole deferred and not just return a thenable.
-    # Other code will need the possibility to cancel the animation
-    # by resolving the deferred.
-    deferred
-
-  ANIMATION_DEFERRED_KEY = 'up-animation-deferred'
-
-  ###*
-  Completes the animation for  the given element by jumping
-  to the last frame instantly. All callbacks chained to
-  the original animation's promise will be called.
-  
-  Does nothing if the given element is not currently animating.
-  
-  Also see [`up.motion.finish()`](/up.motion.finish).
-  
-  @function up.util.finishCssAnimate
-  @param {Element|jQuery|string} elementOrSelector
-  @internal
-  ###
-  finishCssAnimate = (elementOrSelector) ->
-    $(elementOrSelector).each ->
-      if existingAnimation = pluckData(this, ANIMATION_DEFERRED_KEY)
-        existingAnimation.resolve()
+    new up.FinishablePromise(deferred, finish)
 
   ###*
   @internal
@@ -1302,24 +1275,6 @@ up.util = (($) ->
   ###
   nullJQuery = ->
     $()
-
-  ###*
-  Returns a new promise that resolves once all promises in arguments resolve.
-
-  Other then [`$.when` from jQuery](https://api.jquery.com/jquery.when/),
-  the combined promise will have a `resolve` method. This `resolve` method
-  will resolve all the wrapped promises.
-
-  @function up.util.resolvableWhen
-  @internal
-  ###
-  resolvableWhen = (deferreds...) ->
-    joined = Promise.all(deferreds)
-    joined.resolve = memoize(->
-      each deferreds, (deferred) ->
-        deferred.resolve()
-    )
-    joined
 
   ###*
   On the given element, set attributes that are still missing.
@@ -2092,7 +2047,6 @@ up.util = (($) ->
   measure: measure
   temporaryCss: temporaryCss
   cssAnimate: cssAnimate
-  finishCssAnimate: finishCssAnimate
   forceCompositing: forceCompositing
   forceRepaint: forceRepaint
   escapePressed: escapePressed
@@ -2111,7 +2065,6 @@ up.util = (($) ->
   resolvedPromise: resolvedPromise
   rejectedPromise: rejectedPromise
   resolvedDeferred: resolvedDeferred
-  resolvableWhen: resolvableWhen
   setMissingAttrs: setMissingAttrs
   remove: remove
   memoize: memoize

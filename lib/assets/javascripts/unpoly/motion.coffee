@@ -40,6 +40,9 @@ up.motion = (($) ->
   transitions = {}
   defaultTransitions = {}
 
+  animatingDynasty = new up.ExclusiveDynasty('up-animating')
+  ghostingDynasty = new up.ExclusiveDynasty('up-ghosting')
+
   ###*
   Sets default options for animations and transitions.
 
@@ -161,23 +164,36 @@ up.motion = (($) ->
   ###
   animate = (elementOrSelector, animation, options) ->
     $element = $(elementOrSelector)
-    finish($element)
     options = animateOptions(options)
+
+    unless options.finished
+      finish($element)
+      options.finished = true
+
     if isNone(animation)
       none()
     else if u.isFunction(animation)
-      assertIsDeferred(animation($element, options), animation)
+      animateWithFunction($element, animation, options)
     else if u.isString(animation)
       animate($element, findAnimation(animation), options)
     else if u.isHash(animation)
-      if isEnabled()
-        u.cssAnimate($element, animation, options)
-      else
-        # Directly set the last frame
-        $element.css(animation)
-        u.resolvedDeferred()
+      animateWithHash($element, animation, options)
     else
       up.fail("Unknown animation type for %o", animation)
+
+  animateWithFunction = ($element, fn, options) ->
+    promise = fn($element, options)
+    unless promise instanceof up.FinishablePromise
+      up.fail("Did not return an up.FinishablePromise: %o", fn)
+    promise
+
+  animateWithHash = ($element, lastFrame, options) ->
+    if isEnabled()
+      animatingDynasty.start $element, -> u.cssAnimate($element, lastFrame, options)
+    else
+      # Directly set the last frame
+      $element.css(lastFrame)
+      up.FinishablePromise.resolve()
 
   ###*
   Extracts animation-related options from the given options hash.
@@ -195,14 +211,17 @@ up.motion = (($) ->
     consolidatedOptions.easing = u.option(userOptions.easing, u.presentAttr($element, 'up-easing'), moduleDefaults.easing, config.easing)
     consolidatedOptions.duration = Number(u.option(userOptions.duration, u.presentAttr($element, 'up-duration'), moduleDefaults.duration, config.duration))
     consolidatedOptions.delay = Number(u.option(userOptions.delay, u.presentAttr($element, 'up-delay'), moduleDefaults.delay, config.delay))
+    consolidatedOptions.finished = userOptions.finished # this is required by animate()
     consolidatedOptions
       
   findAnimation = (name) ->
     animations[name] or up.fail("Unknown animation %o", name)
 
-  GHOSTING_DEFERRED_KEY = 'up-ghosting-deferred'
-  GHOSTING_CLASS = 'up-ghosting'
-
+  ###*
+  @function withGhosts
+  @return {FinishablePromise}
+  @internal
+  ###
   withGhosts = ($old, $new, options, block) ->
     # Don't create ghosts of ghosts in case a transition function is itself calling `morph`
     if options.copy == false || $old.is('.up-ghost') || $new.is('.up-ghost')
@@ -245,24 +264,16 @@ up.motion = (($) ->
     # shown again, causing a flicker while the browser is painting.
     showNew = u.temporaryCss($new, opacity: '0')
 
-    deferred = block(oldCopy.$ghost, newCopy.$ghost)
+    blockWithGhosts = -> block(oldCopy.$ghost, newCopy.$ghost)
+    promise = ghostingDynasty.start($both, blockWithGhosts)
 
-    # Make a way to look at $old and $new and see if an animation is
-    # already in progress. If someone attempted a new animation on the
-    # same elements, the stored promises would be resolved by the second
-    # animation call, making the transition jump to the last frame instantly.
-    $both.data(GHOSTING_DEFERRED_KEY, deferred)
-    $both.addClass(GHOSTING_CLASS)
-
-    deferred.then ->
-      $both.removeData(GHOSTING_DEFERRED_KEY)
-      $both.removeClass(GHOSTING_CLASS)
+    promise.then ->
       # Now that the transition is over we show $new again.
       showNew()
       oldCopy.$bounds.remove()
       newCopy.$bounds.remove()
 
-    deferred
+    promise
       
   ###*
   Completes [animations](/up.animate) and [transitions](/up.morph).
@@ -277,33 +288,24 @@ up.motion = (($) ->
   
   @function up.motion.finish
   @param {Element|jQuery|string} [elementOrSelector]
+  @return {Promise}
   @stable
   ###
-  finish = (elementOrSelector = '.up-animating') ->
+  finish = (elementOrSelector = undefined) ->
     # We don't need to crawl through the DOM if we aren't animating anyway
     return unless isEnabled()
 
-    $element = $(elementOrSelector)
-
-    # Fast-forward animations in all ancestors and descendants of $element
-    $animatingSubtree = u.selectInDynasty($element, '.up-animating')
-    u.finishCssAnimate($animatingSubtree)
-
-    # Remove ghosting copies in all ancestors and descendants of $element
-    $ghostingSubtree = u.selectInDynasty($element, ".#{GHOSTING_CLASS}")
-    finishGhosting($ghostingSubtree)
-
-  finishGhosting = ($collection) ->
-    $collection.each ->
-      $element = $(this)
-      if existingGhosting = u.pluckData($element, GHOSTING_DEFERRED_KEY)
-        existingGhosting.finish()
-      
-  assertIsFinishablePromise = (object, source) ->
-    if object instanceof up.FinishablePromise
-      object
+    if elementOrSelector
+      $element = $(elementOrSelector)
+      Promise.all [
+        animatingDynasty.finishDynasty($element),
+        ghostingDynasty.finishDynasty($element)
+      ]
     else
-      up.fail("Did not return an up.FinishablePromise: %o", source)
+      Promise.all [
+        animatingDynasty.finishAll(),
+        ghostingDynasty.finishAll()
+      ]
 
   ###*
   Performs an animated transition between two elements.
@@ -380,8 +382,10 @@ up.motion = (($) ->
       parsedOptions = u.only(options, 'reveal', 'restoreScroll', 'source')
       parsedOptions = u.assign(parsedOptions, animateOptions(options))
 
-      finish($old)
-      finish($new)
+      unless parsedOptions.finished
+        finish($old)
+        finish($new)
+        parsedOptions.finished = true
 
       if willMorph
         ensureMorphable($old)
@@ -551,35 +555,16 @@ up.motion = (($) ->
     defaultTransitions = u.copy(transitions)
 
   ###*
-  Returns a new deferred that resolves once all given deferreds have resolved.
-
-  Other then [`$.when` from jQuery](https://api.jquery.com/jquery.when/),
-  the combined deferred will have a `resolve` method. This `resolve` method
-  will resolve all the wrapped deferreds.
-
-  This is important when composing multiple existing animations into
-  a [custom transition](/up.transition), since the transition function
-  must return a deferred with a `resolve` function that fast-forwards
-  the animation to its last frame.
-
-  @function up.motion.when
-  @param {Array<Deferred>} deferreds...
-  @return {Deferred} A new deferred
-  @experimental
-  ###
-  resolvableWhen = u.resolvableWhen
-
-  ###*
   Returns a no-op animation or transition which has no visual effects
   and completes instantly.
 
   @function up.motion.none
-  @return {Promise}
+  @return {FinishablePromise}
     A resolved promise
   @stable
   ###
   none = ->
-    promise = u.resolvedDeferred()
+    promise = up.FinishablePromise.resolved()
     promise.isNone = true
     promise
 
@@ -591,7 +576,7 @@ up.motion = (($) ->
   @internal
   ###
   isNone = (animation) ->
-    animation is false || animation is 'none' || u.isMissing(animation) || (u.isHash(animation) && animation.isNone)
+    animation is false || animation is 'none' || u.isMissing(animation) || (u.isPromise(animation) && animation.isNone)
 
   animation('none', none)
 
@@ -724,7 +709,6 @@ up.motion = (($) ->
   config: config
   isEnabled: isEnabled
   none: none
-  when: resolvableWhen
   prependCopy: prependCopy
   isNone: isNone
 

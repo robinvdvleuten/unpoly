@@ -61,6 +61,8 @@ class up.FinishablePromise
     new @(Promise.reject(value), u.noop)
 
   ###*
+  Returns a new `FinishablePromise` that resolves once all given `FinishablePromises` have resolved.
+
   @function all
   @param {Array<FinishablePromise>} finishablePromises
   @return {FinishablePromise}
@@ -70,4 +72,7 @@ class up.FinishablePromise
     allDone = Promise.all(finishablePromises)
     finishAll = u.sequence(u.map(finishablePromises, (p) -> p.finish))
     new @(allDone, finishAll)
+
+#  @fromDeferred: (deferred) ->
+#    new @(deferred, (-> deferred.resolve()))
 

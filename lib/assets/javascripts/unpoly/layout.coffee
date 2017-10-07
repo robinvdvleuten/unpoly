@@ -221,7 +221,7 @@ up.layout = (($) ->
   @param {boolean} [options.top=false]
     Whether to scroll the viewport so that the first element row aligns
     with the top edge of the viewport.
-  @return {Deferred}
+  @return {FinishablePromise}
     A promise that will be fulfilled when the element is revealed.
   @stable
   ###
@@ -277,7 +277,7 @@ up.layout = (($) ->
     if newScrollPos != originalScrollPos
       scroll($viewport, newScrollPos, options)
     else
-      u.resolvedDeferred()
+      up.FinishablePromise.resolve()
 
   ###*
   [Reveals](/up.reveal) an element matching the `#hash` in the current URL.
@@ -445,7 +445,7 @@ up.layout = (($) ->
   @function up.layout.revealOrRestoreScroll
   @param {boolean} [options.restoreScroll]
   @param {boolean|string} [options.reveal]
-  @return {Deferred}
+  @return {FinishablePromise}
     A promise for when the revealing or scroll restoration ends
   @internal
   ###
@@ -465,7 +465,7 @@ up.layout = (($) ->
 
     # If we didn't need to scroll above, just return a resolved promise
     # to fulfill this function's signature.
-    return u.resolvedDeferred()
+    return up.FinishablePromise.resolve()
 
   ###*
   @internal

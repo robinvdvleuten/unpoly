@@ -518,7 +518,7 @@ up.modal = (($) ->
 
   closeNow = (options) ->
     unless isOpen() # this can happen when a request fails and the chain proceeds to the next task
-      return u.resolvedPromise()
+      return Promise.resolve()
 
     console.debug('*** closeNow')
 
@@ -575,7 +575,7 @@ up.modal = (($) ->
 
     # If we're not animating the dialog, don't animate the backdrop either
     if up.motion.isNone(viewportAnimation)
-      u.resolvedPromise()
+      Promise.resolve()
     else
       markAsAnimating()
       promise = Promise.all([

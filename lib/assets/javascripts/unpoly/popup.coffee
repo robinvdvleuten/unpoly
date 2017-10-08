@@ -304,7 +304,7 @@ up.popup = (($) ->
 
   closeNow = (options) ->
     unless isOpen() # this can happen when a request fails and the chain proceeds to the next task
-      return u.resolvedPromise()
+      return Promise.resolve()
     
     options = u.options(options,
       animation: config.closeAnimation

@@ -262,7 +262,7 @@ up.form = (($) ->
     scheduledValue = undefined
     processedValue = u.submittedValue($field)
     timer = undefined
-    lastCallbackDone = u.resolvedPromise()
+    lastCallbackDone = Promise.resolve()
 
     runCallback = (value) ->
       processedValue = value

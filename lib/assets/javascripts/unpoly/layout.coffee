@@ -296,9 +296,9 @@ up.layout = (($) ->
       if $match = firstHashTarget(hash)
         reveal($match)
       else
-        u.rejectedPromise()
+        Promise.reject()
     else
-      u.resolvedPromise()
+      Promise.resolve()
 
   viewportSelector = ->
     u.multiSelector(config.viewports)

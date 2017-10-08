@@ -272,7 +272,7 @@ up.dom = (($) ->
       processResponse(true, improvedTarget, response, successOptions)
 
     onFailure = (response) ->
-      rejection = -> u.rejectedPromise(response)
+      rejection = -> Promise.reject(response)
       if response.body
         promise = processResponse(false, improvedFailTarget, response, failureOptions)
         u.always(promise, rejection)
@@ -320,7 +320,7 @@ up.dom = (($) ->
       options.title = titleFromXhr
 
     if options.preload
-      u.resolvedPromise()
+      Promise.resolve()
     else
       extract(selector, response.body, options)
 
@@ -478,7 +478,7 @@ up.dom = (($) ->
       # Since we're keeping the element that was requested to be swapped,
       # there is nothing left to do here.
       emitFragmentKept(keepPlan)
-      promise = u.resolvedPromise()
+      promise = Promise.resolve()
 
     else
       replacement = ->
@@ -814,41 +814,47 @@ up.dom = (($) ->
     The delay before the animation starts. See [`up.animate()`](/up.animate).
   @param {string} [options.easing]
     The timing function that controls the animation's acceleration. [`up.animate()`](/up.animate).
-  @return {Deferred}
+  @return {Promise}
     A promise that will be fulfilled once the element has been removed from the DOM.
   @stable
   ###
   destroy = (selectorOrElement, options) ->
-
     $element = $(selectorOrElement)
-    unless $element.is('.up-placeholder, .up-tooltip, .up-modal, .up-popup')
+    options = u.options(options, animation: false)
+    animateOptions = up.motion.animateOptions(options)
+
+    if shouldLogDestruction($element)
       destroyMessage = ['Destroying fragment %o', $element.get(0)]
       destroyedMessage = ['Destroyed fragment %o', $element.get(0)]
+
     if $element.length == 0
-      u.resolvedDeferred()
+      Promise.resolve()
     else if up.bus.nobodyPrevents('up:fragment:destroy', $element: $element, message: destroyMessage)
-      options = u.options(options, animation: false)
-      animateOptions = up.motion.animateOptions(options)
       $element.addClass('up-destroying')
       # If e.g. a modal or popup asks us to restore a URL, do this
       # before emitting `fragment:destroy`. This way up.navigate sees the
       # new URL and can assign/remove .up-current classes accordingly.
       updateHistoryAndTitle(options)
 
-      animationDeferred = u.presence(options.animation, u.isDeferred) ||
+      animate = ->
         up.motion.animate($element, options.animation, animateOptions)
 
-      animationDeferred.then ->
+      wipe = ->
         up.syntax.clean($element)
         # Emit this while $element is still part of the DOM, so event
         # listeners bound to the document will receive the event.
         up.emit 'up:fragment:destroyed', $element: $element, message: destroyedMessage
         $element.remove()
-      animationDeferred
+
+      animate().then(wipe)
     else
       # Although someone prevented the destruction, keep a uniform API for
-      # callers by returning a Deferred that will never be resolved.
-      u.newDeferred()
+      # callers by returning a Promise that will never be resolved.
+      u.unresolvablePromise()
+
+  shouldLogDestruction = ($element) ->
+    # Don't log destruction for elements that are either Unpoly internals or frequently destroyed
+    not $element.is('.up-placeholder, .up-tooltip, .up-modal, .up-popup')
 
   ###*
   Before a page fragment is being [destroyed](/up.destroy), this

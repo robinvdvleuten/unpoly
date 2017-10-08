@@ -570,7 +570,7 @@ describe 'up.form', ->
             expect($group).toHaveText('Username has already been taken')
 
         it 'does not reveal the updated fragment (bugfix)', asyncSpec (next) ->
-          revealSpy = up.layout.knife.mock('reveal').and.returnValue(u.resolvedDeferred())
+          revealSpy = up.layout.knife.mock('reveal').and.returnValue(up.FinishablePromise.resolve())
 
           $form = affix('form[action="/path/to"]')
           $group = $("""

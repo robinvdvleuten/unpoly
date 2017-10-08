@@ -271,7 +271,7 @@ up.browser = (($) ->
   ###
   whenConfirmed = (options) ->
     if options.preload || u.isBlank(options.confirm) || window.confirm(options.confirm)
-      u.resolvedPromise()
+      Promise.resolve()
     else
       u.unresolvablePromise()
 

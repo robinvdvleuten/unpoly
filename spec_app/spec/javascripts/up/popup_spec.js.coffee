@@ -173,7 +173,7 @@ describe 'up.popup', ->
       beforeEach ->
         @stubAttach = =>
           @$link = affix('a[href="/path"][up-popup=".target"]')
-          @attachSpy = up.popup.knife.mock('attachAsap').and.returnValue(u.resolvedPromise())
+          @attachSpy = up.popup.knife.mock('attachAsap').and.returnValue(Promise.resolve())
           @defaultSpy = spyOn(up.link, 'allowDefault').and.callFake((event) -> event.preventDefault())
 
       it 'opens the clicked link in a popup', asyncSpec (next) ->

@@ -397,7 +397,7 @@ up.motion = (($) ->
         else if transition = (u.presence(transitionOrName, u.isFunction) || transitions[transitionOrName])
           return withGhosts $old, $new, parsedOptions, ($oldGhost, $newGhost) ->
             transitionPromise = transition($oldGhost, $newGhost, parsedOptions)
-            assertIsDeferred(transitionPromise, transitionOrName)
+            assertIsFinishablePromise(transitionPromise, transitionOrName)
         else if u.isString(transitionOrName) && transitionOrName.indexOf('/') >= 0
           parts = transitionOrName.split('/')
           transition = ($old, $new, options) ->
@@ -564,7 +564,7 @@ up.motion = (($) ->
   @stable
   ###
   none = ->
-    promise = up.FinishablePromise.resolved()
+    promise = up.FinishablePromise.resolve()
     promise.isNone = true
     promise
 

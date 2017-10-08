@@ -108,7 +108,7 @@ describe 'up.dom', ->
             affix('.fallback')
 
             # can't have the example replace the Jasmine test runner UI
-            extractSpy = up.dom.knife.mock('extract').and.returnValue(u.resolvedPromise())
+            extractSpy = up.dom.knife.mock('extract').and.returnValue(Promise.resolve())
 
             next => up.replace('.middle', '/path')
             next => @respond(status: 500)
@@ -841,7 +841,7 @@ describe 'up.dom', ->
               @revealedHTML.push $element.get(0).outerHTML
               @revealedText.push $element.text().trim()
               @revealOptions = options
-              u.resolvedDeferred()
+              up.FinishablePromise.resolve()
 
           it 'reveals a new element before it is being replaced', asyncSpec (next) ->
             up.replace('.middle', '/path', reveal: true)
@@ -1432,7 +1432,7 @@ describe 'up.dom', ->
           transition = ($old, $new) ->
             oldTextDuringTransition = squish($old.text())
             newTextDuringTransition = squish($new.text())
-            u.resolvedDeferred()
+            up.FinishablePromise.resolve()
           $container = affix('.container')
           $container.html """
             <div class='foo'>old-foo</div>

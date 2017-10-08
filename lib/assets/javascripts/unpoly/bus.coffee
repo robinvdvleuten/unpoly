@@ -333,10 +333,8 @@ up.bus = (($) ->
   @internal
   ###
   whenEmitted = (args...) ->
-    deferred = u.newDeferred()
-    if nobodyPrevents(args...)
-      deferred.resolve()
-    deferred.promise()
+    new Promise (resolve) ->
+      resolve() if nobodyPrevents(args...)
 
   ###*
   Registers an event listener to be called when the user

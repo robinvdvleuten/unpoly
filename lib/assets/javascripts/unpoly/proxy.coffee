@@ -561,7 +561,7 @@ up.proxy = (($) ->
         up.link.follow2($link, options)
     else
       up.puts("Won't preload %o due to unsafe method %s", $link, method)
-      u.resolvedPromise()
+      Promise.resolve()
 
   ###*
   @internal

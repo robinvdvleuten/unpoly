@@ -187,7 +187,7 @@ up.tooltip = (($) ->
 
   closeNow = (options) ->
     unless isOpen() # this can happen when a request fails and the chain proceeds to the next task
-      return u.resolvedPromise()
+      return Promise.resolve()
 
     options = u.options(options, animation: config.closeAnimation)
     animateOptions = up.motion.animateOptions(options, duration: config.closeDuration, easing: config.closeEasing)

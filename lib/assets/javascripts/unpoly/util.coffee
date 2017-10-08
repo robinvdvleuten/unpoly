@@ -496,17 +496,6 @@ up.util = (($) ->
     isObject(object) && isFunction(object.then)
 
   ###*
-  Returns whether the given argument is an object with `then` and `resolve` methods.
-
-  @function up.util.isDeferred
-  @param object
-  @return {boolean}
-  @stable
-  ###
-  isDeferred = (object) ->
-    isPromise(object) && isFunction(object.resolve)
-
-  ###*
   Returns whether the given argument is an array.
 
   @function up.util.isArray
@@ -1210,55 +1199,6 @@ up.util = (($) ->
     isLeftButton && isUnmodifiedKeyEvent(event)
 
   ###*
-  Returns a [Deferred object](https://api.jquery.com/category/deferred-object/) that is
-  already resolved.
-
-  @function up.util.resolvedDeferred
-  @param {Array} [args...]
-    The resolution values that will be passed to callbacks
-  @return {Deferred}
-  @stable
-  ###
-  resolvedDeferred = (args...) ->
-    deferred = newDeferred()
-    deferred.resolve(args...)
-    deferred
-
-  ###*
-  Returns a promise that is already resolved.
-
-  @function up.util.resolvedPromise
-  @param {Array} [args...]
-    The resolution values that will be passed to callbacks
-  @return {Promise}
-  @stable
-  ###
-  resolvedPromise = (arg) ->
-    Promise.resolve(arg)
-
-  ###*
-  Returns a promise that is already rejected.
-
-  @function up.util.rejectedPromise
-  @param {Array} [args...]
-    The rejection values that will be passed to callbacks
-  @return {Promise}
-  @stable
-  ###
-  rejectedPromise = (arg) ->
-    Promise.reject(arg)
-
-  ###*
-  Returns a [Deferred object](https://api.jquery.com/category/deferred-object/) that will never be resolved.
-
-  @function up.util.unresolvableDeferred
-  @return {Deferred}
-  @experimental
-  ###
-  unresolvableDeferred = ->
-    newDeferred()
-
-  ###*
   Returns a promise that will never be resolved.
 
   @function up.util.unresolvablePromise
@@ -1777,11 +1717,9 @@ up.util = (($) ->
 
   whenReady = memoize ->
     if $.isReady
-      resolvedPromise()
+      Promise.resolve()
     else
-      deferred = newDeferred()
-      $ -> deferred.resolve()
-      deferred.promise()
+      new Promise (resolve) -> $(resolve)
 
   identity = (arg) -> arg
 
@@ -1839,7 +1777,7 @@ up.util = (($) ->
 
     promise: =>
       lastTask = last(@allTasks())
-      lastTask?.promise || resolvedPromise()
+      lastTask?.promise || Promise.resolve()
 
     allTasks: =>
       tasks = []
@@ -1958,6 +1896,10 @@ up.util = (($) ->
   always = (promise, callback) ->
     promise.then(callback, callback)
 
+  ###*
+  @function up.util.newDeferred
+  @internal
+  ###
   newDeferred = ->
     resolve = undefined
     reject = undefined
@@ -2033,7 +1975,6 @@ up.util = (($) ->
   isElement: isElement
   isJQuery: isJQuery
   isPromise: isPromise
-  isDeferred: isDeferred
   isHash: isHash
   isArray: isArray
   isFormData: isFormData
@@ -2060,11 +2001,7 @@ up.util = (($) ->
   only: only
   except: except
   trim: trim
-  unresolvableDeferred: unresolvableDeferred
   unresolvablePromise: unresolvablePromise
-  resolvedPromise: resolvedPromise
-  rejectedPromise: rejectedPromise
-  resolvedDeferred: resolvedDeferred
   setMissingAttrs: setMissingAttrs
   remove: remove
   memoize: memoize

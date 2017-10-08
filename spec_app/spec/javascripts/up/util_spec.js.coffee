@@ -513,100 +513,12 @@ describe 'up.util', ->
         string = up.util.requestDataAsQuery({ 'my+key': 'my+value' })
         expect(string).toEqual('my%2Bkey=my%2Bvalue')
 
-    describe 'up.util.unresolvableDeferred', ->
-
-      it 'returns a different object every time (to prevent memory leaks)', ->
-        one = up.util.unresolvableDeferred()
-        two = up.util.unresolvableDeferred()
-        expect(one).not.toBe(two)
-
     describe 'up.util.unresolvablePromise', ->
 
       it 'returns a different object every time (to prevent memory leaks)', ->
         one = up.util.unresolvablePromise()
         two = up.util.unresolvablePromise()
         expect(one).not.toBe(two)
-
-    describe 'up.util.resolvableWhen', ->
-
-      it 'returns a promise that is resolved when all the given deferreds are resolved', (done) ->
-        one = jasmine.createSpy()
-        two = jasmine.createSpy()
-        both = jasmine.createSpy()
-        oneDeferred = u.newDeferred()
-        oneDeferred.then(one)
-        twoDeferred = u.newDeferred()
-        twoDeferred.then(two)
-
-        bothDeferred = up.util.resolvableWhen(oneDeferred, twoDeferred)
-        bothDeferred.then(both)
-
-        u.nextFrame ->
-          expect(one).not.toHaveBeenCalled()
-          expect(two).not.toHaveBeenCalled()
-          expect(both).not.toHaveBeenCalled()
-
-          oneDeferred.resolve()
-          u.nextFrame ->
-            expect(one).toHaveBeenCalled()
-            expect(two).not.toHaveBeenCalled()
-            expect(both).not.toHaveBeenCalled()
-
-            twoDeferred.resolve()
-            u.nextFrame ->
-              expect(one).toHaveBeenCalled()
-              expect(two).toHaveBeenCalled()
-              expect(both).toHaveBeenCalled()
-
-              done()
-
-      it 'returns a promise with a .resolve method that resolves the given deferreds', (done) ->
-        one = jasmine.createSpy()
-        two = jasmine.createSpy()
-        both = jasmine.createSpy()
-        oneDeferred = u.newDeferred()
-        oneDeferred.then(one)
-        twoDeferred = u.newDeferred()
-        twoDeferred.then(two)
-
-        bothDeferred = up.util.resolvableWhen(oneDeferred, twoDeferred)
-        bothDeferred.then(both)
-
-        u.nextFrame ->
-          expect(one).not.toHaveBeenCalled()
-          expect(two).not.toHaveBeenCalled()
-          expect(both).not.toHaveBeenCalled()
-
-          bothDeferred.resolve()
-          u.nextFrame ->
-            expect(one).toHaveBeenCalled()
-            expect(two).toHaveBeenCalled()
-            expect(both).toHaveBeenCalled()
-
-            done()
-
-      it 'does not resolve the given deferreds more than once', ->
-        oneDeferred = u.newDeferred()
-        spyOn(oneDeferred, 'resolve')
-        bothDeferred = up.util.resolvableWhen(oneDeferred)
-
-        bothDeferred.resolve()
-        bothDeferred.resolve()
-
-        expect(oneDeferred.resolve.calls.count()).toEqual(1)
-
-      describe 'bugfix against troublesome jQuery optimization if only one deferred is given', ->
-
-        it 'does not simply return the given deferred', ->
-          oneDeferred = u.newDeferred()
-          whenDeferred = up.util.resolvableWhen(oneDeferred)
-          expect(whenDeferred).not.toBe(oneDeferred)
-
-        it 'does not create an infinite loop if the given deferred is nested twice and the first nesting is resolved', ->
-          oneDeferred = u.newDeferred()
-          firstNesting = up.util.resolvableWhen(oneDeferred)
-          secondNesting = up.util.resolvableWhen(firstNesting)
-          expect(-> firstNesting.resolve()).not.toThrowError()
 
     describe 'up.util.requestDataAsArray', ->
 
@@ -704,6 +616,24 @@ describe 'up.util', ->
         expect(object.a).toBeUndefined()
         expect(object.b).toBe('b value')
         expect(object.c).toBe('a value')
+
+    describe 'up.util.selectInSubtree', ->
+
+      it 'finds the selector in ancestors and descendants of the given element', ->
+        $grandMother = affix('.grand-mother.match')
+        $mother = $grandMother.affix('.mother')
+        $element = $mother.affix('.element')
+        $child = $element.affix('.child.match')
+        $grandChild = $element.affix('.grand-child.match')
+
+        $matches = up.util.selectInSubtree($element, '.match')
+        $expected = $child.add($grandChild)
+        expect($matches).toEqual $expected
+
+      it 'finds the element itself if it matches the selector', ->
+        $element = affix('.element.match')
+        $matches = up.util.selectInSubtree($element, '.match')
+        expect($matches).toEqual $element
 
     describe 'up.util.selectInDynasty', ->
 

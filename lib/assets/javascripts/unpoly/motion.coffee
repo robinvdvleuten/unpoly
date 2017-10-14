@@ -35,10 +35,10 @@ up.motion = (($) ->
   
   u = up.util
 
-  animations = {}
-  defaultAnimations = {}
-  transitions = {}
-  defaultTransitions = {}
+  namedAnimations = {}
+  defaultNamedAnimations = {}
+  namedTransitions = {}
+  defaultNamedTransitions = {}
 
   animatingDynasty = new up.ExclusiveDynasty('up-animating')
   ghostingDynasty = new up.ExclusiveDynasty('up-ghosting')
@@ -74,8 +74,8 @@ up.motion = (($) ->
 
   reset = ->
     finish()
-    animations = u.copy(defaultAnimations)
-    transitions = u.copy(defaultTransitions)
+    namedAnimations = u.copy(defaultNamedAnimations)
+    namedTransitions = u.copy(defaultNamedTransitions)
     config.reset()
 
   ###*
@@ -215,7 +215,7 @@ up.motion = (($) ->
     consolidatedOptions
       
   findAnimation = (name) ->
-    animations[name] or up.fail("Unknown animation %o", name)
+    namedAnimations[name] or up.fail("Unknown animation %o", name)
 
   ###*
   @function withGhosts
@@ -371,54 +371,47 @@ up.motion = (($) ->
     A promise for the transition's end.
   @stable
   ###  
-  morph = (source, target, transitionOrName, options) ->
+  morph = (source, target, transitionObject, options) ->
     options = u.options(options)
+    parsedOptions = u.only(options, 'reveal', 'restoreScroll', 'source', 'finishedBeforeMorph')
+    parsedOptions = u.assign(parsedOptions, animateOptions(options))
 
-    willMorph = isEnabled() && !isNone(transitionOrName)
     $old = $(source)
     $new = $(target)
+    willMorph = isEnabled() && !isNone(transitionObject) && isMorphable($old) && isMorphable($new)
 
-    up.log.group ('Morphing %o to %o (using %s, %o)' if willMorph), $old.get(0), $new.get(0), transitionOrName, options, ->
-      parsedOptions = u.only(options, 'reveal', 'restoreScroll', 'source', 'finished', 'initialTransitionArg')
-      parsedOptions = u.assign(parsedOptions, animateOptions(options))
+    up.log.group ('Morphing %o to %o with transition %o' if willMorph), $old.get(0), $new.get(0), transitionObject, ->
+      finishOnceBeforeMorph($old, $new, parsedOptions).then ->
+        if !willMorph
+          skipMorph($old, $new, parsedOptions)
+        else if transitionFn = findTransitionFn(transitionObject)
+          morphWithFunction($old, $new, transitionFn, parsedOptions)
+        else
+          # Exception will be converted to rejected Promise
+          up.fail("Unknown transition %o", transitionObject)
 
-      unless parsedOptions.finished
-        finish($old)
-        finish($new)
-        parsedOptions.finished = true
+  finishOnceBeforeMorph = ($old, $new, options) ->
+    # Finish existing transitions, but only once in case morph() is called recusrively
+    if options.finishedBeforeMorph
+      Promise.resolve()
+    else
+      options.finishedBeforeMorph = true
+      Promise.all [finish($old), finish($new)]
 
-      unless willMorph
-        return skipMorph($old, $new, parsedOptions)
-
-      ensureMorphable($old)
-      ensureMorphable($new)
-
-      parsedOptions.initialTransitionArg ||= transitionOrName
-      transitionFn = undefined
-
-
-      if transitionFn
-        return morph($old, $new, transitionFn, parsedOptions)
-      else
-        up.fail("Unknown transition %o", transitionOrName)
-
-  resolveTransition = (object) ->
+  findTransitionFn = (object) ->
     if u.isFunction(object)
       object
     else if u.isArray(object)
-      resolveTransition(object...)
+      ($old, $new, options) ->
+        FinishablePromise.all [
+          animate($old, object[0], options),
+          animate($new, object[1], options)
+        ]
     else if u.isString(object)
-      if object.indexOf('/') >= 0
-        resolveTransition(object.split('/')...)
+      if object.indexOf('/') >= 0 # Compose a transition from two animation names
+        findTransitionFn(object.split('/')...)
       else
-        transitions[object]
-
-  transitionFromAnimations = (leaveAnimation, EnterAnimation) ->
-    ($old, $new, options) ->
-      FinishablePromise.all [
-        animate($old, parts[0], options),
-        animate($new, parts[1], options)
-      ]
+        namedTransitions[object]
 
   morphWithFunction = ($old, $new, fn, parsedOptions) ->
     return withGhosts $old, $new, parsedOptions, ($oldGhost, $newGhost) ->
@@ -426,10 +419,8 @@ up.motion = (($) ->
       assertIsFinishablePromise(transitionPromise, parsedOptions.originalTransitionArg)
       transitionPromise
 
-  ensureMorphable = ($element) ->
-    if $element.parents('body').length == 0
-      element = $element.get(0)
-      up.fail("Can't morph a <%s> element (%o)", element.tagName, element)
+  isMorphable = ($element) ->
+    !!$element.parents('body').length
 
   ###*
   This causes the side effects of a successful transition, but instantly.
@@ -529,7 +520,7 @@ up.motion = (($) ->
   @stable
   ###
   transition = (name, transition) ->
-    transitions[name] = transition
+    namedTransitions[name] = transition
 
   ###*
   Defines a named animation.
@@ -563,11 +554,11 @@ up.motion = (($) ->
   @stable
   ###
   animation = (name, animation) ->
-    animations[name] = animation
+    namedAnimations[name] = animation
 
   snapshot = ->
-    defaultAnimations = u.copy(animations)
-    defaultTransitions = u.copy(transitions)
+    defaultNamedAnimations = u.copy(namedAnimations)
+    defaultNamedTransitions = u.copy(namedTransitions)
 
   ###*
   Returns a no-op animation or transition which has no visual effects

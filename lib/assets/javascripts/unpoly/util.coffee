@@ -1911,6 +1911,12 @@ up.util = (($) ->
     nativePromise.promise = -> nativePromise # just return self
     nativePromise
 
+  rejectOnError = (block) ->
+    try
+      block()
+    catch error
+      Promise.reject(error)
+
 #  timerList = ->
 #    timers = []
 #
@@ -2035,6 +2041,8 @@ up.util = (($) ->
   isTruthy: isTruthy
   newDeferred: newDeferred
   always: always
+  rejectOnError: rejectOnError
+
 
 )(jQuery)
 

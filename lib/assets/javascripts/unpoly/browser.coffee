@@ -349,3 +349,4 @@ up.browser = (($) ->
   hash: hash
 
 )(jQuery)
+

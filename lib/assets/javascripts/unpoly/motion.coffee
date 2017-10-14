@@ -166,26 +166,23 @@ up.motion = (($) ->
     $element = $(elementOrSelector)
     options = animateOptions(options)
 
-    unless options.finished
-      finish($element)
-      options.finished = true
-
-    if isNone(animation)
-      none()
-    else if u.isFunction(animation)
-      animateWithFunction($element, animation, options)
-    else if u.isString(animation)
-      animate($element, findAnimation(animation), options)
-    else if u.isHash(animation)
-      animateWithHash($element, animation, options)
-    else
-      up.fail("Unknown animation type for %o", animation)
+    finishOnceBeforeMotion($element, options).then ->
+      if isNone(animation)
+        none()
+      else if u.isFunction(animation)
+        animateWithFunction($element, animation, options)
+      else if u.isString(animation)
+        animate($element, findNamedAnimation(animation), options)
+      else if u.isHash(animation)
+        animateWithHash($element, animation, options)
+      else
+        # Error will be converted to rejected promise in a then() callback
+        up.fail('Animation must be a function, animation name or object of CSS properties, but it was %o', animation)
 
   animateWithFunction = ($element, fn, options) ->
-    promise = fn($element, options)
-    unless promise instanceof up.FinishablePromise
-      up.fail("Did not return an up.FinishablePromise: %o", fn)
-    promise
+    animateDone = fn($element, options)
+    ensureIsFinishablePromise(animateDone, fn)
+    animateDone
 
   animateWithHash = ($element, lastFrame, options) ->
     if isEnabled()
@@ -194,6 +191,10 @@ up.motion = (($) ->
       # Directly set the last frame
       $element.css(lastFrame)
       up.FinishablePromise.resolve()
+
+  ensureIsFinishablePromise = (object, source) ->
+    unless up.FinishablePromise.quacks(object)
+      up.fail("Expected %o to return an up.FinishablePromise, but it returned %o", source, object)
 
   ###*
   Extracts animation-related options from the given options hash.
@@ -214,7 +215,7 @@ up.motion = (($) ->
     consolidatedOptions.finished = userOptions.finished # this is required by animate()
     consolidatedOptions
       
-  findAnimation = (name) ->
+  findNamedAnimation = (name) ->
     namedAnimations[name] or up.fail("Unknown animation %o", name)
 
   ###*
@@ -253,7 +254,7 @@ up.motion = (($) ->
     # in the same position.
     oldCopy.moveTop(newScrollTop - oldScrollTop)
 
-    # Hide $old since we no longer need it.
+    # Hide $old since we no longer need it. It's not our job to remove the element.
     $old.hide()
 
     # We will let $new take up space in the element flow, but hide it.
@@ -289,13 +290,14 @@ up.motion = (($) ->
   @function up.motion.finish
   @param {Element|jQuery|string} [elementOrSelector]
   @return {Promise}
+    A promise that will settle when animations and transitions have finished.
   @stable
   ###
   finish = (elementOrSelector = undefined) ->
     # We don't need to crawl through the DOM if we aren't animating anyway
-    return unless isEnabled()
-
-    if elementOrSelector
+    if !isEnabled()
+      Promise.resolve()
+    else if elementOrSelector
       $element = $(elementOrSelector)
       Promise.all [
         animatingDynasty.finishDynasty($element),
@@ -373,30 +375,31 @@ up.motion = (($) ->
   ###  
   morph = (source, target, transitionObject, options) ->
     options = u.options(options)
-    parsedOptions = u.only(options, 'reveal', 'restoreScroll', 'source', 'finishedBeforeMorph')
-    parsedOptions = u.assign(parsedOptions, animateOptions(options))
+    options = u.assign(options, animateOptions(options))
 
     $old = $(source)
     $new = $(target)
+    $both = $old.add($new)
     willMorph = isEnabled() && !isNone(transitionObject) && isMorphable($old) && isMorphable($new)
 
     up.log.group ('Morphing %o to %o with transition %o' if willMorph), $old.get(0), $new.get(0), transitionObject, ->
-      finishOnceBeforeMorph($old, $new, parsedOptions).then ->
+      finishOnceBeforeMotion($both, options).then ->
         if !willMorph
-          skipMorph($old, $new, parsedOptions)
+          debugger
+          skipMorph($old, $new, options)
         else if transitionFn = findTransitionFn(transitionObject)
-          morphWithFunction($old, $new, transitionFn, parsedOptions)
+          morphWithFunction($old, $new, transitionFn, options)
         else
           # Exception will be converted to rejected Promise
           up.fail("Unknown transition %o", transitionObject)
 
-  finishOnceBeforeMorph = ($old, $new, options) ->
+  finishOnceBeforeMotion = ($elements, options) ->
     # Finish existing transitions, but only once in case morph() is called recusrively
-    if options.finishedBeforeMorph
+    if options.finishedBeforeMotion
       Promise.resolve()
     else
-      options.finishedBeforeMorph = true
-      Promise.all [finish($old), finish($new)]
+      options.finishedBeforeMotion = true
+      finish($elements)
 
   findTransitionFn = (object) ->
     if u.isFunction(object)
@@ -415,18 +418,20 @@ up.motion = (($) ->
 
   morphWithFunction = ($old, $new, fn, parsedOptions) ->
     return withGhosts $old, $new, parsedOptions, ($oldGhost, $newGhost) ->
-      transitionPromise = fn($oldGhost, $newGhost, parsedOptions)
-      assertIsFinishablePromise(transitionPromise, parsedOptions.originalTransitionArg)
-      transitionPromise
+      morphDone = fn($oldGhost, $newGhost, parsedOptions)
+      ensureIsFinishablePromise(morphDone, fn)
+      debugger
+      morphDone
 
   isMorphable = ($element) ->
     !!$element.parents('body').length
 
   ###*
-  This causes the side effects of a successful transition, but instantly.
+  This instantly causes the side effects of a successful transition.
   We use this to skip morphing for old browsers, or when the developer
   decides to only animate the new element (i.e. no real ghosting or transition).
 
+  @return {Promise}
   @internal
   ###
   skipMorph = ($old, $new, options) ->

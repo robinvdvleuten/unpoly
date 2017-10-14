@@ -482,7 +482,6 @@ up.dom = (($) ->
 
     else
       replacement = ->
-
         options.keepPlans = transferKeepableElements($old, $new, options)
 
         if $old.is('body')

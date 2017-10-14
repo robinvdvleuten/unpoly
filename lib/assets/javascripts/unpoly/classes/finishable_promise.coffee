@@ -73,6 +73,5 @@ class up.FinishablePromise
     finishAll = u.sequence(u.map(finishablePromises, (p) -> p.finish))
     new @(allDone, finishAll)
 
-#  @fromDeferred: (deferred) ->
-#    new @(deferred, (-> deferred.resolve()))
-
+  @quacks: (object) ->
+    u.isPromise(object) && object.finish

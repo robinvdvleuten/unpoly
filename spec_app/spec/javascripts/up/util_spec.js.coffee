@@ -515,6 +515,12 @@ describe 'up.util', ->
 
     describe 'up.util.unresolvablePromise', ->
 
+      it 'return a pending promise', (done) ->
+        promise = up.util.unresolvablePromise()
+        promiseState2(promise).then (result) ->
+          expect(result.state).toEqual('pending')
+          done()
+
       it 'returns a different object every time (to prevent memory leaks)', ->
         one = up.util.unresolvablePromise()
         two = up.util.unresolvablePromise()
@@ -624,7 +630,7 @@ describe 'up.util', ->
         $mother = $grandMother.affix('.mother')
         $element = $mother.affix('.element')
         $child = $element.affix('.child.match')
-        $grandChild = $element.affix('.grand-child.match')
+        $grandChild = $child.affix('.grand-child.match')
 
         $matches = up.util.selectInSubtree($element, '.match')
         $expected = $child.add($grandChild)
@@ -635,6 +641,25 @@ describe 'up.util', ->
         $matches = up.util.selectInSubtree($element, '.match')
         expect($matches).toEqual $element
 
+      describe 'when given a jQuery collection with multiple elements', ->
+
+        it 'searches in a all subtrees of the given elements', ->
+          $a_grandMother = affix('.grand-mother.match')
+          $a_mother = $a_grandMother.affix('.mother')
+          $a_element = $a_mother.affix('.element')
+          $a_child = $a_element.affix('.child.match')
+          $a_grandChild = $a_child.affix('.grand-child.match')
+
+          $b_grandMother = affix('.grand-mother.match')
+          $b_mother = $b_grandMother.affix('.mother')
+          $b_element = $b_mother.affix('.element')
+          $b_child = $b_element.affix('.child.match')
+          $b_grandChild = $b_child.affix('.grand-child.match')
+
+          $matches = up.util.selectInSubtree($a_element.add($b_element), '.match')
+          expect($matches).toEqual $a_child.add($a_grandChild).add($b_child).add($b_grandChild)
+
+
     describe 'up.util.selectInDynasty', ->
 
       it 'finds the selector in both ancestors and descendants of the given element', ->
@@ -642,7 +667,7 @@ describe 'up.util', ->
         $mother = $grandMother.affix('.mother')
         $element = $mother.affix('.element')
         $child = $element.affix('.child.match')
-        $grandChild = $element.affix('.grand-child.match')
+        $grandChild = $child.affix('.grand-child.match')
 
         $matches = up.util.selectInDynasty($element, '.match')
         $expected = $grandMother.add($child).add($grandChild)

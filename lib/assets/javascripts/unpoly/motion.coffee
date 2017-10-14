@@ -379,7 +379,7 @@ up.motion = (($) ->
     $new = $(target)
 
     up.log.group ('Morphing %o to %o (using %s, %o)' if willMorph), $old.get(0), $new.get(0), transitionOrName, options, ->
-      parsedOptions = u.only(options, 'reveal', 'restoreScroll', 'source')
+      parsedOptions = u.only(options, 'reveal', 'restoreScroll', 'source', 'finished', 'initialTransitionArg')
       parsedOptions = u.assign(parsedOptions, animateOptions(options))
 
       unless parsedOptions.finished
@@ -387,29 +387,44 @@ up.motion = (($) ->
         finish($new)
         parsedOptions.finished = true
 
-      if willMorph
-        ensureMorphable($old)
-        ensureMorphable($new)
-
-        if animation = animations[transitionOrName]
-          skipMorph($old, $new, parsedOptions)
-          return animate($new, animation, parsedOptions)
-        else if transition = (u.presence(transitionOrName, u.isFunction) || transitions[transitionOrName])
-          return withGhosts $old, $new, parsedOptions, ($oldGhost, $newGhost) ->
-            transitionPromise = transition($oldGhost, $newGhost, parsedOptions)
-            assertIsFinishablePromise(transitionPromise, transitionOrName)
-        else if u.isString(transitionOrName) && transitionOrName.indexOf('/') >= 0
-          parts = transitionOrName.split('/')
-          transition = ($old, $new, options) ->
-            resolvableWhen(
-              animate($old, parts[0], options),
-              animate($new, parts[1], options)
-            )
-          return morph($old, $new, transition, parsedOptions)
-        else
-          up.fail("Unknown transition %o", transitionOrName)
-      else
+      unless willMorph
         return skipMorph($old, $new, parsedOptions)
+
+      ensureMorphable($old)
+      ensureMorphable($new)
+
+      parsedOptions.initialTransitionArg ||= transitionOrName
+      transitionFn = undefined
+
+
+      if transitionFn
+        return morph($old, $new, transitionFn, parsedOptions)
+      else
+        up.fail("Unknown transition %o", transitionOrName)
+
+  resolveTransition = (object) ->
+    if u.isFunction(object)
+      object
+    else if u.isArray(object)
+      resolveTransition(object...)
+    else if u.isString(object)
+      if object.indexOf('/') >= 0
+        resolveTransition(object.split('/')...)
+      else
+        transitions[object]
+
+  transitionFromAnimations = (leaveAnimation, EnterAnimation) ->
+    ($old, $new, options) ->
+      FinishablePromise.all [
+        animate($old, parts[0], options),
+        animate($new, parts[1], options)
+      ]
+
+  morphWithFunction = ($old, $new, fn, parsedOptions) ->
+    return withGhosts $old, $new, parsedOptions, ($oldGhost, $newGhost) ->
+      transitionPromise = fn($oldGhost, $newGhost, parsedOptions)
+      assertIsFinishablePromise(transitionPromise, parsedOptions.originalTransitionArg)
+      transitionPromise
 
   ensureMorphable = ($element) ->
     if $element.parents('body').length == 0
@@ -419,7 +434,7 @@ up.motion = (($) ->
   ###*
   This causes the side effects of a successful transition, but instantly.
   We use this to skip morphing for old browsers, or when the developer
-  decides to only animate the new element (i.e. no real ghosting or transition)   .
+  decides to only animate the new element (i.e. no real ghosting or transition).
 
   @internal
   ###

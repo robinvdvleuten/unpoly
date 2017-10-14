@@ -6,8 +6,12 @@ class up.ExclusiveDynasty
     @selector = ".#{@name}"
 
   ###*
+  Finishes all animations in the given element's ancestors and descendants,
+  than calls the animator.
+
   @method claim
-  @param {Function(jQuery): up.FinishablePromise}
+  @param {jQuery} $element
+  @param {Function(jQuery): up.FinishablePromise} animator
   @return {Promise} A promise that will be fulfilled when the animation ends
   ###
   claim: ($element, animator) =>
@@ -30,6 +34,7 @@ class up.ExclusiveDynasty
 
   finishElement: (element) =>
     $element = $(element)
+    $element.length == 1 or throw "must call with single element"
     finishablePromise = $element.data(@name)
     @unmarkElement($element)
     if finishablePromise

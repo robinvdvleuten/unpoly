@@ -10,7 +10,7 @@ describe 'up.motion', ->
         $element = affix('.element').text('content')
         up.animate($element, 'fade-in', duration: 200, easing: 'linear')
 
-        u.setTimer 0, ->
+        u.setTimer 5, ->
           expect(u.opacity($element)).toBeAround(0.0, 0.25)
         u.setTimer 100, ->
           expect(u.opacity($element)).toBeAround(0.5, 0.25)
@@ -42,15 +42,16 @@ describe 'up.motion', ->
         beforeEach ->
           up.motion.config.enabled = false
 
-        it "doesn't animate and directly sets the last frame instead", asyncSpec (next) ->
+        it "doesn't animate and directly sets the last frame instead", (done) ->
           $element = affix('.element').text('content')
           callback = jasmine.createSpy('animation done callback')
           animateDone = up.animate($element, { 'font-size': '40px' }, duration: 10000, easing: 'linear')
           animateDone.then(callback)
 
-          next =>
+          u.setTimer 5, =>
             expect($element.css('font-size')).toEqual('40px')
             expect(callback).toHaveBeenCalled()
+            done()
 
       [false, null, undefined, 'none', up.motion.none()].forEach (noneAnimation) ->
 
@@ -73,6 +74,8 @@ describe 'up.motion', ->
 
           next =>
             up.motion.finish($element)
+
+          next =>
             expect($element.css('font-size')).toEqual('40px')
             expect($element.css('opacity')).toEqual('0.33')
 
@@ -83,6 +86,8 @@ describe 'up.motion', ->
 
           next =>
             up.motion.finish($parent)
+
+          next =>
             expect($child.css('font-size')).toEqual('40px')
 
         it 'does not cancel animations on other elements', asyncSpec (next) ->
@@ -93,8 +98,10 @@ describe 'up.motion', ->
 
           next =>
             up.motion.finish($element1)
+
+          next =>
             expect(Number($element1.css('opacity'))).toEqual(1)
-            expect(Number($element2.css('opacity'))).toEqual(0, 0.1)
+            expect(Number($element2.css('opacity'))).toBeAround(0, 0.1)
 
         it 'restores existing transitions on the element', asyncSpec (next) ->
           $element = affix('.element').text('content')
@@ -107,6 +114,7 @@ describe 'up.motion', ->
           next =>
             up.motion.finish($element)
 
+          next =>
             expect(u.opacity($element)).toEqual(1)
             currentTransitionProperty = $element.css('transition-property')
             expect(currentTransitionProperty).toEqual(oldTransitionProperty)
@@ -120,10 +128,12 @@ describe 'up.motion', ->
           up.morph($old, $new, 'cross-fade', duration: 2000)
 
           next =>
+            debugger
             expect($('.up-ghost').length).toBe(2)
 
             up.motion.finish($old)
 
+          next =>
             expect($('.up-ghost').length).toBe(0)
             expect($old.css('display')).toEqual('none')
             expect($new.css('display')).toEqual('block')
@@ -139,6 +149,7 @@ describe 'up.motion', ->
 
             up.motion.finish($new)
 
+          next =>
             expect($('.up-ghost').length).toBe(0)
             expect($old.css('display')).toEqual('none')
             expect($new.css('display')).toEqual('block')
@@ -156,6 +167,7 @@ describe 'up.motion', ->
 
             up.motion.finish($parent)
 
+          next =>
             expect($('.up-ghost').length).toBe(0)
             expect($old.css('display')).toEqual('none')
             expect($new.css('display')).toEqual('block')
@@ -175,6 +187,7 @@ describe 'up.motion', ->
 
             up.motion.finish()
 
+          next =>
             $element1 = $('.element1')
             $element2 = $('.element2')
             expect(u.opacity($element1)).toBe(1.0)

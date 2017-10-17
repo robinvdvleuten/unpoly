@@ -166,9 +166,9 @@ up.motion = (($) ->
     $element = $(elementOrSelector)
     options = animateOptions(options)
 
-    finishOnceBeforeMotion($element, options).then ->
+    finishOnce($element, options).then ->
       if !willAnimate($element, animation, options)
-        none()
+        skipAnimate($element, animation)
       else if u.isFunction(animation)
         animation($element, options)
       else if u.isString(animation)
@@ -181,6 +181,11 @@ up.motion = (($) ->
 
   willAnimate = ($elements, animationOrTransition, options) ->
     isEnabled() && !isNone(animationOrTransition) && options.duration > 0 && u.all($elements, u.isBodyDescendant)
+
+  skipAnimate = ($element, animation) ->
+    if u.isHash(animation)
+      $element.css(animation)
+    none()
 
   ###*
   Animates the given element's CSS properties using CSS transitions.
@@ -219,33 +224,35 @@ up.motion = (($) ->
       oldTransition = $element.css(Object.keys(transition))
   
       deferred = u.newDeferred()
-      finish = -> deferred.resolve()
+      # May not call this finish() since this would override the global finish()
+      # function in this scope. We really need `let`, which CoffeeScript will never get.
+      fulfil = -> deferred.resolve()
   
       onTransitionEnd = (event) ->
         # Check if the transitionend event was caused by our own transition,
         # and not by some other transition that happens to live on the same element.
         completedProperty = event.originalEvent.propertyName
-        finish() if u.contains(transitionProperties, completedProperty)
+        fulfil() if u.contains(transitionProperties, completedProperty)
   
       # Animating code is expected to listen to this event to enable external code
-      # to finish the animation.
-      $element.on(motionTracker.finishEvent, finish)
+      # to fulfil the animation.
+      $element.on(motionTracker.finishAnimateEvent, fulfil)
   
-      # Ideally, we want to finish when we receive the `transitionend` event
+      # Ideally, we want to fulfil when we receive the `transitionend` event
       $element.on('transitionend', onTransitionEnd)
   
       # The `transitionend` event might not fire reliably if other transitions
       # are interfering on the same element. This is why we register a fallback
-      # timeout that forces the animation to finish a few ms later.
+      # timeout that forces the animation to fulfil a few ms later.
       transitionTimingTolerance = 5
-      cancelFallbackTimer = u.setTimer(options.duration + transitionTimingTolerance, finish)
+      cancelFallbackTimer = u.setTimer(options.duration + transitionTimingTolerance, fulfil)
 
       # All clean-up is handled in the following then() handler.
-      # This way it will be run both when the animation finishes naturally and
-      # when it is finished externally.
+      # This way it will be run both when the animation finishAnimatees naturally and
+      # when it is finishAnimateed externally.
       deferred.then ->
-        # Disable all three triggers that would finish the motion:
-        $element.off(motionTracker.finishEvent, finish)
+        # Disable all three triggers that would fulfil the motion:
+        $element.off(motionTracker.finishAnimateEvent, fulfil)
         $element.off('transitionend', onTransitionEnd)
         clearTimeout(cancelFallbackTimer)
 
@@ -277,7 +284,8 @@ up.motion = (($) ->
       $element.css(transition)
       $element.css(lastFrame)
   
-      # Return a promise that fulfills when the animation ends.
+      # Return a promise that fulfills when either the animation ends
+      # or someone finishes the animation.
       deferred.promise()
 
     motionTracker.start($element, startCssTransition)
@@ -310,7 +318,7 @@ up.motion = (($) ->
   @internal
   ###
   withGhosts = ($old, $new, options, block) ->
-    # Don't create ghosts of ghosts in case a transition function is itself calling `morph`
+    # Don't create ghosts of ghosts in case a transition function calling `morph` recursively.
     if options.copy == false || $old.is('.up-ghost') || $new.is('.up-ghost')
       return block($old, $new, options)
 
@@ -457,7 +465,7 @@ up.motion = (($) ->
     willMorph = willAnimate($both, transitionObject, options)
 
     up.log.group ('Morphing %o to %o with transition %o' if willMorph), $old.get(0), $new.get(0), transitionObject, ->
-      finishOnceBeforeMotion($both, options).then ->
+      finishOnce($both, options).then ->
         if !willMorph
           skipMorph($old, $new, options)
         else if transitionFn = findTransitionFn(transitionObject)
@@ -466,12 +474,13 @@ up.motion = (($) ->
           # Exception will be converted to rejected Promise inside a then() handler
           up.fail("Unknown transition %o", transitionObject)
 
-  finishOnceBeforeMotion = ($elements, options) ->
+  finishOnce = ($elements, options) ->
     # Finish existing transitions, but only once in case morph() or animate() is called recursively.
-    if options.finishedBeforeMotion
+    if options.finishedMotion
       Promise.resolve()
     else
-      options.finishedBeforeMotion = true
+      # Use options to persist that we have finished motion.
+      options.finishedMotion = true
       finish($elements)
 
   findTransitionFn = (object) ->

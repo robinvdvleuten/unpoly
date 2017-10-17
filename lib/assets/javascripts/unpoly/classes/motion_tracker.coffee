@@ -10,7 +10,7 @@ class up.MotionTracker
 
   ###*
   Finishes all animations in the given element's ancestors and descendants,
-  than calls the animator.
+  then calls the animator.
 
   @method claim
   @param {jQuery} $element

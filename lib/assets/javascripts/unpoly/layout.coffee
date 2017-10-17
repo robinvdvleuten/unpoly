@@ -69,12 +69,12 @@ up.layout = (($) ->
     size: 30,
     key: up.history.normalizeUrl
 
-  scrollingDynasty = new up.ExclusiveDynasty('up-scrolling')
+  scrollingTracker = new up.MotionTracker('scrolling')
 
   reset = ->
     config.reset()
     lastScrollTops.clear()
-    scrollingDynasty.finishAll()
+    scrollingTracker.finish()
 
   ###*
   Scrolls the given viewport to the given Y-position.
@@ -115,34 +115,43 @@ up.layout = (($) ->
   @experimental
   ###
   scroll = (viewport, scrollTop, options) ->
-    $viewport = $(viewport)
+    $scrollable = scrollableElementForViewport(viewport)
     options = u.options(options)
     options.duration = u.option(options.duration, config.duration)
     options.easing = u.option(options.easing, config.easing)
 
+    finishScrolling($scrollable).then ->
 
-
-    if shouldAnimateScroll(options)
-      scrollWithAnimate($viewport, scrollTop, options)
+    if up.motion.isEnabled() && options.duration > 0
+      scrollWithAnimateNow($scrollable, scrollTop, options)
     else
-      scrollAbruptly($viewport, scrollTop)
+      scrollAbruptlyNow($scrollable, scrollTop)
 
-  shouldAnimateScroll = (options) ->
-    up.motion.isEnabled() && options.duration > 0
+  scrollableElementForViewport = (viewport) ->
+    $viewport = $(viewport)
+    if $viewport.get(0) == document
+      $('html, body') # FML
+    else
+      $viewport
 
-  scrollWithAnimate = ($viewport, scrollTop, animateOptions) ->
+  scrollWithAnimateNow = ($scrollable, scrollTop, animateOptions) ->
     start = ->
-      if $viewport.get(0) == document then $viewport = $('html, body') # FML
-      jqAnimatePromise = $viewport.animate({ scrollTop }, animateOptions).promise()
-      finish = -> $viewport.finish() # https://api.jquery.com/finish/
-      new FinishablePromise(jqAnimatePromise, finish)
+      finish = ->
+        # jQuery exposes a finish() method that completes all animations orchestrated through jQuery.
+        # This will also resolve the promise returned by $element.animate(..).promise().
+        $scrollable.finish()
 
-    # Dynasty will finish previous scrolling animations before starting
-    scrollingDynasty.claim($viewport, start)
+      $scrollable.on(scrollingTracker.eventName, finish)
+      scrollDone = $scrollable.animate({ scrollTop }, animateOptions).promise()
+      scrollDone.then -> $scrollable.off(scrollingTracker.eventName)
+      scrollDone
 
-  scrollAbruptly = ($viewport, scrollTop) ->
-    finishScrolling($viewport)
-    $viewport.scrollTop(scrollTop)
+    # Tracker will either finish or wait for previous scrolling animations before starting the next
+    scrollingTracker.claim($scrollable, start)
+
+  scrollAbruptlyNow = ($scrollable, scrollTop) ->
+    scrollingTracker.finish($scrollable)
+    $scrollable.scrollTop(scrollTop)
     Promise.resolve()
 
   ###*
@@ -154,7 +163,8 @@ up.layout = (($) ->
   @internal
   ###
   finishScrolling = (element) ->
-    scrollDynasty.finishAll($(element))
+    $element = scrollableElementForViewport(element)
+    scrollingTracker.finish($element)
 
   ###*
   @function up.layout.anchoredRight
@@ -223,8 +233,8 @@ up.layout = (($) ->
   @param {boolean} [options.top=false]
     Whether to scroll the viewport so that the first element row aligns
     with the top edge of the viewport.
-  @return {FinishablePromise}
-    A promise that will be fulfilled when the element is revealed.
+  @return {Promise}
+    A promise that fulfills when the element is revealed.
   @stable
   ###
   reveal = (elementOrSelector, options) ->
@@ -279,7 +289,7 @@ up.layout = (($) ->
     if newScrollPos != originalScrollPos
       scroll($viewport, newScrollPos, options)
     else
-      up.FinishablePromise.resolve()
+      Promise.resolve()
 
   ###*
   [Reveals](/up.reveal) an element matching the `#hash` in the current URL.
@@ -447,8 +457,9 @@ up.layout = (($) ->
   @function up.layout.revealOrRestoreScroll
   @param {boolean} [options.restoreScroll]
   @param {boolean|string} [options.reveal]
-  @return {FinishablePromise}
-    A promise for when the revealing or scroll restoration ends
+  @return {Promise}
+    A promise that is fulfilled when the element is revealed or
+    the scroll position is restored.
   @internal
   ###
   revealOrRestoreScroll = (selectorOrElement, options) ->
@@ -467,7 +478,7 @@ up.layout = (($) ->
 
     # If we didn't need to scroll above, just return a resolved promise
     # to fulfill this function's signature.
-    return up.FinishablePromise.resolve()
+    return Promise.resolve()
 
   ###*
   @internal

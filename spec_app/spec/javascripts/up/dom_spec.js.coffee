@@ -841,7 +841,7 @@ describe 'up.dom', ->
               @revealedHTML.push $element.get(0).outerHTML
               @revealedText.push $element.text().trim()
               @revealOptions = options
-              up.FinishablePromise.resolve()
+              Promise.resolve()
 
           it 'reveals a new element before it is being replaced', asyncSpec (next) ->
             up.replace('.middle', '/path', reveal: true)
@@ -1432,7 +1432,7 @@ describe 'up.dom', ->
           transition = ($old, $new) ->
             oldTextDuringTransition = squish($old.text())
             newTextDuringTransition = squish($new.text())
-            up.FinishablePromise.resolve()
+            Promise.resolve()
           $container = affix('.container')
           $container.html """
             <div class='foo'>old-foo</div>

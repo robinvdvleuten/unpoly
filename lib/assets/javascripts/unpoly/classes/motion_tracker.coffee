@@ -1,8 +1,12 @@
+u = up.util
+
 class up.MotionTracker
 
-  MARK_CLASS = "up-motion"
-  MARK_DATA = "#{MARK_CLASS}-finished"
-  MARK_SELECTOR = ".#{MARK_CLASS}"
+  constructor: (name) ->
+    @className = "up-#{name}"
+    @dataKey = "up-#{name}-finished"
+    @selector = ".#{@className}"
+    @finishEvent = "up:#{name}:finish"
 
   ###*
   Finishes all animations in the given element's ancestors and descendants,
@@ -51,12 +55,12 @@ class up.MotionTracker
 
   expandFinishRequest: (elements) ->
     if elements
-      u.selectInDynasty($(elements), MARK_SELECTOR)
+      u.selectInDynasty($(elements), @selector)
     else
-      $(MARK_SELECTOR)
+      $(@selector)
 
   finishOneElement: (element) =>
-    $element = (element)
+    $element = $(element)
     finished = $element.data(@name)
     @unmarkElement($element)
 
@@ -67,7 +71,7 @@ class up.MotionTracker
     # If animating code ignores the event, we cannot force the animation to
     # finish from here. We will wait for the animation to end naturally before
     # starting the next animation.
-    $element.trigger('up:motion:finish')
+    $element.trigger(@finishEvent)
 
     # There are some cases related to element ghosting where an element
     # has the class, but not the data value. In that case simply return
@@ -75,9 +79,9 @@ class up.MotionTracker
     finished || Promise.resolve()
 
   markElement: ($element, promise) =>
-    $element.addClass(MARK_CLASS)
-    $element.data(MARK_DATA, promise)
+    $element.addClass(@className)
+    $element.data(@dataKey, promise)
 
   unmarkElement: ($element) =>
-    $element.removeClass(MARK_CLASS)
-    $element.removeData(MARK_DATA)
+    $element.removeClass(@className)
+    $element.removeData(@dataKey)

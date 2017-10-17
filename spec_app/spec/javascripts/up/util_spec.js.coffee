@@ -184,15 +184,6 @@ describe 'up.util', ->
         expect(element.querySelector("title")).toBeMissing()
         expect(element.querySelector("h1").textContent).toEqual('Full story')
 
-    describe 'up.util.cssAnimate', ->
-
-      it 'returns a deferred that eventually resolves if called with a duration of 0 (bugfix)', (done) ->
-        $element = affix('.element')
-        promise = up.util.cssAnimate($element, { 'font-size': '90px' }, { duration: 0 })
-        promise.then ->
-          expect('done').toEqual('done') # need an expectation of Jasmine will complain
-          done()
-
     describe 'up.util.isFixed', ->
 
       it 'returns true if the given element or one of its ancestors has a "fixed" CSS position', ->

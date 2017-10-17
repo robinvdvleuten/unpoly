@@ -930,116 +930,7 @@ up.util = (($) ->
     element = unJQuery(element)
     element.offsetHeight
 
-  ###*
-  Animates the given element's CSS properties using CSS transitions.
-  
-  If the element is already being animated, the previous animation
-  will instantly jump to its last frame before the new animation begins. 
-  
-  To improve performance, the element will be forced into compositing for
-  the duration of the animation.
-
-  @function up.util.cssAnimate
-  @param {Element|jQuery|string} elementOrSelector
-    The element to animate.
-  @param {Object} lastFrame
-    The CSS properties that should be transitioned to.
-  @param {number} [options.duration=300]
-    The duration of the animation, in milliseconds.
-  @param {number} [options.delay=0]
-    The delay before the animation starts, in milliseconds.
-  @param {string} [options.easing='ease']
-    The timing function that controls the animation's acceleration.
-    See [W3C documentation](http://www.w3.org/TR/css3-transitions/#transition-timing-function)
-    for a list of pre-defined timing functions.
-  @return {Promise}
-    A promise that fulfills when the animation ends.
-  @internal
-  ###
   cssAnimate = (elementOrSelector, lastFrame, opts) ->
-    $element = $(elementOrSelector)
-
-    # Don't name the local variable `options` since that would override
-    # the `options` function in our scope. We really need `let` :(
-    opts = options(opts,
-      duration: 300,
-      delay: 0,
-      easing: 'ease'
-    )
-
-    if opts.duration == 0
-      # In case the duration is zero we 1) spare ourselves all the trouble below,
-      # and 2) return a promise that actually settled, since a CSS transition with
-      # a zero duration never fires a transitionEnd event.
-      $element.css(lastFrame)
-      return Promise.resolve()
-
-    transitionProperties = Object.keys(lastFrame)
-    transition =
-      'transition-property': transitionProperties.join(', ')
-      'transition-duration': "#{opts.duration}ms"
-      'transition-delay': "#{opts.delay}ms"
-      'transition-timing-function': opts.easing
-    oldTransition = $element.css(Object.keys(transition))
-
-    # We don't finish an existing animation here, since the public API
-    # we expose as `up.motion.animate()` already does this.
-    deferred = newDeferred()
-
-    finish = -> deferred.resolve()
-
-    onTransitionEnd = (event) ->
-      # Check if the transitionend event was caused by our own transition,
-      # and not by some other transition that happens to live on the same element.
-      completedProperty = event.originalEvent.propertyName
-      finish() if contains(transitionProperties, completedProperty)
-
-    # Animating code is expected to listen to this event to enable external code
-    # to finish the animation.
-    $element.on('up:motion:finish', finish)
-
-    # Ideally, we want to finish when we receive the `transitionend` event
-    $element.on('transitionend', onTransitionEnd)
-
-    # The `transitionend` event might not fire reliably if other transitions
-    # are interfering on the same element. This is why we register a fallback
-    # timeout that forces the animation to finish a few ms later.
-    transitionTimingTolerance = 5
-    cancelFallbackTimer = setTimer(opts.duration + transitionTimingTolerance, finish)
-
-    deferred.then ->
-      # Disable all three triggers that would finish the motion:
-      $element.off('up:motion:finish', finish)
-      $element.off('transitionend', onTransitionEnd)
-      cancelFallbackTimer()
-
-      undoCompositing()
-
-      # To interrupt the running transition we *must* set it to 'none' exactly.
-      # We cannot simply restore the old transition properties because browsers
-      # would simply keep transitioning.
-      $element.css('transition': 'none')
-
-      # Restoring a previous transition involves forcing a repaint, so we only do it if
-      # we know the element was transitioning before.
-      # Note that the default transition for elements is actually "all 0s ease 0s"
-      # instead of "none", although that has the same effect as "none".
-      hadTransitionBefore = !(oldTransition['transition-property'] == 'none' || (oldTransition['transition-property'] == 'all' && oldTransition['transition-duration'][0] == '0'))
-      if hadTransitionBefore
-        # If there is no repaint between the "none" transition and restoring the previous
-        # transition, the browser will simply keep transitioning. I'm sorry.
-        forceRepaint($element)
-        $element.css(oldTransition)
-
-    undoCompositing = forceCompositing($element)
-
-    # CSS will start animating when we set the `transition-*` properties and then change
-    # the animating properties to the last frame.
-    $element.css(transition)
-    $element.css(lastFrame)
-
-    # Return a promise that fulfills when the animation ends.
-    deferred.promise()
 
   ###*
   @internal
@@ -1933,6 +1824,9 @@ up.util = (($) ->
     catch error
       Promise.reject(error)
 
+  isBodyDescendant = (element) ->
+    $(element).parents('body').length > 0
+
 #  timerList = ->
 #    timers = []
 #
@@ -2058,6 +1952,7 @@ up.util = (($) ->
   newDeferred: newDeferred
   always: always
   rejectOnError: rejectOnError
+  isBodyDescendant: isBodyDescendant
 
 
 )(jQuery)

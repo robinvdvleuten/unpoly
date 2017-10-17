@@ -40,8 +40,8 @@ up.motion = (($) ->
   namedTransitions = {}
   defaultNamedTransitions = {}
 
-  animatingDynasty = new up.ExclusiveDynasty('up-animating')
-  ghostingDynasty = new up.ExclusiveDynasty('up-ghosting')
+  motionTracker = new up.MotionTracker('motion')
+  ghostingTracker = new up.MotionTracker('ghosting')
 
   ###*
   Sets default options for animations and transitions.
@@ -167,34 +167,120 @@ up.motion = (($) ->
     options = animateOptions(options)
 
     finishOnceBeforeMotion($element, options).then ->
-      if isNone(animation)
+      if !willAnimate($element, animation, options)
         none()
       else if u.isFunction(animation)
-        animateWithFunction($element, animation, options)
+        animation($element, options)
       else if u.isString(animation)
         animate($element, findNamedAnimation(animation), options)
       else if u.isHash(animation)
-        animateWithHash($element, animation, options)
+        animateWithCss($element, animation, options)
       else
         # Error will be converted to rejected promise in a then() callback
         up.fail('Animation must be a function, animation name or object of CSS properties, but it was %o', animation)
 
-  animateWithFunction = ($element, fn, options) ->
-    animateDone = fn($element, options)
-    ensureIsFinishablePromise(animateDone, fn)
-    animateDone
+  willAnimate = ($elements, animationOrTransition, options) ->
+    isEnabled() && !isNone(animationOrTransition) && options.duration > 0 && u.all($elements, u.isBodyDescendant)
 
-  animateWithHash = ($element, lastFrame, options) ->
-    if isEnabled()
-      animatingDynasty.start $element, -> u.cssAnimate($element, lastFrame, options)
-    else
-      # Directly set the last frame
+  ###*
+  Animates the given element's CSS properties using CSS transitions.
+
+  If the element is already being animated, the previous animation
+  will instantly jump to its last frame before the new animation begins.
+
+  To improve performance, the element will be forced into compositing for
+  the duration of the animation.
+
+  @function up.util.cssAnimate
+  @param {Element|jQuery|string} elementOrSelector
+    The element to animate.
+  @param {Object} lastFrame
+    The CSS properties that should be transitioned to.
+  @param {number} [options.duration=300]
+    The duration of the animation, in milliseconds.
+  @param {number} [options.delay=0]
+    The delay before the animation starts, in milliseconds.
+  @param {string} [options.easing='ease']
+    The timing function that controls the animation's acceleration.
+    See [W3C documentation](http://www.w3.org/TR/css3-transitions/#transition-timing-function)
+    for a list of pre-defined timing functions.
+  @return {Promise}
+    A promise that fulfills when the animation ends.
+  @internal
+  ###
+  animateWithCss = ($element, lastFrame, options) ->
+    startCssTransition = ->
+      transitionProperties = Object.keys(lastFrame)
+      transition =
+        'transition-property': transitionProperties.join(', ')
+        'transition-duration': "#{options.duration}ms"
+        'transition-delay': "#{options.delay}ms"
+        'transition-timing-function': options.easing
+      oldTransition = $element.css(Object.keys(transition))
+  
+      deferred = u.newDeferred()
+      finish = -> deferred.resolve()
+  
+      onTransitionEnd = (event) ->
+        # Check if the transitionend event was caused by our own transition,
+        # and not by some other transition that happens to live on the same element.
+        completedProperty = event.originalEvent.propertyName
+        finish() if u.contains(transitionProperties, completedProperty)
+  
+      # Animating code is expected to listen to this event to enable external code
+      # to finish the animation.
+      $element.on(motionTracker.finishEvent, finish)
+  
+      # Ideally, we want to finish when we receive the `transitionend` event
+      $element.on('transitionend', onTransitionEnd)
+  
+      # The `transitionend` event might not fire reliably if other transitions
+      # are interfering on the same element. This is why we register a fallback
+      # timeout that forces the animation to finish a few ms later.
+      transitionTimingTolerance = 5
+      cancelFallbackTimer = u.setTimer(options.duration + transitionTimingTolerance, finish)
+
+      # All clean-up is handled in the following then() handler.
+      # This way it will be run both when the animation finishes naturally and
+      # when it is finished externally.
+      deferred.then ->
+        # Disable all three triggers that would finish the motion:
+        $element.off(motionTracker.finishEvent, finish)
+        $element.off('transitionend', onTransitionEnd)
+        clearTimeout(cancelFallbackTimer)
+
+        # Elements with compositing might look blurry, so undo that.
+        undoCompositing()
+  
+        # To interrupt the running transition we *must* set it to 'none' exactly.
+        # We cannot simply restore the old transition properties because browsers
+        # would simply keep transitioning.
+        $element.css('transition': 'none')
+  
+        # Restoring a previous transition involves forcing a repaint, so we only do it if
+        # we know the element was transitioning before.
+        # Note that the default transition for elements is actually "all 0s ease 0s"
+        # instead of "none", although that has the same effect as "none".
+        hadTransitionBefore = !(oldTransition['transition-property'] == 'none' || (oldTransition['transition-property'] == 'all' && oldTransition['transition-duration'][0] == '0'))
+        if hadTransitionBefore
+          # If there is no repaint between the "none" transition and restoring the previous
+          # transition, the browser will simply keep transitioning. I'm sorry.
+          u.forceRepaint($element)
+          $element.css(oldTransition)
+
+      # Push the element into its own compositing layer before we are going
+      # to massively change the element against background.
+      undoCompositing = u.forceCompositing($element)
+  
+      # CSS will start animating when we set the `transition-*` properties and then change
+      # the animating properties to the last frame.
+      $element.css(transition)
       $element.css(lastFrame)
-      up.FinishablePromise.resolve()
+  
+      # Return a promise that fulfills when the animation ends.
+      deferred.promise()
 
-  ensureIsFinishablePromise = (object, source) ->
-    unless up.FinishablePromise.quacks(object)
-      up.fail("Expected %o to return an up.FinishablePromise, but it returned %o", source, object)
+    motionTracker.start($element, startCssTransition)
 
   ###*
   Extracts animation-related options from the given options hash.
@@ -220,13 +306,13 @@ up.motion = (($) ->
 
   ###*
   @function withGhosts
-  @return {FinishablePromise}
+  @return {Promise}
   @internal
   ###
   withGhosts = ($old, $new, options, block) ->
     # Don't create ghosts of ghosts in case a transition function is itself calling `morph`
     if options.copy == false || $old.is('.up-ghost') || $new.is('.up-ghost')
-      return block($old, $new)
+      return block($old, $new, options)
 
     oldCopy = undefined
     newCopy = undefined
@@ -265,8 +351,8 @@ up.motion = (($) ->
     # shown again, causing a flicker while the browser is painting.
     showNew = u.temporaryCss($new, opacity: '0')
 
-    blockWithGhosts = -> block(oldCopy.$ghost, newCopy.$ghost)
-    promise = ghostingDynasty.start($both, blockWithGhosts)
+    blockWithGhosts = -> block(oldCopy.$ghost, newCopy.$ghost, options)
+    promise = ghostingTracker.start($both, blockWithGhosts)
 
     promise.then ->
       # Now that the transition is over we show $new again.
@@ -290,24 +376,12 @@ up.motion = (($) ->
   @function up.motion.finish
   @param {Element|jQuery|string} [elementOrSelector]
   @return {Promise}
-    A promise that will settle when animations and transitions have finished.
+    A promise that fulfills when animations and transitions have finished.
   @stable
   ###
-  finish = (elementOrSelector = undefined) ->
-    # We don't need to crawl through the DOM if we aren't animating anyway
-    if !isEnabled()
-      Promise.resolve()
-    else if elementOrSelector
-      $element = $(elementOrSelector)
-      Promise.all [
-        animatingDynasty.finishDynasty($element),
-        ghostingDynasty.finishDynasty($element)
-      ]
-    else
-      Promise.all [
-        animatingDynasty.finishAll(),
-        ghostingDynasty.finishAll()
-      ]
+  finish = (elementOrSelector) ->
+    motionTracker.finish(elementOrSelector)
+    ghostingTracker.finish(elementOrSelector)
 
   ###*
   Performs an animated transition between two elements.
@@ -370,7 +444,7 @@ up.motion = (($) ->
   @param {boolean} [options.reveal=false]
     Whether to reveal the new element by scrolling its parent viewport.
   @return {Promise}
-    A promise for the transition's end.
+    A promise that fulfills when the transition ends.
   @stable
   ###  
   morph = (source, target, transitionObject, options) ->
@@ -380,21 +454,20 @@ up.motion = (($) ->
     $old = $(source)
     $new = $(target)
     $both = $old.add($new)
-    willMorph = isEnabled() && !isNone(transitionObject) && isMorphable($old) && isMorphable($new)
+    willMorph = willAnimate($both, transitionObject, options)
 
     up.log.group ('Morphing %o to %o with transition %o' if willMorph), $old.get(0), $new.get(0), transitionObject, ->
       finishOnceBeforeMotion($both, options).then ->
         if !willMorph
-          debugger
           skipMorph($old, $new, options)
         else if transitionFn = findTransitionFn(transitionObject)
-          morphWithFunction($old, $new, transitionFn, options)
+          withGhosts($old, $new, options, transitionFn)
         else
-          # Exception will be converted to rejected Promise
+          # Exception will be converted to rejected Promise inside a then() handler
           up.fail("Unknown transition %o", transitionObject)
 
   finishOnceBeforeMotion = ($elements, options) ->
-    # Finish existing transitions, but only once in case morph() is called recusrively
+    # Finish existing transitions, but only once in case morph() or animate() is called recursively.
     if options.finishedBeforeMotion
       Promise.resolve()
     else
@@ -406,7 +479,7 @@ up.motion = (($) ->
       object
     else if u.isArray(object)
       ($old, $new, options) ->
-        FinishablePromise.all [
+        Promise.all [
           animate($old, object[0], options),
           animate($new, object[1], options)
         ]
@@ -415,16 +488,6 @@ up.motion = (($) ->
         findTransitionFn(object.split('/')...)
       else
         namedTransitions[object]
-
-  morphWithFunction = ($old, $new, fn, parsedOptions) ->
-    return withGhosts $old, $new, parsedOptions, ($oldGhost, $newGhost) ->
-      morphDone = fn($oldGhost, $newGhost, parsedOptions)
-      ensureIsFinishablePromise(morphDone, fn)
-      debugger
-      morphDone
-
-  isMorphable = ($element) ->
-    !!$element.parents('body').length
 
   ###*
   This instantly causes the side effects of a successful transition.
@@ -524,7 +587,7 @@ up.motion = (($) ->
   @param {Function} transition
   @stable
   ###
-  transition = (name, transition) ->
+  registerTransition = (name, transition) ->
     namedTransitions[name] = transition
 
   ###*
@@ -558,7 +621,7 @@ up.motion = (($) ->
   @param {Function} animation
   @stable
   ###
-  animation = (name, animation) ->
+  registerAnimation = (name, animation) ->
     namedAnimations[name] = animation
 
   snapshot = ->
@@ -570,12 +633,12 @@ up.motion = (($) ->
   and completes instantly.
 
   @function up.motion.none
-  @return {FinishablePromise}
+  @return {Promise}
     A resolved promise
   @stable
   ###
   none = ->
-    promise = up.FinishablePromise.resolve()
+    promise = Promise.resolve()
     promise.isNone = true
     promise
 
@@ -589,14 +652,14 @@ up.motion = (($) ->
   isNone = (animation) ->
     animation is false || animation is 'none' || u.isMissing(animation) || (u.isPromise(animation) && animation.isNone)
 
-  animation('none', none)
+  registerAnimation('none', none)
 
-  animation('fade-in', ($ghost, options) ->
+  registerAnimation('fade-in', ($ghost, options) ->
     $ghost.css(opacity: 0)
     animate($ghost, { opacity: 1 }, options)
   )
 
-  animation('fade-out', ($ghost, options) ->
+  registerAnimation('fade-out', ($ghost, options) ->
     $ghost.css(opacity: 1)
     animate($ghost, { opacity: 0 }, options)
   )
@@ -604,63 +667,63 @@ up.motion = (($) ->
   translateCss = (x, y) ->
     { transform: "translate(#{x}px, #{y}px)" }
 
-  animation('move-to-top', ($ghost, options) ->
+  registerAnimation('move-to-top', ($ghost, options) ->
     box = u.measure($ghost)
     travelDistance = box.top + box.height
     $ghost.css(translateCss(0, 0))
     animate($ghost, translateCss(0, -travelDistance), options)
   )
 
-  animation('move-from-top', ($ghost, options) ->
+  registerAnimation('move-from-top', ($ghost, options) ->
     box = u.measure($ghost)
     travelDistance = box.top + box.height
     $ghost.css(translateCss(0, -travelDistance))
     animate($ghost, translateCss(0, 0), options)
   )
 
-  animation('move-to-bottom', ($ghost, options) ->
+  registerAnimation('move-to-bottom', ($ghost, options) ->
     box = u.measure($ghost)
     travelDistance = u.clientSize().height - box.top
     $ghost.css(translateCss(0, 0))
     animate($ghost, translateCss(0, travelDistance), options)
   )
 
-  animation('move-from-bottom', ($ghost, options) ->
+  registerAnimation('move-from-bottom', ($ghost, options) ->
     box = u.measure($ghost)
     travelDistance = u.clientSize().height - box.top
     $ghost.css(translateCss(0, travelDistance))
     animate($ghost, translateCss(0, 0), options)
   )
 
-  animation('move-to-left', ($ghost, options) ->
+  registerAnimation('move-to-left', ($ghost, options) ->
     box = u.measure($ghost)
     travelDistance = box.left + box.width
     $ghost.css(translateCss(0, 0))
     animate($ghost, translateCss(-travelDistance, 0), options)
   )
 
-  animation('move-from-left', ($ghost, options) ->
+  registerAnimation('move-from-left', ($ghost, options) ->
     box = u.measure($ghost)
     travelDistance = box.left + box.width
     $ghost.css(translateCss(-travelDistance, 0))
     animate($ghost, translateCss(0, 0), options)
   )
 
-  animation('move-to-right', ($ghost, options) ->
+  registerAnimation('move-to-right', ($ghost, options) ->
     box = u.measure($ghost)
     travelDistance = u.clientSize().width - box.left
     $ghost.css(translateCss(0, 0))
     animate($ghost, translateCss(travelDistance, 0), options)
   )
 
-  animation('move-from-right', ($ghost, options) ->
+  registerAnimation('move-from-right', ($ghost, options) ->
     box = u.measure($ghost)
     travelDistance = u.clientSize().width - box.left
     $ghost.css(translateCss(travelDistance, 0))
     animate($ghost, translateCss(0, 0), options)
   )
 
-  animation('roll-down', ($ghost, options) ->
+  registerAnimation('roll-down', ($ghost, options) ->
     fullHeight = $ghost.height()
     styleMemo = u.temporaryCss($ghost,
       height: '0px'
@@ -671,37 +734,37 @@ up.motion = (($) ->
     deferred
   )
 
-  transition('none', none)
+  registerTransition('none', none)
 
-  transition('move-left', ($old, $new, options) ->
+  registerTransition('move-left', ($old, $new, options) ->
     resolvableWhen(
       animate($old, 'move-to-left', options),
       animate($new, 'move-from-right', options)
     )
   )
 
-  transition('move-right', ($old, $new, options) ->
+  registerTransition('move-right', ($old, $new, options) ->
     resolvableWhen(
       animate($old, 'move-to-right', options),
       animate($new, 'move-from-left', options)
     )
   )
 
-  transition('move-up', ($old, $new, options) ->
+  registerTransition('move-up', ($old, $new, options) ->
     resolvableWhen(
       animate($old, 'move-to-top', options),
       animate($new, 'move-from-bottom', options)
     )
   )
 
-  transition('move-down', ($old, $new, options) ->
+  registerTransition('move-down', ($old, $new, options) ->
     resolvableWhen(
       animate($old, 'move-to-bottom', options),
       animate($new, 'move-from-top', options)
     )
   )
 
-  transition('cross-fade', ($old, $new, options) ->
+  registerTransition('cross-fade', ($old, $new, options) ->
     resolvableWhen(
       animate($old, 'fade-out', options),
       animate($new, 'fade-in', options)
@@ -715,8 +778,8 @@ up.motion = (($) ->
   animate: animate
   animateOptions: animateOptions
   finish: finish
-  transition: transition
-  animation: animation
+  transition: registerTransition
+  animation: registerAnimation
   config: config
   isEnabled: isEnabled
   none: none

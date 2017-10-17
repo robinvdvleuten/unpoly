@@ -358,6 +358,13 @@ up.motion = (($) ->
     showNew = u.temporaryCss($new, opacity: '0')
 
     promise = block(oldCopy.$ghost, newCopy.$ghost, options)
+
+    u.nextFrame =>
+      console.error("How to do this after the animation has started?")
+      console.error("Wir müssen die ganze transition canceln, nicht nur die eine Hälfte!")
+      motionTracker.registerGhost($old, oldCopy.$ghost)
+      motionTracker.registerGhost($new, newCopy.$ghost)
+
     promise.then ->
       # This will be called when the transition in the block is either done
       # or when it is finished by triggering up:motion:finish on either element.

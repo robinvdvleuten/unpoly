@@ -72,7 +72,7 @@ describe 'up.motion', ->
           $element = affix('.element').text('content')
           up.animate($element, { 'font-size': '40px', 'opacity': '0.33' }, duration: 30000)
 
-          next.await =>
+          next =>
             up.motion.finish($element)
 
           next =>
@@ -130,6 +130,7 @@ describe 'up.motion', ->
           next =>
             expect($('.up-ghost').length).toBe(2)
 
+          next.await =>
             up.motion.finish($old)
 
           next =>

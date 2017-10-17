@@ -61,30 +61,36 @@ class up.MotionTracker
 
   finishOneElement: (element) =>
     $element = $(element)
-    finished = $element.data(@name)
-    @unmarkElement($element)
 
-    # Animating code is expected to listen to this event and fast-forward
-    # the animation if triggered. All built-ins like `up.animate`, `up.morph`,
-    # or `up.scroll` behave that way.
-    #
+    # Animating code is expected to listen to this event, fast-forward
+    # the animation and resolve their promise. All built-ins like
+    # `up.animate`, `up.morph`, or `up.scroll` behave that way.
+    $element.trigger(@finishEvent)
+
     # If animating code ignores the event, we cannot force the animation to
     # finish from here. We will wait for the animation to end naturally before
     # starting the next animation.
-    $element.trigger(@finishEvent)
+    @whenElementFinished($element)
 
+  whenElementFinished: ($element) =>
     # There are some cases related to element ghosting where an element
     # has the class, but not the data value. In that case simply return
     # a resolved promise.
-    finished || Promise.resolve()
+    console.debug("!!! data is %o", $element.data(@dataKey))
+    $element.data(@dataKey) || Promise.resolve()
 
   markElement: ($element, promise) =>
     $element.addClass(@className)
-    $element.attr('wtf-attr', 'wtf-value')
-    console.info("!!! Adding #{@className} to %o", $element.get())
-    console.info("!!! className is now %o", $element.get(0).className)
     $element.data(@dataKey, promise)
 
   unmarkElement: ($element) =>
     $element.removeClass(@className)
     $element.removeData(@dataKey)
+
+  registerGhost: ($original, $ghost) =>
+    @start $original, =>
+      console.debug("!!! registerGhost")
+      # Forward the finish event to the $ghost that is actually animating
+      $original.on @finishEvent, (=> console.debug("!!! FORWARD TO $GHOST"); $ghost.trigger(@finishEvent))
+      # Our own pseudo-animation finishes when the actual animation on $ghost finishes
+      @whenElementFinished($ghost)

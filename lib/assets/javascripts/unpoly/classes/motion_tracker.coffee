@@ -80,6 +80,9 @@ class up.MotionTracker
 
   markElement: ($element, promise) =>
     $element.addClass(@className)
+    $element.attr('wtf-attr', 'wtf-value')
+    console.info("!!! Adding #{@className} to %o", $element.get())
+    console.info("!!! className is now %o", $element.get(0).className)
     $element.data(@dataKey, promise)
 
   unmarkElement: ($element) =>

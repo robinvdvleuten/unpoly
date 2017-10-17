@@ -121,11 +121,10 @@ up.layout = (($) ->
     options.easing = u.option(options.easing, config.easing)
 
     finishScrolling($scrollable).then ->
-
-    if up.motion.isEnabled() && options.duration > 0
-      scrollWithAnimateNow($scrollable, scrollTop, options)
-    else
-      scrollAbruptlyNow($scrollable, scrollTop)
+      if up.motion.isEnabled() && options.duration > 0
+        scrollWithAnimateNow($scrollable, scrollTop, options)
+      else
+        scrollAbruptlyNow($scrollable, scrollTop)
 
   scrollableElementForViewport = (viewport) ->
     $viewport = $(viewport)

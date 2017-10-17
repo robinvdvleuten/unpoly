@@ -70,9 +70,9 @@ describe 'up.motion', ->
 
         it 'cancels an existing animation on the given element by instantly jumping to the last frame', asyncSpec (next) ->
           $element = affix('.element').text('content')
-          up.animate($element, { 'font-size': '40px', 'opacity': '0.33' }, duration: 10000)
+          up.animate($element, { 'font-size': '40px', 'opacity': '0.33' }, duration: 30000)
 
-          next =>
+          next.await =>
             up.motion.finish($element)
 
           next =>
@@ -128,7 +128,6 @@ describe 'up.motion', ->
           up.morph($old, $new, 'cross-fade', duration: 2000)
 
           next =>
-            debugger
             expect($('.up-ghost').length).toBe(2)
 
             up.motion.finish($old)

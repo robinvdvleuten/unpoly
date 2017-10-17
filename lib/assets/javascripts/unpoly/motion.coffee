@@ -41,7 +41,6 @@ up.motion = (($) ->
   defaultNamedTransitions = {}
 
   motionTracker = new up.MotionTracker('motion')
-  ghostingTracker = new up.MotionTracker('ghosting')
 
   ###*
   Sets default options for animations and transitions.
@@ -236,7 +235,7 @@ up.motion = (($) ->
   
       # Animating code is expected to listen to this event to enable external code
       # to fulfil the animation.
-      $element.on(motionTracker.finishAnimateEvent, fulfil)
+      $element.on(motionTracker.finishEvent, fulfil)
   
       # Ideally, we want to fulfil when we receive the `transitionend` event
       $element.on('transitionend', onTransitionEnd)
@@ -252,7 +251,7 @@ up.motion = (($) ->
       # when it is finishAnimateed externally.
       deferred.then ->
         # Disable all three triggers that would fulfil the motion:
-        $element.off(motionTracker.finishAnimateEvent, fulfil)
+        $element.off(motionTracker.finishEvent, fulfil)
         $element.off('transitionend', onTransitionEnd)
         clearTimeout(cancelFallbackTimer)
 
@@ -328,7 +327,6 @@ up.motion = (($) ->
     newScrollTop = undefined
 
     $viewport = up.layout.viewportOf($old)
-    $both = $old.add($new)
 
     u.temporaryCss $new, display: 'none', ->
       # Within this block, $new is hidden but $old is visible
@@ -359,11 +357,11 @@ up.motion = (($) ->
     # shown again, causing a flicker while the browser is painting.
     showNew = u.temporaryCss($new, opacity: '0')
 
-    blockWithGhosts = -> block(oldCopy.$ghost, newCopy.$ghost, options)
-    promise = ghostingTracker.start($both, blockWithGhosts)
-
+    promise = block(oldCopy.$ghost, newCopy.$ghost, options)
     promise.then ->
-      # Now that the transition is over we show $new again.
+      # This will be called when the transition in the block is either done
+      # or when it is finished by triggering up:motion:finish on either element.
+
       showNew()
       oldCopy.$bounds.remove()
       newCopy.$bounds.remove()
@@ -389,7 +387,6 @@ up.motion = (($) ->
   ###
   finish = (elementOrSelector) ->
     motionTracker.finish(elementOrSelector)
-    ghostingTracker.finish(elementOrSelector)
 
   ###*
   Performs an animated transition between two elements.
@@ -494,9 +491,9 @@ up.motion = (($) ->
         ]
     else if u.isString(object)
       if object.indexOf('/') >= 0 # Compose a transition from two animation names
-        findTransitionFn(object.split('/')...)
-      else
-        namedTransitions[object]
+        findTransitionFn(object.split('/'))
+      else if namedTransition = namedTransitions[object]
+        findTransitionFn(namedTransition)
 
   ###*
   This instantly causes the side effects of a successful transition.
@@ -744,41 +741,11 @@ up.motion = (($) ->
   )
 
   registerTransition('none', none)
-
-  registerTransition('move-left', ($old, $new, options) ->
-    resolvableWhen(
-      animate($old, 'move-to-left', options),
-      animate($new, 'move-from-right', options)
-    )
-  )
-
-  registerTransition('move-right', ($old, $new, options) ->
-    resolvableWhen(
-      animate($old, 'move-to-right', options),
-      animate($new, 'move-from-left', options)
-    )
-  )
-
-  registerTransition('move-up', ($old, $new, options) ->
-    resolvableWhen(
-      animate($old, 'move-to-top', options),
-      animate($new, 'move-from-bottom', options)
-    )
-  )
-
-  registerTransition('move-down', ($old, $new, options) ->
-    resolvableWhen(
-      animate($old, 'move-to-bottom', options),
-      animate($new, 'move-from-top', options)
-    )
-  )
-
-  registerTransition('cross-fade', ($old, $new, options) ->
-    resolvableWhen(
-      animate($old, 'fade-out', options),
-      animate($new, 'fade-in', options)
-    )
-  )
+  registerTransition('move-left', 'move-to-left/move-from-right')
+  registerTransition('move-right', 'move-to-right/move-from-left')
+  registerTransition('move-up', 'move-to-top/move-from-bottom')
+  registerTransition('move-down', 'move-to-bottom/move-from-top')
+  registerTransition('cross-fade', 'fade-out/fade-in')
 
   up.on 'up:framework:booted', snapshot
   up.on 'up:framework:reset', reset

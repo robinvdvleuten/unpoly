@@ -952,8 +952,8 @@ up.util = (($) ->
     The timing function that controls the animation's acceleration.
     See [W3C documentation](http://www.w3.org/TR/css3-transitions/#transition-timing-function)
     for a list of pre-defined timing functions.
-  @return {FinishablePromise}
-    A promise for the animation's end.
+  @return {Promise}
+    A promise that fulfills when the animation ends.
   @internal
   ###
   cssAnimate = (elementOrSelector, lastFrame, opts) ->
@@ -972,7 +972,7 @@ up.util = (($) ->
       # and 2) return a promise that actually settled, since a CSS transition with
       # a zero duration never fires a transitionEnd event.
       $element.css(lastFrame)
-      return up.FinishablePromise.resolve()
+      return Promise.resolve()
 
     transitionProperties = Object.keys(lastFrame)
     transition =
@@ -994,12 +994,24 @@ up.util = (($) ->
       completedProperty = event.originalEvent.propertyName
       finish() if contains(transitionProperties, completedProperty)
 
+    # Animating code is expected to listen to this event to enable external code
+    # to finish the animation.
+    $element.on('up:motion:finish', finish)
+
+    # Ideally, we want to finish when we receive the `transitionend` event
     $element.on('transitionend', onTransitionEnd)
 
-    setTimer opts.duration, finish
+    # The `transitionend` event might not fire reliably if other transitions
+    # are interfering on the same element. This is why we register a fallback
+    # timeout that forces the animation to finish a few ms later.
+    transitionTimingTolerance = 5
+    cancelFallbackTimer = setTimer(opts.duration + transitionTimingTolerance, finish)
 
     deferred.then ->
+      # Disable all three triggers that would finish the motion:
+      $element.off('up:motion:finish', finish)
       $element.off('transitionend', onTransitionEnd)
+      cancelFallbackTimer()
 
       undoCompositing()
 
@@ -1014,16 +1026,20 @@ up.util = (($) ->
       # instead of "none", although that has the same effect as "none".
       hadTransitionBefore = !(oldTransition['transition-property'] == 'none' || (oldTransition['transition-property'] == 'all' && oldTransition['transition-duration'][0] == '0'))
       if hadTransitionBefore
-        # If there is no repaint between the "none" transition and restoring
-        # the previous transition, the browser will simply keep transitioning.
-        forceRepaint($element) # :(
+        # If there is no repaint between the "none" transition and restoring the previous
+        # transition, the browser will simply keep transitioning. I'm sorry.
+        forceRepaint($element)
         $element.css(oldTransition)
 
     undoCompositing = forceCompositing($element)
+
+    # CSS will start animating when we set the `transition-*` properties and then change
+    # the animating properties to the last frame.
     $element.css(transition)
     $element.css(lastFrame)
 
-    new up.FinishablePromise(deferred, finish)
+    # Return a promise that fulfills when the animation ends.
+    deferred.promise()
 
   ###*
   @internal

@@ -120,6 +120,8 @@ up.layout = (($) ->
     options.duration = u.option(options.duration, config.duration)
     options.easing = u.option(options.easing, config.easing)
 
+
+
     if shouldAnimateScroll(options)
       scrollWithAnimate($viewport, scrollTop, options)
     else
@@ -141,7 +143,7 @@ up.layout = (($) ->
   scrollAbruptly = ($viewport, scrollTop) ->
     finishScrolling($viewport)
     $viewport.scrollTop(scrollTop)
-    FinishablePromise.resolve()
+    Promise.resolve()
 
   ###*
   Finishes scrolling animations in the given element, its ancestors or its descendants.

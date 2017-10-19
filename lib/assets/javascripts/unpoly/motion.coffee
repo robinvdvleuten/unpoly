@@ -162,6 +162,7 @@ up.motion = (($) ->
   @stable
   ###
   animate = (elementOrSelector, animation, options) ->
+    console.debug("!!! animate called with %o, %o", $(elementOrSelector).get(0), animation)
     $element = $(elementOrSelector)
     options = animateOptions(options)
 
@@ -225,17 +226,22 @@ up.motion = (($) ->
       deferred = u.newDeferred()
       # May not call this finish() since this would override the global finish()
       # function in this scope. We really need `let`, which CoffeeScript will never get.
-      fulfil = -> deferred.resolve()
+      fulfill = -> deferred.resolve()
   
       onTransitionEnd = (event) ->
         # Check if the transitionend event was caused by our own transition,
         # and not by some other transition that happens to live on the same element.
         completedProperty = event.originalEvent.propertyName
-        fulfil() if u.contains(transitionProperties, completedProperty)
+        fulfill() if u.contains(transitionProperties, completedProperty)
   
       # Animating code is expected to listen to this event to enable external code
       # to fulfil the animation.
-      $element.on(motionTracker.finishEvent, fulfil)
+      console.debug('!!! registering %o on %o', motionTracker.finishEvent, $element.get(0))
+      onFinish = (event) ->
+        console.debug("!!! received finish event on %o", $element.get(0))
+        fulfill()
+
+      $element.on(motionTracker.finishEvent, onFinish)
   
       # Ideally, we want to fulfil when we receive the `transitionend` event
       $element.on('transitionend', onTransitionEnd)
@@ -244,14 +250,15 @@ up.motion = (($) ->
       # are interfering on the same element. This is why we register a fallback
       # timeout that forces the animation to fulfil a few ms later.
       transitionTimingTolerance = 5
-      cancelFallbackTimer = u.setTimer(options.duration + transitionTimingTolerance, fulfil)
+      cancelFallbackTimer = u.setTimer(options.duration + transitionTimingTolerance, fulfill)
 
       # All clean-up is handled in the following then() handler.
       # This way it will be run both when the animation finishAnimatees naturally and
       # when it is finishAnimateed externally.
       deferred.then ->
         # Disable all three triggers that would fulfil the motion:
-        $element.off(motionTracker.finishEvent, fulfil)
+        console.debug('!!! unregistering %o on %o', motionTracker.finishEvent, $element.get(0))
+        $element.off(motionTracker.finishEvent, onFinish)
         $element.off('transitionend', onTransitionEnd)
         clearTimeout(cancelFallbackTimer)
 
@@ -273,6 +280,8 @@ up.motion = (($) ->
           # transition, the browser will simply keep transitioning. I'm sorry.
           u.forceRepaint($element)
           $element.css(oldTransition)
+
+        console.debug("!!! deferred done for %o", $element.get(0))
 
       # Push the element into its own compositing layer before we are going
       # to massively change the element against background.
@@ -305,7 +314,7 @@ up.motion = (($) ->
     consolidatedOptions.easing = u.option(userOptions.easing, u.presentAttr($element, 'up-easing'), moduleDefaults.easing, config.easing)
     consolidatedOptions.duration = Number(u.option(userOptions.duration, u.presentAttr($element, 'up-duration'), moduleDefaults.duration, config.duration))
     consolidatedOptions.delay = Number(u.option(userOptions.delay, u.presentAttr($element, 'up-delay'), moduleDefaults.delay, config.delay))
-    consolidatedOptions.finished = userOptions.finished # this is required by animate()
+    consolidatedOptions.finishedMotion = userOptions.finishedMotion # this is required by animate() and finishOnceBeforeMotion()
     consolidatedOptions
       
   findNamedAnimation = (name) ->
@@ -366,9 +375,10 @@ up.motion = (($) ->
       motionTracker.registerGhost($new, newCopy.$ghost)
 
     promise.then ->
+      throw "hier kommen wir aber erst hin, wenn beide animationen zu ende sind!!!"
+      console.debug("!!! removing ghosts")
       # This will be called when the transition in the block is either done
       # or when it is finished by triggering up:motion:finish on either element.
-
       showNew()
       oldCopy.$bounds.remove()
       newCopy.$bounds.remove()
@@ -393,7 +403,9 @@ up.motion = (($) ->
   @stable
   ###
   finish = (elementOrSelector) ->
-    motionTracker.finish(elementOrSelector)
+    console.debug("!!! finish called with %o", $(elementOrSelector).get(0))
+    motionTracker.finish(elementOrSelector).then ->
+      console.debug("!!! motionTracker reports finish done for %o", $(elementOrSelector).get(0))
 
   ###*
   Performs an animated transition between two elements.
@@ -479,6 +491,7 @@ up.motion = (($) ->
           up.fail("Unknown transition %o", transitionObject)
 
   finishOnce = ($elements, options) ->
+    console.debug("!!! finishOnce with %o / %o", options.finishedMotion, $elements.get())
     # Finish existing transitions, but only once in case morph() or animate() is called recursively.
     if options.finishedMotion
       Promise.resolve()

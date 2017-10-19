@@ -91,6 +91,6 @@ class up.MotionTracker
     @start $original, =>
       console.debug("!!! registerGhost")
       # Forward the finish event to the $ghost that is actually animating
-      $original.on @finishEvent, (=> console.debug("!!! FORWARD TO $GHOST"); $ghost.trigger(@finishEvent))
+      $original.on @finishEvent, (=> console.debug("!!! forwarding event from %o to %o", $original.get(0), $ghost.get(0)); $ghost.trigger(@finishEvent))
       # Our own pseudo-animation finishes when the actual animation on $ghost finishes
       @whenElementFinished($ghost)

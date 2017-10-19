@@ -131,9 +131,11 @@ describe 'up.motion', ->
             expect($('.up-ghost').length).toBe(2)
 
           next.await =>
+            console.debug("!!! finish from spec")
             up.motion.finish($old)
 
-          next =>
+          next.after 100, =>
+            console.debug("!!! expectation from spec")
             expect($('.up-ghost').length).toBe(0)
             expect($old.css('display')).toEqual('none')
             expect($new.css('display')).toEqual('block')

@@ -87,10 +87,21 @@ class up.MotionTracker
     $element.removeClass(@className)
     $element.removeData(@dataKey)
 
-  registerGhost: ($original, $ghost) =>
+  forwardFinishEvent: ($original, $ghost, duration) =>
     @start $original, =>
       console.debug("!!! registerGhost")
+      doForward = =>
+        console.debug("!!! forwarding event from %o to %o", $original.get(0), $ghost.get(0))
+        $ghost.trigger(@finishEvent)
       # Forward the finish event to the $ghost that is actually animating
-      $original.on @finishEvent, (=> console.debug("!!! forwarding event from %o to %o", $original.get(0), $ghost.get(0)); $ghost.trigger(@finishEvent))
+      $original.on @finishEvent, doForward
       # Our own pseudo-animation finishes when the actual animation on $ghost finishes
-      @whenElementFinished($ghost)
+      duration.then => $original.off @finishEvent, doForward
+
+#  registerGhost: ($original, $ghost) =>
+#    @start $original, =>
+#      console.debug("!!! registerGhost")
+#      # Forward the finish event to the $ghost that is actually animating
+#      $original.on @finishEvent, (=> console.debug("!!! forwarding event from %o to %o", $original.get(0), $ghost.get(0)); $ghost.trigger(@finishEvent))
+#      # Our own pseudo-animation finishes when the actual animation on $ghost finishes
+#      @whenElementFinished($ghost)

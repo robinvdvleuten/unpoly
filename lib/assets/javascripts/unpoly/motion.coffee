@@ -368,14 +368,13 @@ up.motion = (($) ->
 
     promise = block(oldCopy.$ghost, newCopy.$ghost, options)
 
-    u.nextFrame =>
-      console.error("How to do this after the animation has started?")
-      console.error("Wir müssen die ganze transition canceln, nicht nur die eine Hälfte!")
-      motionTracker.registerGhost($old, oldCopy.$ghost)
-      motionTracker.registerGhost($new, newCopy.$ghost)
+    console.error("Wir müssen die ganze transition canceln, nicht nur die eine Hälfte!")
+    $bothGhosts = oldCopy.$ghost.add(newCopy.$ghost)
+    $bothOriginals = $old.add($new)
+    motionTracker.forwardFinishEvent($bothOriginals, $bothGhosts, promise)
 
     promise.then ->
-      throw "hier kommen wir aber erst hin, wenn beide animationen zu ende sind!!!"
+      # throw "hier kommen wir aber erst hin, wenn beide animationen zu ende sind!!!"
       console.debug("!!! removing ghosts")
       # This will be called when the transition in the block is either done
       # or when it is finished by triggering up:motion:finish on either element.

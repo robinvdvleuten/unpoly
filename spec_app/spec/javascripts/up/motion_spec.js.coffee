@@ -219,21 +219,21 @@ describe 'up.motion', ->
           # The actual animation will be performed on Ghosts since
           # two element usually cannot exist in the DOM at the same time
           # without undesired visual effects
-          $oldGhost = $('.old.up-ghost')
-          $newGhost = $('.new.up-ghost')
-          expect($oldGhost).toExist()
-          expect($newGhost).toExist()
+          @$oldGhost = $('.old.up-ghost')
+          @$newGhost = $('.new.up-ghost')
+          expect(@$oldGhost).toExist()
+          expect(@$newGhost).toExist()
 
-          $oldBounds = $oldGhost.parent('.up-bounds')
-          $newBounds = $newGhost.parent('.up-bounds')
+          $oldBounds = @$oldGhost.parent('.up-bounds')
+          $newBounds = @$newGhost.parent('.up-bounds')
           expect($oldBounds).toExist()
           expect($newBounds).toExist()
 
           # Ghosts should be inserted before (not after) the element
           # or the browser scroll position will be too low after the
           # transition ends.
-          expect($oldGhost.parent().next()).toEqual($old)
-          expect($newGhost.parent().next()).toEqual($new)
+          expect(@$oldGhost.parent().next()).toEqual($old)
+          expect(@$newGhost.parent().next()).toEqual($new)
 
           # The old element is removed from the layout flow.
           # It will be removed from the DOM after the animation has ended.
@@ -268,22 +268,22 @@ describe 'up.motion', ->
             height:   '23px'
           )
 
-          expect(u.opacity($newGhost)).toBeAround(0.0, 0.25)
-          expect(u.opacity($oldGhost)).toBeAround(1.0, 0.25)
+          expect(u.opacity(@$newGhost)).toBeAround(0.0, 0.25)
+          expect(u.opacity(@$oldGhost)).toBeAround(1.0, 0.25)
 
-        next.after 80, ->
-          expect(u.opacity($newGhost)).toBeAround(0.4, 0.25)
-          expect(u.opacity($oldGhost)).toBeAround(0.6, 0.25)
+        next.after 80, =>
+          expect(u.opacity(@$newGhost)).toBeAround(0.4, 0.25)
+          expect(u.opacity(@$oldGhost)).toBeAround(0.6, 0.25)
 
-        next.after 60, ->
-          expect(u.opacity($newGhost)).toBeAround(0.7, 0.25)
-          expect(u.opacity($oldGhost)).toBeAround(0.3, 0.25)
+        next.after 60, =>
+          expect(u.opacity(@$newGhost)).toBeAround(0.7, 0.25)
+          expect(u.opacity(@$oldGhost)).toBeAround(0.3, 0.25)
 
-        next.after 110, ->
+        next.after 110, =>
           # Once our two ghosts have rendered their visual effect,
           # we remove them from the DOM.
-          expect($newGhost).not.toBeInDOM()
-          expect($oldGhost).not.toBeInDOM()
+          expect(@$newGhost).not.toBeInDOM()
+          expect(@$oldGhost).not.toBeInDOM()
 
           # The old element is still in the DOM, but hidden.
           # Morphing does *not* remove the target element.
@@ -300,17 +300,17 @@ describe 'up.motion', ->
         up.morph($old, $new, 'cross-fade', duration: 200)
 
         next =>
-          $ghost1 = $('.old.up-ghost')
-          expect($ghost1).toHaveLength(1)
+          @$ghost1 = $('.old.up-ghost')
+          expect(@$ghost1).toHaveLength(1)
 
           up.morph($old, $new, 'cross-fade', duration: 200)
 
         next =>
-          $ghost2 = $('.old.up-ghost')
+          @$ghost2 = $('.old.up-ghost')
           # Check that we didn't create additional ghosts
-          expect($ghost2).toHaveLength(1)
+          expect(@$ghost2).toHaveLength(1)
           # Check that it's a different ghosts
-          expect($ghost2).not.toEqual($ghost1)
+          expect(@$ghost2).not.toEqual(@$ghost1)
 
       describe 'with { reveal: true } option', ->
 

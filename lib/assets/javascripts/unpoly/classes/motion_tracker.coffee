@@ -76,7 +76,6 @@ class up.MotionTracker
     # There are some cases related to element ghosting where an element
     # has the class, but not the data value. In that case simply return
     # a resolved promise.
-    console.debug("!!! data is %o", $element.data(@dataKey))
     $element.data(@dataKey) || Promise.resolve()
 
   markElement: ($element, promise) =>
@@ -89,19 +88,8 @@ class up.MotionTracker
 
   forwardFinishEvent: ($original, $ghost, duration) =>
     @start $original, =>
-      console.debug("!!! registerGhost")
-      doForward = =>
-        console.debug("!!! forwarding event from %o to %o", $original.get(0), $ghost.get(0))
-        $ghost.trigger(@finishEvent)
+      doForward = => $ghost.trigger(@finishEvent)
       # Forward the finish event to the $ghost that is actually animating
       $original.on @finishEvent, doForward
       # Our own pseudo-animation finishes when the actual animation on $ghost finishes
       duration.then => $original.off @finishEvent, doForward
-
-#  registerGhost: ($original, $ghost) =>
-#    @start $original, =>
-#      console.debug("!!! registerGhost")
-#      # Forward the finish event to the $ghost that is actually animating
-#      $original.on @finishEvent, (=> console.debug("!!! forwarding event from %o to %o", $original.get(0), $ghost.get(0)); $ghost.trigger(@finishEvent))
-#      # Our own pseudo-animation finishes when the actual animation on $ghost finishes
-#      @whenElementFinished($ghost)

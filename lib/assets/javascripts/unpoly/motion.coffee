@@ -162,7 +162,6 @@ up.motion = (($) ->
   @stable
   ###
   animate = (elementOrSelector, animation, options) ->
-    console.debug("!!! animate called with %o, %o", $(elementOrSelector).get(0), animation)
     $element = $(elementOrSelector)
     options = animateOptions(options)
 
@@ -236,10 +235,7 @@ up.motion = (($) ->
   
       # Animating code is expected to listen to this event to enable external code
       # to fulfil the animation.
-      console.debug('!!! registering %o on %o', motionTracker.finishEvent, $element.get(0))
-      onFinish = (event) ->
-        console.debug("!!! received finish event on %o", $element.get(0))
-        fulfill()
+      onFinish = fulfill
 
       $element.on(motionTracker.finishEvent, onFinish)
   
@@ -257,7 +253,6 @@ up.motion = (($) ->
       # when it is finishAnimateed externally.
       deferred.then ->
         # Disable all three triggers that would fulfil the motion:
-        console.debug('!!! unregistering %o on %o', motionTracker.finishEvent, $element.get(0))
         $element.off(motionTracker.finishEvent, onFinish)
         $element.off('transitionend', onTransitionEnd)
         clearTimeout(cancelFallbackTimer)
@@ -280,8 +275,6 @@ up.motion = (($) ->
           # transition, the browser will simply keep transitioning. I'm sorry.
           u.forceRepaint($element)
           $element.css(oldTransition)
-
-        console.debug("!!! deferred done for %o", $element.get(0))
 
       # Push the element into its own compositing layer before we are going
       # to massively change the element against background.
@@ -325,10 +318,10 @@ up.motion = (($) ->
   @return {Promise}
   @internal
   ###
-  withGhosts = ($old, $new, options, block) ->
+  withGhosts = ($old, $new, options, transitionFn) ->
     # Don't create ghosts of ghosts in case a transition function calling `morph` recursively.
     if options.copy == false || $old.is('.up-ghost') || $new.is('.up-ghost')
-      return block($old, $new, options)
+      return transitionFn($old, $new, options)
 
     oldCopy = undefined
     newCopy = undefined
@@ -337,53 +330,50 @@ up.motion = (($) ->
 
     $viewport = up.layout.viewportOf($old)
 
+    # Right now $old and $new are visible siblings in the DOM.
+    # Temporarily hide $new while we copy $old and take some measurements.
     u.temporaryCss $new, display: 'none', ->
-      # Within this block, $new is hidden but $old is visible
       oldCopy = prependCopy($old, $viewport)
       # Remember the previous scroll position in case we will reveal $new below.
       oldScrollTop = $viewport.scrollTop()
-      # $viewport.scrollTop(oldScrollTop + 1)
 
-    u.temporaryCss $old, display: 'none', ->
-      # Within this block, $old is hidden but $new is visible
-      up.layout.revealOrRestoreScroll($new, options)
+    # Hide $old. We will never re-show it.
+    # It's not our job to remove $old from the DOM.
+    $old.hide()
+
+    up.layout.revealOrRestoreScroll($new, options).then ->
       newCopy = prependCopy($new, $viewport)
       newScrollTop = $viewport.scrollTop()
 
-    # Since we have scrolled the viewport (containing both $old and $new),
-    # we must shift the old copy so it looks like it it is still sitting
-    # in the same position.
-    oldCopy.moveTop(newScrollTop - oldScrollTop)
+      # Since we have scrolled the viewport (containing both $old and $new),
+      # we must shift the old copy so it looks like it it is still sitting
+      # in the same position.
+      oldCopy.moveTop(newScrollTop - oldScrollTop)
 
-    # Hide $old since we no longer need it. It's not our job to remove the element.
-    $old.hide()
+      # We will let $new take up space in the element flow, but hide it.
+      # The user will only see the two animated ghosts until the transition
+      # is over.
+      # Note that we must **not** use `visibility: hidden` to hide the new
+      # element. This would delay browser painting until the element is
+      # shown again, causing a flicker while the browser is painting.
+      restoreNewOpacity = u.temporaryCss($new, opacity: '0')
 
-    # We will let $new take up space in the element flow, but hide it.
-    # The user will only see the two animated ghosts until the transition
-    # is over.
-    # Note that we must **not** use `visibility: hidden` to hide the new
-    # element. This would delay browser painting until the element is
-    # shown again, causing a flicker while the browser is painting.
-    showNew = u.temporaryCss($new, opacity: '0')
+      # Perform the transition on the ghosts.
+      transitionDone = transitionFn(oldCopy.$ghost, newCopy.$ghost, options)
 
-    promise = block(oldCopy.$ghost, newCopy.$ghost, options)
+      # The animations on both ghosts should finish if someone calls finish()
+      # on either of the original elements.
+      $bothGhosts = oldCopy.$ghost.add(newCopy.$ghost)
+      $bothOriginals = $old.add($new)
+      motionTracker.forwardFinishEvent($bothOriginals, $bothGhosts, transitionDone)
 
-    console.error("Wir müssen die ganze transition canceln, nicht nur die eine Hälfte!")
-    $bothGhosts = oldCopy.$ghost.add(newCopy.$ghost)
-    $bothOriginals = $old.add($new)
-    motionTracker.forwardFinishEvent($bothOriginals, $bothGhosts, promise)
+      transitionDone.then ->
+        # This will be called when the transition in the block is either done
+        # or when it is finished by triggering up:motion:finish on either element.
+        restoreNewOpacity()
+        oldCopy.$bounds.remove()
+        newCopy.$bounds.remove()
 
-    promise.then ->
-      # throw "hier kommen wir aber erst hin, wenn beide animationen zu ende sind!!!"
-      console.debug("!!! removing ghosts")
-      # This will be called when the transition in the block is either done
-      # or when it is finished by triggering up:motion:finish on either element.
-      showNew()
-      oldCopy.$bounds.remove()
-      newCopy.$bounds.remove()
-
-    promise
-      
   ###*
   Completes [animations](/up.animate) and [transitions](/up.morph).
 
@@ -402,9 +392,7 @@ up.motion = (($) ->
   @stable
   ###
   finish = (elementOrSelector) ->
-    console.debug("!!! finish called with %o", $(elementOrSelector).get(0))
-    motionTracker.finish(elementOrSelector).then ->
-      console.debug("!!! motionTracker reports finish done for %o", $(elementOrSelector).get(0))
+    motionTracker.finish(elementOrSelector)
 
   ###*
   Performs an animated transition between two elements.
@@ -490,7 +478,6 @@ up.motion = (($) ->
           up.fail("Unknown transition %o", transitionObject)
 
   finishOnce = ($elements, options) ->
-    console.debug("!!! finishOnce with %o / %o", options.finishedMotion, $elements.get())
     # Finish existing transitions, but only once in case morph() or animate() is called recursively.
     if options.finishedMotion
       Promise.resolve()
@@ -559,8 +546,10 @@ up.motion = (($) ->
     top = elementDims.top
 
     moveTop = (diff) ->
+      console.debug("!!! moveTop diff: %o / %o", diff, $ghost.get(0))
       if diff != 0
         top += diff
+        console.debug("!!! moveTop new top: %o / %o", diff, $ghost.get(0))
         $bounds.css(top: top)
 
     $ghost.appendTo($bounds)

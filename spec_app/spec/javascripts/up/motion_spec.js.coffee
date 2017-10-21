@@ -325,6 +325,8 @@ describe 'up.motion', ->
           $old = affix('.old').appendTo($container).css(height: '600px')
           $container.scrollTop(300)
 
+          expect($container.scrollTop()).toEqual(300)
+
           $new = affix('.new').insertBefore($old).css(height: '600px')
 
           up.morph($old, $new, 'cross-fade', duration: 50, reveal: true)
@@ -335,7 +337,7 @@ describe 'up.motion', ->
 
             # Container is scrolled up due to { reveal: true } option.
             # Since $old and $new are sitting in the same viewport with a
-            # single shares scrollbar This will make the ghost for $old jump.
+            # single shared scrollbar, this will make the ghost for $old jump.
             expect($container.scrollTop()).toEqual(0)
 
             # See that the ghost for $new is aligned with the top edge

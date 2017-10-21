@@ -136,7 +136,7 @@ up.link = (($) ->
     The delay before the transition starts. See [`up.morph()`](/up.morph).
   @param {string} [options.easing]
     The timing function that controls the transition's acceleration. [`up.morph()`](/up.morph).
-  @param {Element|jQuery|string} [options.reveal]
+  @param {Element|jQuery|string} [options.reveal=true]
     Whether to reveal the target  element within its viewport before updating.
   @param {boolean} [options.restoreScroll]
     If set to `true`, this will attempt to [restore scroll positions](/up.restoreScroll)

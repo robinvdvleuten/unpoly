@@ -546,10 +546,8 @@ up.motion = (($) ->
     top = elementDims.top
 
     moveTop = (diff) ->
-      console.debug("!!! moveTop diff: %o / %o", diff, $ghost.get(0))
       if diff != 0
         top += diff
-        console.debug("!!! moveTop new top: %o / %o", diff, $ghost.get(0))
         $bounds.css(top: top)
 
     $ghost.appendTo($bounds)

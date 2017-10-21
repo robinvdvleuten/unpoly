@@ -1300,6 +1300,7 @@ up.util = (($) ->
       if isEnabled() && isCachable(key)
         makeRoomForAnotherKey()
         storeKey = normalizeStoreKey(key)
+        log("Setting entry %o to %o", storeKey, value)
         store[storeKey] =
           timestamp: timestamp()
           value: value

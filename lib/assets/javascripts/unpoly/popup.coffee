@@ -400,11 +400,11 @@ up.popup = (($) ->
 
   @stable
   ###
-  up.link.onAction '[up-popup]', ($link) ->
+  up.link.onAction '[up-popup]', ($link, options) ->
     if $link.is('.up-current')
       closeAsap()
     else
-      attachAsap($link)
+      attachAsap($link, options)
 
   # We close the popup when someone clicks on the document.
   # We also need to listen to up:action:consumed in case an [up-instant] link

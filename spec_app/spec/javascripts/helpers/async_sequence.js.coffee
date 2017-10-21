@@ -1,6 +1,6 @@
 u = up.util
 
-LOG_ENABLED = false
+LOG_ENABLED = true
 
 window.asyncSpec = (args...) ->
   (done) ->
@@ -8,23 +8,17 @@ window.asyncSpec = (args...) ->
     plan = args.pop()
     options = args.pop() || {}
 
-    mockTime = u.option(options.mockTime, false)
-
-    if mockTime
-      mockClock = jasmine.clock()
-      mockClock.install()
-      mockClock.mockDate()
-
     queue = []
 
     insertCursor = 0
 
     log = (args...) ->
       if LOG_ENABLED
+        args[0] = "[asyncSpec] #{args[0]}"
         up.log.debug(args...)
 
     insertAtCursor = (task) ->
-      log('[asyncSequence] Inserting task at index %d: %o', insertCursor, task)
+      log('Inserting task at index %d: %o', insertCursor, task)
       # We insert at pointer instead of pushing to the end.
       # This way tasks can insert additional tasks at runtime.
       queue.splice(insertCursor, 0, task)
@@ -46,7 +40,7 @@ window.asyncSpec = (args...) ->
 
     runBlockSyncAndPoke = (block) ->
       try
-        log('[asyncSequence] runBlockSync')
+        log('runBlockSync')
         block()
         pokeQueue()
       catch e
@@ -54,7 +48,7 @@ window.asyncSpec = (args...) ->
         throw e
 
     runBlockAsyncThenPoke = (blockOrPromise) ->
-      log('[asyncSequence] runBlockAsync')
+      log('runBlockAsync')
       # On plan-level people will usually pass a function returning a promise.
       # During runtime people will usually pass a promise to delay the next step.
       promise = if u.isPromise(blockOrPromise) then blockOrPromise else blockOrPromise()
@@ -63,7 +57,7 @@ window.asyncSpec = (args...) ->
 
     pokeQueue = ->
       if entry = queue[runtimeCursor]
-        log('[asyncSequence] Playing task at index %d', runtimeCursor)
+        log('Playing task at index %d', runtimeCursor)
         runtimeCursor++
         insertCursor++
 
@@ -71,7 +65,7 @@ window.asyncSpec = (args...) ->
         block = entry[1]
         callStyle = entry[2]
 
-        log('[asyncSequence] Task is %s after %d ms: %o', callStyle, timing, block)
+        log('Task is %s after %d ms: %o', callStyle, timing, block)
 
         switch timing
           when 'now'
@@ -86,13 +80,9 @@ window.asyncSpec = (args...) ->
                   runBlockAsyncThenPoke(block)
 
             # Also move to the next frame
-            log('[asyncSequence] setting timeout in %d (mockTime: %o)', timing, mockTime)
             setTimeout(fun, timing)
-
-            # Mocked time also freezes setTimeout
-            mockClock.tick(timing) if mockTime
       else
-        log('[asyncSequence] calling done()')
+        log('calling done()')
         done()
 
     runtimeCursor = insertCursor = 0

@@ -118,7 +118,7 @@ up.proxy = (($) ->
     expiry: -> config.cacheExpiry
     key: cacheKey
     cachable: isCachable
-    # log: 'up.proxy'
+    logPrefix: 'up.proxy'
 
   ###*
   Returns a cached response for the given request.
@@ -134,17 +134,20 @@ up.proxy = (($) ->
   get = (request) ->
     request = up.Request.normalize(request)
     candidates = [request]
-    # Since <html> is the root tag, a request for the `html` selector
-    # will contain all other selectors.
+
     if request.target != 'html'
+      # Since <html> is the root tag, a request for the `html` selector
+      # will contain all other selectors.
       requestForHtml = request.copy(target: 'html')
       candidates.push(requestForHtml)
-    # Although <body> is not the root tag, we consider it the selector developers
-    # will use when they want to replace the entire page. Hence we consider it
-    # a suitable match for all other selectors, including `html`.
-    if request.target != 'body'
-      requestForBody = request.copy(target: 'body')
-      candidates.push(requestForBody)
+
+      # Although <body> is not the root tag, we consider it the selector developers
+      # will use when they want to replace the entire page. Hence we consider it
+      # a suitable match for all other selectors, including `html`.
+      if request.target != 'body'
+        requestForBody = request.copy(target: 'body')
+        candidates.push(requestForBody)
+
     for candidate in candidates
       if response = cache.get(candidate)
         return response
@@ -198,7 +201,7 @@ up.proxy = (($) ->
   @param {string} [request.method='GET']
   @param {string} [request.target='body']
   @param {boolean} [request.cache]
-    Whether to use a cached response, if available.
+    Whether to use a cached response for idempotent requests, if available.
     If set to `false` a network connection will always be attempted.
   @param {Object} [request.headers={}]
     An object of additional header key/value pairs to send along

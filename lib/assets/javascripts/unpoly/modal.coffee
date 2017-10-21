@@ -696,8 +696,7 @@ up.modal = (($) ->
 
   @stable
   ###
-  up.link.onAction '[up-modal]', ($link) ->
-    followAsap($link)
+  up.link.onAction '[up-modal]', followAsap
 
   # Close the modal when someone clicks outside the dialog (but not on a modal opener).
   # Note that we cannot listen to clicks on .up-modal-backdrop, which is a sister element

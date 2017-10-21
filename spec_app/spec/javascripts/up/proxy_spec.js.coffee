@@ -210,7 +210,9 @@ describe 'up.proxy', ->
               expect(response.request.data).toBeBlank()
               done()
 
-      it 'caches server responses for 5 minutes', asyncSpec { mockTime: true }, (next) ->
+      it 'caches server responses for the configured duration', asyncSpec (next) ->
+        up.proxy.config.cacheExpiry = 200 # 1 second for test
+
         responses = []
         trackResponse = (response) ->
           console.debug('Tracking response %s', response.body)
@@ -220,7 +222,7 @@ describe 'up.proxy', ->
           up.ajax(url: '/foo').then(trackResponse)
           expect(jasmine.Ajax.requests.count()).toEqual(1)
 
-        next.after (3 * 60 * 1000), =>
+        next.after (10), =>
           # Send the same request for the same path
           up.ajax(url: '/foo').then(trackResponse)
 
@@ -236,7 +238,7 @@ describe 'up.proxy', ->
           # See that both requests have been fulfilled
           expect(responses).toEqual(['foo', 'foo'])
 
-        next.after (3 * 60 * 1000), =>
+        next.after (200), =>
           # Send another request after another 3 minutes
           # The clock is now a total of 6 minutes after the first request,
           # exceeding the cache's retention time of 5 minutes.
@@ -251,83 +253,81 @@ describe 'up.proxy', ->
         next =>
           expect(responses).toEqual(['foo', 'foo', 'bar'])
 
-
-      it "does not cache responses if config.cacheExpiry is 0", ->
+      it "does not cache responses if config.cacheExpiry is 0", asyncSpec (next) ->
         up.proxy.config.cacheExpiry = 0
-        up.ajax(url: '/foo')
-        up.ajax(url: '/foo')
-        expect(jasmine.Ajax.requests.count()).toEqual(2)
+        next => up.ajax(url: '/foo')
+        next => up.ajax(url: '/foo')
+        next => expect(jasmine.Ajax.requests.count()).toEqual(2)
 
-      it "does not cache responses if config.cacheSize is 0", ->
+      it "does not cache responses if config.cacheSize is 0", asyncSpec (next) ->
         up.proxy.config.cacheSize = 0
-        up.ajax(url: '/foo')
-        up.ajax(url: '/foo')
-        expect(jasmine.Ajax.requests.count()).toEqual(2)
+        next => up.ajax(url: '/foo')
+        next => up.ajax(url: '/foo')
+        next => expect(jasmine.Ajax.requests.count()).toEqual(2)
 
       it 'does not limit the number of cache entries if config.cacheSize is undefined'
 
       it 'never discards old cache entries if config.cacheExpiry is undefined'
 
-      it 'respects a config.cacheSize setting', ->
+      it 'respects a config.cacheSize setting', asyncSpec (next) ->
         up.proxy.config.cacheSize = 2
-        up.ajax(url: '/foo')
-        up.ajax(url: '/bar')
-        up.ajax(url: '/baz')
-        up.ajax(url: '/foo')
-        expect(jasmine.Ajax.requests.count()).toEqual(4)
+        next => up.ajax(url: '/foo')
+        next => up.ajax(url: '/bar')
+        next => up.ajax(url: '/baz')
+        next => up.ajax(url: '/foo')
+        next => expect(jasmine.Ajax.requests.count()).toEqual(4)
 
-      it "doesn't reuse responses when asked for the same path, but different selectors", ->
-        up.ajax(url: '/path', target: '.a')
-        up.ajax(url: '/path', target: '.b')
-        expect(jasmine.Ajax.requests.count()).toEqual(2)
+      it "doesn't reuse responses when asked for the same path, but different selectors", asyncSpec (next) ->
+        next => up.ajax(url: '/path', target: '.a')
+        next => up.ajax(url: '/path', target: '.b')
+        next => expect(jasmine.Ajax.requests.count()).toEqual(2)
 
-      it "doesn't reuse responses when asked for the same path, but different params", ->
-        up.ajax(url: '/path', data: { query: 'foo' })
-        up.ajax(url: '/path', data: { query: 'bar' })
-        expect(jasmine.Ajax.requests.count()).toEqual(2)
+      it "doesn't reuse responses when asked for the same path, but different params", asyncSpec (next) ->
+        next => up.ajax(url: '/path', data: { query: 'foo' })
+        next => up.ajax(url: '/path', data: { query: 'bar' })
+        next => expect(jasmine.Ajax.requests.count()).toEqual(2)
 
-      it "reuses a response for an 'html' selector when asked for the same path and any other selector", ->
-        up.ajax(url: '/path', target: 'html')
-        up.ajax(url: '/path', target: 'body')
-        up.ajax(url: '/path', target: 'p')
-        up.ajax(url: '/path', target: '.klass')
-        expect(jasmine.Ajax.requests.count()).toEqual(1)
+      it "reuses a response for an 'html' selector when asked for the same path and any other selector", asyncSpec (next) ->
+        next => up.ajax(url: '/path', target: 'html')
+        next => up.ajax(url: '/path', target: 'body')
+        next => up.ajax(url: '/path', target: 'p')
+        next => up.ajax(url: '/path', target: '.klass')
+        next => expect(jasmine.Ajax.requests.count()).toEqual(1)
 
-      it "reuses a response for a 'body' selector when asked for the same path and any other selector other than 'html'", ->
-        up.ajax(url: '/path', target: 'body')
-        up.ajax(url: '/path', target: 'p')
-        up.ajax(url: '/path', target: '.klass')
-        expect(jasmine.Ajax.requests.count()).toEqual(1)
+      it "reuses a response for a 'body' selector when asked for the same path and any other selector other than 'html'", asyncSpec (next) ->
+        next => up.ajax(url: '/path', target: 'body')
+        next => up.ajax(url: '/path', target: 'p')
+        next => up.ajax(url: '/path', target: '.klass')
+        next => expect(jasmine.Ajax.requests.count()).toEqual(1)
 
-      it "doesn't reuse a response for a 'body' selector when asked for the same path but an 'html' selector", ->
-        up.ajax(url: '/path', target: 'body')
-        up.ajax(url: '/path', target: 'html')
-        expect(jasmine.Ajax.requests.count()).toEqual(2)
+      it "doesn't reuse a response for a 'body' selector when asked for the same path but an 'html' selector", asyncSpec (next) ->
+        next => up.ajax(url: '/path', target: 'body')
+        next => up.ajax(url: '/path', target: 'html')
+        next => expect(jasmine.Ajax.requests.count()).toEqual(2)
 
-      it "doesn't reuse responses for different paths", ->
-        up.ajax(url: '/foo')
-        up.ajax(url: '/bar')
-        expect(jasmine.Ajax.requests.count()).toEqual(2)
+      it "doesn't reuse responses for different paths", asyncSpec (next) ->
+        next => up.ajax(url: '/foo')
+        next => up.ajax(url: '/bar')
+        next => expect(jasmine.Ajax.requests.count()).toEqual(2)
 
       u.each ['GET', 'HEAD', 'OPTIONS'], (method) ->
 
-        it "caches #{method} requests", ->
-          u.times 2, -> up.ajax(url: '/foo', method: method)
-          expect(jasmine.Ajax.requests.count()).toEqual(1)
+        it "caches #{method} requests", asyncSpec (next) ->
+          next => up.ajax(url: '/foo', method: method)
+          next => up.ajax(url: '/foo', method: method)
+          next => expect(jasmine.Ajax.requests.count()).toEqual(1)
 
-        it "does not cache #{method} requests with cache: false option", ->
-          u.times 2, -> up.ajax(url: '/foo', method: method, cache: false)
-          expect(jasmine.Ajax.requests.count()).toEqual(2)
+        it "does not cache #{method} requests with { cache: false }", asyncSpec (next) ->
+          next => up.ajax(url: '/foo', method: method, cache: false)
+          next => up.ajax(url: '/foo', method: method, cache: false)
+          next => expect(jasmine.Ajax.requests.count()).toEqual(2)
 
       u.each ['POST', 'PUT', 'DELETE'], (method) ->
 
-        it "does not cache #{method} requests", ->
-          u.times 2, -> up.ajax(url: '/foo', method: method)
-          expect(jasmine.Ajax.requests.count()).toEqual(2)
-
-        it "caches #{method} requests with cache: true option", ->
-          u.times 2, -> up.ajax(url: '/foo', method: method, cache: true)
-          expect(jasmine.Ajax.requests.count()).toEqual(1)
+        it "does not cache #{method} requests", asyncSpec (next) ->
+          next => up.ajax(url: '/foo', method: method)
+          next => up.ajax(url: '/foo', method: method)
+          next => expect(jasmine.Ajax.requests.count()).toEqual(2)
 
       it 'does not cache responses with a non-200 status code', asyncSpec (next) ->
         next => up.ajax(url: '/foo')
@@ -342,19 +342,23 @@ describe 'up.proxy', ->
 
         u.each ['GET', 'POST', 'HEAD', 'OPTIONS'], (method) ->
 
-          it "does not change the method of a #{method} request", ->
+          it "does not change the method of a #{method} request", asyncSpec (next) ->
             up.ajax(url: '/foo', method: method)
-            request = @lastRequest()
-            expect(request.method).toEqual(method)
-            expect(request.data()['_method']).toBeUndefined()
+
+            next =>
+              request = @lastRequest()
+              expect(request.method).toEqual(method)
+              expect(request.data()['_method']).toBeUndefined()
 
         u.each ['PUT', 'PATCH', 'DELETE'], (method) ->
 
-          it "turns a #{method} request into a POST request and sends the actual method as a { _method } param", ->
+          it "turns a #{method} request into a POST request and sends the actual method as a { _method } param", asyncSpec (next) ->
             up.ajax(url: '/foo', method: method)
-            request = @lastRequest()
-            expect(request.method).toEqual('POST')
-            expect(request.data()['_method']).toEqual([method])
+
+            next =>
+              request = @lastRequest()
+              expect(request.method).toEqual('POST')
+              expect(request.data()['_method']).toEqual([method])
 
       describe 'with config.maxRequests set', ->
 
@@ -389,10 +393,12 @@ describe 'up.proxy', ->
           next =>
             expect(responses).toEqual ['first response', 'second response']
 
-#        it 'considers preloading links for the request limit', ->
-#          up.ajax(url: '/foo', preload: true)
-#          up.ajax(url: '/bar')
-#          expect(jasmine.Ajax.requests.count()).toEqual(1)
+        it 'ignores preloading for the request limit', asyncSpec (next) ->
+          next => up.ajax(url: '/foo', preload: true)
+          next => up.ajax(url: '/bar')
+          next => expect(jasmine.Ajax.requests.count()).toEqual(2)
+          next => up.ajax(url: '/bar')
+          next => expect(jasmine.Ajax.requests.count()).toEqual(2)
 
       describe 'events', ->
 
@@ -530,10 +536,14 @@ describe 'up.proxy', ->
       describeCapability 'canPushState', ->
 
         it "loads and caches the given link's destination", asyncSpec (next) ->
-          $link = affix('a[href="/path"]')
+          affix('.target')
+          $link = affix('a[href="/path"][up-target=".target"]')
+
           up.proxy.preload($link)
 
-          next => expect(u.isPromise(up.proxy.get(url: '/path'))).toBe(true)
+          next =>
+            cachedPromise = up.proxy.get(url: '/path', target: '.target')
+            expect(u.isPromise(cachedPromise)).toBe(true)
 
         it "does not load a link whose method has side-effects", asyncSpec (next) ->
           $link = affix('a[href="/path"][data-method="post"]')
@@ -571,10 +581,12 @@ describe 'up.proxy', ->
 
       describeFallback 'canPushState', ->
 
-        it "does nothing", ->
-          $link = affix('a[href="/path"]')
+        it "does nothing", asyncSpec (next) ->
+          affix('.target')
+          $link = affix('a[href="/path"][up-target=".target"]')
           up.proxy.preload($link)
-          expect(jasmine.Ajax.requests.count()).toBe(0)
+          next =>
+            expect(jasmine.Ajax.requests.count()).toBe(0)
 
     describe 'up.proxy.get', ->
 

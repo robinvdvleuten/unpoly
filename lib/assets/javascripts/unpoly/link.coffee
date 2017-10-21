@@ -375,8 +375,7 @@ up.link = (($) ->
     Set this to a URL string to update the history with the given URL.
   @stable
   ###
-  DEFAULT_FOLLOW_VARIANT = onAction '[up-target]', ($link) ->
-    follow($link)
+  DEFAULT_FOLLOW_VARIANT = onAction '[up-target]', follow
 
   ###*
   By adding an `up-instant` attribute to a link, the destination will be
@@ -450,8 +449,7 @@ up.link = (($) ->
     within the response.
   @stable
   ###
-  onAction '[up-follow]', ($link) ->
-    follow($link)
+  onAction '[up-follow]', follow
 
   ###*
   Marks up the current link to be followed *as fast as possible*.

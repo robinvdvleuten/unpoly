@@ -237,8 +237,8 @@ up.dom = (($) ->
     options.inspectResponse = fullLoad = -> up.browser.loadPage(url, u.only(options, 'method', 'data'))
 
     if !up.browser.canPushState() && options.history != false
-       fullLoad() unless options.preload
-       return u.unresolvablePromise()
+      fullLoad() unless options.preload
+      return u.unresolvablePromise()
 
     successOptions = u.merge options,
       humanizedTarget: 'target'

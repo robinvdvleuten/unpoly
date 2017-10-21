@@ -832,7 +832,8 @@ up.dom = (($) ->
 
     if $element.length == 0
       Promise.resolve()
-    else if up.bus.nobodyPrevents('up:fragment:destroy', $element: $element, message: destroyMessage)
+    else
+      up.emit 'up:fragment:destroy', $element: $element, message: destroyMessage
       $element.addClass('up-destroying')
       # If e.g. a modal or popup asks us to restore a URL, do this
       # before emitting `fragment:destroy`. This way up.navigate sees the
@@ -852,10 +853,6 @@ up.dom = (($) ->
         $element.remove()
 
       animate().then(beforeWipe).then(wipe)
-    else
-      # Although someone prevented the destruction, keep a uniform API for
-      # callers by returning a Promise that will never be resolved.
-      u.unresolvablePromise()
 
   shouldLogDestruction = ($element) ->
     # Don't log destruction for elements that are either Unpoly internals or frequently destroyed
@@ -871,8 +868,6 @@ up.dom = (($) ->
   @event up:fragment:destroy
   @param {jQuery} event.$element
     The page fragment that is about to be destroyed.
-  @param event.preventDefault()
-    Event listeners may call this method to prevent the fragment from being destroyed.
   @stable
   ###
 

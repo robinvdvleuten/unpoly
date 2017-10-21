@@ -402,7 +402,7 @@ up.dom = (($) ->
 
       catch e
         # Since we're an async function, we should not throw exceptions but return a rejected promise.
-        # http://2ality.com/2016/03/promise-rejections-vs-exceptions.html
+        # See http://2ality.com/2016/03/promise-rejections-vs-exceptions.html
         return Promise.reject(e)
 
   bestPreflightSelector = (selector, options) ->
@@ -514,7 +514,7 @@ up.dom = (($) ->
 
       # Wrap the replacement as a destroy animation, so $old will
       # get marked as .up-destroying right away.
-      promise = destroy($old, animation: replacement)
+      promise = destroy($old, beforeWipe: replacement)
 
     promise
 
@@ -842,6 +842,8 @@ up.dom = (($) ->
       animate = ->
         up.motion.animate($element, options.animation, animateOptions)
 
+      beforeWipe = options.beforeWipe || Promise.resolve()
+
       wipe = ->
         up.syntax.clean($element)
         # Emit this while $element is still part of the DOM, so event
@@ -849,7 +851,7 @@ up.dom = (($) ->
         up.emit 'up:fragment:destroyed', $element: $element, message: destroyedMessage
         $element.remove()
 
-      animate().then(wipe)
+      animate().then(beforeWipe).then(wipe)
     else
       # Although someone prevented the destruction, keep a uniform API for
       # callers by returning a Promise that will never be resolved.

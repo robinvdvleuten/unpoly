@@ -1,5 +1,7 @@
 u = up.util
 
+LOG_ENABLED = false
+
 window.asyncSpec = (args...) ->
   (done) ->
 
@@ -17,8 +19,12 @@ window.asyncSpec = (args...) ->
 
     insertCursor = 0
 
+    log = (args...) ->
+      if LOG_ENABLED
+        up.log.debug(args...)
+
     insertAtCursor = (task) ->
-      console.debug('[asyncSequence] Inserting task at index %d: %o', insertCursor, task)
+      log('[asyncSequence] Inserting task at index %d: %o', insertCursor, task)
       # We insert at pointer instead of pushing to the end.
       # This way tasks can insert additional tasks at runtime.
       queue.splice(insertCursor, 0, task)
@@ -40,7 +46,7 @@ window.asyncSpec = (args...) ->
 
     runBlockSyncAndPoke = (block) ->
       try
-        console.debug('[asyncSequence] runBlockSync')
+        log('[asyncSequence] runBlockSync')
         block()
         pokeQueue()
       catch e
@@ -48,7 +54,7 @@ window.asyncSpec = (args...) ->
         throw e
 
     runBlockAsyncThenPoke = (blockOrPromise) ->
-      console.debug('[asyncSequence] runBlockAsync')
+      log('[asyncSequence] runBlockAsync')
       # On plan-level people will usually pass a function returning a promise.
       # During runtime people will usually pass a promise to delay the next step.
       promise = if u.isPromise(blockOrPromise) then blockOrPromise else blockOrPromise()
@@ -57,7 +63,7 @@ window.asyncSpec = (args...) ->
 
     pokeQueue = ->
       if entry = queue[runtimeCursor]
-        console.debug('[asyncSequence] Playing task at index %d', runtimeCursor)
+        log('[asyncSequence] Playing task at index %d', runtimeCursor)
         runtimeCursor++
         insertCursor++
 
@@ -65,7 +71,7 @@ window.asyncSpec = (args...) ->
         block = entry[1]
         callStyle = entry[2]
 
-        console.debug('[asyncSequence] Task is %s after %d ms: %o', callStyle, timing, block)
+        log('[asyncSequence] Task is %s after %d ms: %o', callStyle, timing, block)
 
         switch timing
           when 'now'
@@ -80,13 +86,13 @@ window.asyncSpec = (args...) ->
                   runBlockAsyncThenPoke(block)
 
             # Also move to the next frame
-            console.debug('[asyncSequence] setting timeout in %d (mockTime: %o)', timing, mockTime)
+            log('[asyncSequence] setting timeout in %d (mockTime: %o)', timing, mockTime)
             setTimeout(fun, timing)
 
             # Mocked time also freezes setTimeout
             mockClock.tick(timing) if mockTime
       else
-        console.debug('[asyncSequence] calling done()')
+        log('[asyncSequence] calling done()')
         done()
 
     runtimeCursor = insertCursor = 0

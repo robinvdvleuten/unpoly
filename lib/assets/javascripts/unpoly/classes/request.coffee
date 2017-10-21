@@ -12,7 +12,7 @@ class up.Request extends up.Record
     @method = u.normalizeMethod(options.method)
     @headers ||= {}
     @extractHashFromUrl()
-    if @data && !u.methodAllowsPayload(@method)
+    if @data && !u.methodAllowsPayload(@method) && !u.isFormData(@data)
       @transferDataToUrl()
 
   extractHashFromUrl: =>
@@ -55,6 +55,12 @@ class up.Request extends up.Record
       jqRequest.processData = false
 
     $.ajax(jqRequest)
+
+  isCachable: =>
+    @isIdempotent() && !u.isFormData(@data)
+
+  cacheKey: =>
+    [@url, @method, u.requestDataAsQuery(@data), @target].join('|')
 
   @normalize: (object) ->
     if object instanceof @

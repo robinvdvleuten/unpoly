@@ -94,30 +94,11 @@ up.proxy = (($) ->
     wrapMethods: ['PATCH', 'PUT', 'DELETE']
     safeMethods: ['GET', 'OPTIONS', 'HEAD']
 
-  cacheKey = (request) ->
-    request = up.Request.normalize(request)
-    [ request.url,
-      request.method,
-      u.requestDataAsQuery(request.data),
-      request.target
-    ].join('|')
-
-  ###*
-  Returns whether the proxy is capable of caching the given request.
-  Even if this returns `true`, only idempodent requests will be
-  cached by default.
-
-  @function up.proxy.isCachable
-  @internal
-  ###
-  isCachable = (request) ->
-    request.isIdempotent() && !u.isFormData(request.data)
-
   cache = u.newCache
     size: -> config.cacheSize
     expiry: -> config.cacheExpiry
-    key: cacheKey
-    cachable: isCachable
+    key: (request) -> up.Request.normalize(request).cacheKey()
+    cachable: (request) -> up.Request.normalize(request).isCachable()
     logPrefix: 'up.proxy'
 
   ###*
@@ -603,7 +584,6 @@ up.proxy = (($) ->
   remove: remove
   isIdle: isIdle
   isBusy: isBusy
-  isCachable: isCachable
   isIdempotentMethod: isIdempotentMethod
   config: config
   

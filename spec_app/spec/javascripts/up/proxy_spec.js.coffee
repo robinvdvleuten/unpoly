@@ -621,18 +621,24 @@ describe 'up.proxy', ->
 
       it 'preloads the link destination on mouseover, after a delay'
 
-      it 'triggers a separate AJAX request with a short cache expiry when hovered multiple times', asyncSpec (next)  ->
-        up.proxy.config.cacheExpiry = 10
+      it 'triggers a separate AJAX request when hovered multiple times and the cache expires between hovers', asyncSpec (next)  ->
+        up.proxy.config.cacheExpiry = 20
         up.proxy.config.preloadDelay = 0
-        spyOn(up, 'follow')
+        # spyOn(up, 'follow')
         $element = affix('a[href="/foo"][up-preload]')
         Trigger.mouseover($element)
 
-        next =>
-          expect(up.follow.calls.count()).toBe(1)
+        next.after 1, =>
+          expect(jasmine.Ajax.requests.count()).toEqual(1)
 
-        next =>
+        next.after 1, =>
           Trigger.mouseover($element)
 
-        next =>
-          expect(up.follow.calls.count()).toBe(2)
+        next.after 1, =>
+          expect(jasmine.Ajax.requests.count()).toEqual(1)
+
+        next.after 20, =>
+          Trigger.mouseover($element)
+
+        next.after 1, =>
+          expect(jasmine.Ajax.requests.count()).toEqual(2)

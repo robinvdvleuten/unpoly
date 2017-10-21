@@ -233,6 +233,7 @@ up.popup = (($) ->
     options = u.options(options)
     url = u.option(u.pluckKey(options, 'url'), $anchor.attr('up-href'), $anchor.attr('href'))
     html = u.option(u.pluckKey(options, 'html'))
+    url or html or up.fail('up.popup.attach() requires either an { url } or { html } option')
     target = u.option(u.pluckKey(options, 'target'), $anchor.attr('up-popup'), 'body')
     position = u.option(options.position, $anchor.attr('up-position'), config.position)
     options.animation = u.option(options.animation, $anchor.attr('up-animation'), config.openAnimation)

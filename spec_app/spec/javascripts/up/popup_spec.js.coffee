@@ -50,6 +50,7 @@ describe 'up.popup', ->
           expect($popup).toSitBelow($link)
 
       it 'always makes a request for the given selector, and does not "improve" the selector with a fallback', asyncSpec (next) ->
+        $container = affix('.container')
         $link = $container.affix('a[href="/path/to"][up-popup=".content"]').text('link')
         up.popup.attach($link)
         next =>
@@ -387,10 +388,7 @@ describe 'up.popup', ->
       it 'does not auto-close the popup when a replacement from inside the popup affects a selector inside the popup', asyncSpec (next) ->
         affix('.outside').text('old outside')
         $link = affix('.link')
-        up.popup.attach($link, target: '.inside')
-
-        next =>
-          @respondWith("<div class='inside'>old inside</div>")
+        up.popup.attach($link, html: "<div class='inside'>old inside</div>", target: '.inside')
 
         next =>
           up.extract('.inside', "<div class='inside'>new inside</div>", origin: $('.inside'))

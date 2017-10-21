@@ -306,7 +306,7 @@ up.dom = (($) ->
         options.source  = sourceUrl unless options.source  is false || u.isString(options.source)
       else # e.g. POST returns 200 OK
         # We allow the developer to pass GETable URLs as { history } and { source } options.
-        options.history = historyUrl  unless u.isString(options.history)
+        options.history = false unless u.isString(options.history)
         options.source  = 'keep' unless u.isString(options.source)
     else
       if isReloadable # e.g. GET returns 500 Internal Server Error

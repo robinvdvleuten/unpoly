@@ -9,4 +9,7 @@ afterEach (done) ->
     console.debug('[reset_up helper] resetting framework now')
     up.reset()
     $('.up-toast').remove()
-    done()
+
+    # Give async reset behavior another frame to play out,
+    # then start the next example.
+    up.util.nextFrame(done)

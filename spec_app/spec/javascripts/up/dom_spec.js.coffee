@@ -1,4 +1,4 @@
-describe 'up.dom', ->
+describe 'xyz up.dom', ->
 
   u = up.util
   
@@ -171,6 +171,9 @@ describe 'up.dom', ->
 
         describe 'history', ->
 
+          beforeEach ->
+            up.history.config.enabled = true
+
           it 'should set the browser location to the given URL', (done) ->
             promise = up.replace('.middle', '/path')
             @respond()
@@ -265,6 +268,9 @@ describe 'up.dom', ->
               next => expect(up.dom.source('.middle')).toMatchUrl('/previous-source')
 
         describe 'document title', ->
+
+          beforeEach ->
+            up.history.config.enabled = true
 
           it "sets the document title to the response <title>", asyncSpec (next) ->
             affix('.container').text('old container text')
@@ -804,6 +810,9 @@ describe 'up.dom', ->
 
 
         describe 'with { restoreScroll: true } option', ->
+
+          beforeEach ->
+            up.history.config.enabled = true
 
           it 'restores the scroll positions of all viewports around the target', asyncSpec (next) ->
 
@@ -1467,6 +1476,7 @@ describe 'up.dom', ->
           done()
 
       it 'allows to pass a new history entry as { history } option', (done) ->
+        up.history.config.enabled = true
         affix('.element')
         up.destroy('.element', history: '/new-path').then ->
           u.setTimer 100, ->
@@ -1474,6 +1484,7 @@ describe 'up.dom', ->
             done()
 
       it 'allows to pass a new document title as { title } option', (done) ->
+        up.history.config.enabled = true
         affix('.element')
         up.destroy('.element', history: '/new-path', title: 'Title from options').then ->
           expect(document.title).toEqual('Title from options')

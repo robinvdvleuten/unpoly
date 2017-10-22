@@ -144,6 +144,7 @@ describe 'up.popup', ->
       describeCapability 'canPushState', ->
 
         it 'returns the URL behind the popup', asyncSpec (next) ->
+          up.history.config.enabled = true
           up.history.replace('/foo')
           expect(up.popup.coveredUrl()).toBeMissing()
 

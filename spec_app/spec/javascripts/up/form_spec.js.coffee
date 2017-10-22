@@ -241,6 +241,7 @@ describe 'up.form', ->
       describeCapability 'canPushState', ->
 
         beforeEach ->
+          up.history.config.enabled = true
           @$form = affix('form[action="/form-target"][method="put"][up-target=".response"]')
           @$form.append('<input name="field1" value="value1">')
           @$form.append('<input name="field2" value="value2">')

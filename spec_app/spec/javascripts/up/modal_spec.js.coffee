@@ -36,6 +36,8 @@ describe 'up.modal', ->
     describe 'up.modal.extract', ->
 
       it 'opens a modal by extracting the given selector from the given HTML string', (done) ->
+        up.history.config.enabled = true
+
         oldHref = location.href
         promise = up.modal.extract '.middle', """
           <div class="before">new-before</div>
@@ -58,6 +60,8 @@ describe 'up.modal', ->
     describe 'up.modal.visit', ->
 
       it "requests the given URL and places the given selector into a modal", (done) ->
+        up.history.config.enabled = true
+
         promise = up.modal.visit('/foo', target: '.middle')
 
         u.nextFrame =>
@@ -383,6 +387,7 @@ describe 'up.modal', ->
       describeCapability 'canPushState', ->
 
         it 'returns the URL behind the modal overlay', (done) ->
+          up.history.config.enabled = true
           up.history.replace('/foo')
           expect(up.modal.coveredUrl()).toBeMissing()
           visitPromise = up.modal.visit('/bar', target: '.container')
@@ -544,9 +549,11 @@ describe 'up.modal', ->
 
       it 'adds a history entry and allows the user to use the back button', asyncSpec (next) ->
         up.motion.config.enabled = false
+        up.history.config.enabled = true
+        up.history.config.popTargets = ['.container']
+
         up.history.push('/original-path')
 
-        up.history.config.popTargets = ['.container']
         $container = affix('.container').text('old container content')
         $link = $container.affix('a[href="/new-path"][up-modal=".target"]')
 
@@ -779,6 +786,7 @@ describe 'up.modal', ->
           expect($('.up-modal')).not.toExist()
 
       it 'does not restore the covered URL when auto-closing', (done) ->
+        up.history.config.enabled = true
         up.motion.config.enabled = true
         up.modal.config.openDuration = 0
         up.modal.config.closeDuration = 20

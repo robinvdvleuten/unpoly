@@ -1,4 +1,4 @@
-describe 'up.feedback', ->
+describe 'xyz up.feedback', ->
 
   u = up.util
 
@@ -64,81 +64,84 @@ describe 'up.feedback', ->
 
       describeCapability 'canPushState', ->
 
-        it 'marks a link as .up-current if it links to the current URL, but is missing a trailing slash', asyncSpec (next) ->
-          $link = affix('a[href="/foo"][up-target=".main"]')
-          affix('.main')
-          Trigger.clickSequence($link)
+        describe 'updating .up-current marks wen the URL changes', ->
 
-          next =>
-            @respondWith
-              responseHeaders: { 'X-Up-Location': '/foo/' }
-              responseText: '<div class="main">new-text</div>'
+          beforeEach ->
+            up.history.config.enabled = true
 
-          next =>
-            expect($link).toHaveClass('up-current')
+          it 'marks a link as .up-current if it links to the current URL, but is missing a trailing slash', asyncSpec (next) ->
+            $link = affix('a[href="/foo"][up-target=".main"]')
+            affix('.main')
+            Trigger.clickSequence($link)
 
-        it 'marks a link as .up-current if it links to the current URL, but has an extra trailing slash', asyncSpec (next) ->
-          $link = affix('a[href="/foo/"][up-target=".main"]')
-          affix('.main')
-          Trigger.clickSequence($link)
+            next =>
+              @respondWith
+                responseHeaders: { 'X-Up-Location': '/foo/' }
+                responseText: '<div class="main">new-text</div>'
 
-          next =>
-            @respondWith
-              responseHeaders: { 'X-Up-Location': '/foo' }
-              responseText: '<div class="main">new-text</div>'
+            next =>
+              expect($link).toHaveClass('up-current')
 
-          next =>
-            expect($link).toHaveClass('up-current')
+          it 'marks a link as .up-current if it links to the current URL, but has an extra trailing slash', asyncSpec (next) ->
+            $link = affix('a[href="/foo/"][up-target=".main"]')
+            affix('.main')
+            Trigger.clickSequence($link)
 
-        it 'marks a link as .up-current if it links to an URL currently shown either within or below the modal', asyncSpec (next) ->
-          up.history.replace('/foo')
+            next =>
+              @respondWith
+                responseHeaders: { 'X-Up-Location': '/foo' }
+                responseText: '<div class="main">new-text</div>'
 
-          $backgroundLink = affix('a[href="/foo"]')
-          $modalLink = affix('a[href="/bar"][up-modal=".main"]')
-          $unrelatedLink = affix('a[href="/baz]')
+            next =>
+              expect($link).toHaveClass('up-current')
 
-          Trigger.clickSequence($modalLink)
+          it 'marks a link as .up-current if it links to an URL currently shown either within or below the modal', asyncSpec (next) ->
+            up.history.replace('/foo')
 
-          next =>
-            @respondWith('<div class="main">new-text</div>')
+            $backgroundLink = affix('a[href="/foo"]')
+            $modalLink = affix('a[href="/bar"][up-modal=".main"]')
+            $unrelatedLink = affix('a[href="/baz]')
 
-          next =>
-            expect($backgroundLink).toHaveClass('up-current')
-            expect($modalLink).toHaveClass('up-current')
-            expect($unrelatedLink).not.toHaveClass('up-current')
-            next.await up.modal.close()
+            Trigger.clickSequence($modalLink)
 
-          next =>
-            expect($backgroundLink).toHaveClass('up-current')
-            expect($modalLink).not.toHaveClass('up-current')
-            expect($unrelatedLink).not.toHaveClass('up-current')
+            next =>
+              @respondWith('<div class="main">new-text</div>')
 
-        it 'marks a link as .up-current if it links to the URL currently either within or below the popup', asyncSpec (next) ->
-          up.history.replace('/foo')
+            next =>
+              expect($backgroundLink).toHaveClass('up-current')
+              expect($modalLink).toHaveClass('up-current')
+              expect($unrelatedLink).not.toHaveClass('up-current')
+              next.await up.modal.close()
 
-          $backgroundLink = affix('a[href="/foo"]')
-          $popupLink = affix('a[href="/bar"][up-popup=".main"]')
-          $unrelatedLink = affix('a[href="/baz]')
+            next =>
+              expect($backgroundLink).toHaveClass('up-current')
+              expect($modalLink).not.toHaveClass('up-current')
+              expect($unrelatedLink).not.toHaveClass('up-current')
 
-          next =>
-            Trigger.clickSequence($popupLink)
+          it 'marks a link as .up-current if it links to the URL currently either within or below the popup', asyncSpec (next) ->
+            up.history.replace('/foo')
 
-          next =>
-            @respondWith('<div class="main">new-text</div>')
+            $backgroundLink = affix('a[href="/foo"]')
+            $popupLink = affix('a[href="/bar"][up-popup=".main"]')
+            $unrelatedLink = affix('a[href="/baz]')
 
-          next =>
-            expect($backgroundLink).toHaveClass('up-current')
-            expect($popupLink).toHaveClass('up-current')
-            expect($unrelatedLink).not.toHaveClass('up-current')
+            next =>
+              Trigger.clickSequence($popupLink)
 
-            next.await up.popup.close()
+            next =>
+              @respondWith('<div class="main">new-text</div>')
 
-          next =>
-            expect($backgroundLink).toHaveClass('up-current')
-            expect($popupLink).not.toHaveClass('up-current')
-            expect($unrelatedLink).not.toHaveClass('up-current')
+            next =>
+              expect($backgroundLink).toHaveClass('up-current')
+              expect($popupLink).toHaveClass('up-current')
+              expect($unrelatedLink).not.toHaveClass('up-current')
 
-        it 'changes .up-current marks as the URL changes'
+              next.await up.popup.close()
+
+            next =>
+              expect($backgroundLink).toHaveClass('up-current')
+              expect($popupLink).not.toHaveClass('up-current')
+              expect($unrelatedLink).not.toHaveClass('up-current')
 
     describe '.up-active', ->
 

@@ -46,6 +46,7 @@ describe 'up.link', ->
           next => expect($container.text()).toBe('first-linksecond-div')
 
         it 'adds history entries and allows the user to use the back- and forward-buttons', asyncSpec (next) ->
+          up.history.config.enabled = true
 
           waitForBrowser = 70
 
@@ -131,6 +132,7 @@ describe 'up.link', ->
             expect(document.title).toEqual('restored title from two')
 
         it 'does not add additional history entries when linking to the current URL', asyncSpec (next) ->
+          up.history.config.enabled = true
 
           # By default, up.history will replace the <body> tag when
           # the user presses the back-button. We reconfigure this
@@ -197,6 +199,8 @@ describe 'up.link', ->
             expect(location.pathname).toEqual('/two')
 
         it 'does adds additional history entries when linking to the current URL, but with a different hash', asyncSpec (next) ->
+          up.history.config.enabled = true
+
           # By default, up.history will replace the <body> tag when
           # the user presses the back-button. We reconfigure this
           # so we don't lose the Jasmine runner interface.
@@ -268,6 +272,9 @@ describe 'up.link', ->
             expect(location.hash).toEqual('#hash')
 
         describe 'with { restoreScroll: true } option', ->
+
+          beforeEach ->
+            up.history.config.enabled = true
 
           it 'does not reveal, but instead restores the scroll positions of all viewports around the target', asyncSpec (next) ->
 
@@ -419,6 +426,8 @@ describe 'up.link', ->
       describeCapability 'canPushState', ->
 
         it 'adds a history entry', asyncSpec (next) ->
+          up.history.config.enabled = true
+
           affix('.target')
           $link = affix('a[href="/path"][up-target=".target"]')
           Trigger.clickSequence($link)
@@ -431,6 +440,8 @@ describe 'up.link', ->
             expect(location.pathname).toEqual('/path')
 
         it 'respects a X-Up-Location header that the server sends in case of a redirect', asyncSpec (next) ->
+          up.history.config.enabled = true
+
           affix('.target')
           $link = affix('a[href="/path"][up-target=".target"]')
           Trigger.clickSequence($link)
@@ -609,6 +620,8 @@ describe 'up.link', ->
               expect('.fallback').toHaveText('old fallback')
 
       it 'does not add a history entry when an up-history attribute is set to "false"', asyncSpec (next) ->
+        up.history.config.enabled = true
+
         oldPathname = location.pathname
         affix('.target')
         $link = affix('a[href="/path"][up-target=".target"][up-history="false"]')

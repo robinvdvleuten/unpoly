@@ -1,6 +1,9 @@
 describe 'up.history', ->
 
   u = up.util
+
+  beforeEach ->
+    up.history.config.enabled = true
   
   describe 'JavaScript functions', ->
     

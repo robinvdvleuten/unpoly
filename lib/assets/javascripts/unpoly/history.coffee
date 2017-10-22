@@ -28,6 +28,7 @@ up.history = (($) ->
   @stable
   ###
   config = u.config
+    enabled: true
     popTargets: ['body']
     restoreScroll: true
 
@@ -93,7 +94,7 @@ up.history = (($) ->
 
   @function up.history.replace
   @param {string} url
-  @experimental
+  @internal
   ###
   replace = (url) ->
     manipulate('replaceState', url)
@@ -121,8 +122,10 @@ up.history = (($) ->
     options = u.options(options, force: false)
     url = normalizeUrl(url)
     if (options.force || !isCurrentUrl(url)) && up.bus.nobodyPrevents('up:history:push', url: url, message: "Adding history entry for #{url}")
-      manipulate('pushState', url)
-      up.emit('up:history:pushed', url: url, message: "Advanced to location #{url}")
+      if manipulate('pushState', url)
+        up.emit('up:history:pushed', url: url, message: "Advanced to location #{url}")
+      else
+        up.emit('up:history:muted', url: url, message: "Did not advance to #{url} (history is unavailable)")
 
   ###*
   This event is [emitted](/up.emit) before a new history entry is added.
@@ -144,13 +147,20 @@ up.history = (($) ->
   @experimental
   ###
 
+  manipulateStateCount = 0
+
   manipulate = (method, url) ->
-    if up.browser.canPushState()
+    if up.browser.canPushState() && config.enabled
       state = buildState()
       window.history[method](state, '', url)
       observeNewUrl(currentUrl())
+
+      manipulateStateCount++
+      console.error("manipulateState from up.history: %o", manipulateStateCount)
+
+      true
     else
-      up.fail "This browser doesn't support history.#{method}"
+      false
 
   buildState = ->
     fromUp: true

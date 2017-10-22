@@ -536,7 +536,6 @@ up.modal = (($) ->
     )
 
     up.bus.whenEmitted('up:modal:close', $element: state.$modal, message: 'Closing modal').then ->
-      console.debug('*** closing event')
       state.phase = 'closing'
       # the current URL must be deleted *before* calling up.destroy,
       # since up.feedback listens to up:fragment:destroyed and then
@@ -545,16 +544,12 @@ up.modal = (($) ->
       state.coveredUrl = null
       state.coveredTitle = null
 
-      console.debug('*** animating')
-
       promise = animate(viewportCloseAnimation, backdropCloseAnimation, animateOptions)
 
       promise = promise.then ->
-        console.debug('*** animating done, destroy')
         up.destroy(state.$modal, destroyOptions)
 
       promise = promise.then ->
-        console.debug('*** nilifying the world')
         unshiftElements()
         state.phase = 'closed'
         state.$modal = null
@@ -567,12 +562,9 @@ up.modal = (($) ->
       promise
 
   markAsAnimating = (isAnimating = true) ->
-    console.debug('markAsAnimating with %o', isAnimating)
-    state.$modal.toggleClass('up-modal-animating', isAnimating)
+    state.$modal?.toggleClass('up-modal-animating', isAnimating)
 
   animate = (viewportAnimation, backdropAnimation, animateOptions) ->
-    console.debug('--- up.modal.animate with %o ---', animateOptions)
-
     # If we're not animating the dialog, don't animate the backdrop either
     if up.motion.isNone(viewportAnimation)
       Promise.resolve()
@@ -696,7 +688,9 @@ up.modal = (($) ->
 
   @stable
   ###
-  up.link.onAction '[up-modal]', followAsap
+  up.link.onAction '[up-modal]',
+    # Don't just pass the `follow` function reference so we can stub it in tests
+    ($link, options) -> followAsap($link, options)
 
   # Close the modal when someone clicks outside the dialog (but not on a modal opener).
   # Note that we cannot listen to clicks on .up-modal-backdrop, which is a sister element

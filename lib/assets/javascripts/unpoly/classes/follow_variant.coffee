@@ -26,13 +26,15 @@ class up.FollowVariant
     "a#{@selector}#{additionalClause}, [up-href]#{@selector}#{additionalClause}"
 
   registerEvents: ->
-    up.on 'click', @fullSelector(), @onClick
-    up.on 'mousedown', @fullSelector('[up-instant]'), @onMousedown
+    up.on 'click', @fullSelector(), (args...) =>
+      @onClick(args...)
+    up.on 'mousedown', @fullSelector('[up-instant]'), (args...) =>
+      @onMousedown(args...)
 
   shouldProcessLinkEvent: (event, $link) =>
     u.isUnmodifiedMouseEvent(event) && !up.link.childClicked(event, $link)
 
-  followLink: ($link, options) =>
+  followLink: ($link, options = {}) =>
     up.feedback.start $link, =>
       @followNow($link, options)
 

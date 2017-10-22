@@ -99,7 +99,7 @@ up.proxy = (($) ->
     expiry: -> config.cacheExpiry
     key: (request) -> up.Request.normalize(request).cacheKey()
     cachable: (request) -> up.Request.normalize(request).isCachable()
-    logPrefix: 'up.proxy'
+    # logPrefix: 'up.proxy'
 
   ###*
   Returns a cached response for the given request.
@@ -203,7 +203,6 @@ up.proxy = (($) ->
   @stable
   ###
   ajax = (args...) ->
-    console.debug('ajax(...)')
     options = u.extractOptions(args)
     options.url = args[0] if u.isGiven(args[0])
 
@@ -225,7 +224,6 @@ up.proxy = (($) ->
       up.puts 'Re-using cached response for %s %s', request.method, request.url
     else
       # If no existing promise is available, we make a network request.
-      console.debug('Calling loadOrQueue')
       promise = loadOrQueue(request)
       set(request, promise)
       # Don't cache failed requests
@@ -357,7 +355,6 @@ up.proxy = (($) ->
   ###
 
   loadOrQueue = (request) ->
-    console.debug('loadOrQueue')
     if pendingCount < config.maxRequests
       load(request)
     else
@@ -415,7 +412,6 @@ up.proxy = (($) ->
         resolve(response)
 
       onFailure = (xhr, textStatus, errorThrown) ->
-        console.error('--- onFailure in proxy')
         response = buildResponse(request, textStatus, xhr)
         responseReceived(response)
         reject(response)
@@ -423,8 +419,6 @@ up.proxy = (($) ->
       jqAjaxPromise.then(onSuccess, onFailure)
 
   responseReceived = (response) ->
-    console.debug('Response is %o', response)
-
     if response.isMaterialError()
       emitMessage = ['Request failed (%s)', response.textStatus]
       eventProps = u.merge(response, message: emitMessage)

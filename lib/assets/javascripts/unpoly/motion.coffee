@@ -467,12 +467,9 @@ up.motion = (($) ->
     $both = $old.add($new)
     willMorph = willAnimate($both, transitionObject, options)
 
-    console.error("morphing with %o", transitionObject)
-
     up.log.group ('Morphing %o to %o with transition %o' if willMorph), $old.get(0), $new.get(0), transitionObject, ->
       finishOnce($both, options).then ->
         if !willMorph
-          console.error("skipping morph")
           skipMorph($old, $new, options)
         else if transitionFn = findTransitionFn(transitionObject)
           withGhosts($old, $new, options, transitionFn)

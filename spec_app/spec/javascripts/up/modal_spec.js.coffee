@@ -510,7 +510,8 @@ describe 'up.modal', ->
 
         it 'opens the modal on mousedown (instead of on click)', asyncSpec (next) ->
           Trigger.mousedown(@$link)
-          next => expect(@followSpy.calls.mostRecent().args[0]).toEqual(@$link)
+          next =>
+            expect(@followSpy).toHaveBeenCalledWith(@$link, {})
 
         it 'does nothing on mouseup', asyncSpec (next) ->
           Trigger.mouseup(@$link)
@@ -785,25 +786,24 @@ describe 'up.modal', ->
           expect($('.outside')).toHaveText('new outside')
           expect($('.up-modal')).not.toExist()
 
-      it 'does not restore the covered URL when auto-closing', (done) ->
+      it 'does not restore the covered URL when auto-closing (since it would override the URL from the triggering update)', asyncSpec (next) ->
         up.history.config.enabled = true
         up.motion.config.enabled = true
         up.modal.config.openDuration = 0
         up.modal.config.closeDuration = 20
 
         affix('.outside').text('old outside')
-        whenModalOpen = up.modal.visit('/path', target: '.inside')
+        up.modal.visit('/path', target: '.inside')
 
-        u.nextFrame =>
+        next =>
           @respondWith("<div class='inside'>old inside</div>") # Populate modal
 
-        whenModalOpen.then ->
+        next =>
           up.extract('.outside', "<div class='outside'>new outside</div>",
             origin: $('.inside'), history: '/new-location') # Provoke auto-close
 
-          u.setTimer 50, ->
-            expect(location.href).toMatchUrl '/new-location'
-            done()
+        next =>
+          expect(location.href).toMatchUrl '/new-location'
 
       it 'does not auto-close the modal when a replacement from inside the modal affects a selector inside the modal', asyncSpec (next) ->
         affix('.outside').text('old outside')

@@ -254,11 +254,14 @@ up.history = (($) ->
   ###
   up.compiler '[up-back]', ($link) ->
     if u.isPresent(previousUrl)
+      console.error("setting [up-back] with previous url %o", previousUrl)
       u.setMissingAttrs $link,
         'up-href': previousUrl,
         'up-restore-scroll': ''
       $link.removeAttr 'up-back'
       up.link.makeFollowable($link)
+    else
+      console.error("cannot set [up-back]")
 
   up.on 'up:framework:reset', reset
 

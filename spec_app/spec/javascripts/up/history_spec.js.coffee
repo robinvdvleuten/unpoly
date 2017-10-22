@@ -86,11 +86,11 @@ describe 'up.history', ->
       describeCapability 'canPushState', ->
 
         it 'sets an [up-href] attribute to the previous URL and sets the up-restore-scroll attribute to "true"', ->
-          up.history.push('/one')
-          up.history.push('/two')
-          $element = up.hello(affix('a[href="/three"][up-back]').text('text'))
-          expect($element.attr('href')).toMatchUrl('/three')
-          expect($element.attr('up-href')).toMatchUrl('/one')
+          up.history.push('/path1')
+          up.history.push('/path2')
+          $element = up.hello(affix('a[href="/path3"][up-back]').text('text'))
+          expect($element.attr('href')).toMatchUrl('/path3')
+          expect($element.attr('up-href')).toMatchUrl('/path1')
           expect($element.attr('up-restore-scroll')).toBe('')
           expect($element.attr('up-follow')).toBe('')
 
@@ -246,50 +246,37 @@ describe 'up.history', ->
 
           normalize = up.history.normalizeUrl
 
-          up.replace('.content', '/one')
+          up.replace('.content', '/foo')
 
           next =>
             respond()
 
           next =>
             expect(events).toEqual [
-              ['up:history:pushed', normalize('/one')]
+              ['up:history:pushed', normalize('/foo')]
             ]
 
-            up.replace('.content', '/two')
+            up.replace('.content', '/bar')
 
           next =>
             respond()
 
           next =>
             expect(events).toEqual [
-              ['up:history:pushed', normalize('/one')]
-              ['up:history:pushed', normalize('/two')]
+              ['up:history:pushed', normalize('/foo')]
+              ['up:history:pushed', normalize('/bar')]
             ]
 
-            up.replace('.content', '/three')
+            up.replace('.content', '/baz')
 
           next =>
             respond()
 
           next =>
             expect(events).toEqual [
-              ['up:history:pushed', normalize('/one')]
-              ['up:history:pushed', normalize('/two')]
-              ['up:history:pushed', normalize('/three')]
-            ]
-
-            history.back()
-
-          next.after 50, =>
-            respond()
-
-          next =>
-            expect(events).toEqual [
-              ['up:history:pushed', normalize('/one')]
-              ['up:history:pushed', normalize('/two')]
-              ['up:history:pushed', normalize('/three')]
-              ['up:history:restored', normalize('/two')]
+              ['up:history:pushed', normalize('/foo')]
+              ['up:history:pushed', normalize('/bar')]
+              ['up:history:pushed', normalize('/baz')]
             ]
 
             history.back()
@@ -299,11 +286,24 @@ describe 'up.history', ->
 
           next =>
             expect(events).toEqual [
-              ['up:history:pushed', normalize('/one')]
-              ['up:history:pushed', normalize('/two')]
-              ['up:history:pushed', normalize('/three')]
-              ['up:history:restored', normalize('/two')]
-              ['up:history:restored', normalize('/one')]
+              ['up:history:pushed', normalize('/foo')]
+              ['up:history:pushed', normalize('/bar')]
+              ['up:history:pushed', normalize('/baz')]
+              ['up:history:restored', normalize('/bar')]
+            ]
+
+            history.back()
+
+          next.after 50, =>
+            respond()
+
+          next =>
+            expect(events).toEqual [
+              ['up:history:pushed', normalize('/foo')]
+              ['up:history:pushed', normalize('/bar')]
+              ['up:history:pushed', normalize('/baz')]
+              ['up:history:restored', normalize('/bar')]
+              ['up:history:restored', normalize('/foo')]
             ]
 
             history.forward()
@@ -313,26 +313,26 @@ describe 'up.history', ->
 
           next =>
             expect(events).toEqual [
-              ['up:history:pushed', normalize('/one')]
-              ['up:history:pushed', normalize('/two')]
-              ['up:history:pushed', normalize('/three')]
-              ['up:history:restored', normalize('/two')]
-              ['up:history:restored', normalize('/one')]
-              ['up:history:restored', normalize('/two')]
+              ['up:history:pushed', normalize('/foo')]
+              ['up:history:pushed', normalize('/bar')]
+              ['up:history:pushed', normalize('/baz')]
+              ['up:history:restored', normalize('/bar')]
+              ['up:history:restored', normalize('/foo')]
+              ['up:history:restored', normalize('/bar')]
             ]
 
             history.forward()
 
           next.after 50, =>
-            respond() # we need to respond since we've never requested /three with the popTarget
+            respond() # we need to respond since we've never requested /baz with the popTarget
 
           next =>
             expect(events).toEqual [
-              ['up:history:pushed', normalize('/one')]
-              ['up:history:pushed', normalize('/two')]
-              ['up:history:pushed', normalize('/three')]
-              ['up:history:restored', normalize('/two')]
-              ['up:history:restored', normalize('/one')]
-              ['up:history:restored', normalize('/two')]
-              ['up:history:restored', normalize('/three')]
+              ['up:history:pushed', normalize('/foo')]
+              ['up:history:pushed', normalize('/bar')]
+              ['up:history:pushed', normalize('/baz')]
+              ['up:history:restored', normalize('/bar')]
+              ['up:history:restored', normalize('/foo')]
+              ['up:history:restored', normalize('/bar')]
+              ['up:history:restored', normalize('/baz')]
             ]

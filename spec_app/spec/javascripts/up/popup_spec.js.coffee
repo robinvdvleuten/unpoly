@@ -181,7 +181,7 @@ describe 'up.popup', ->
       it 'opens the clicked link in a popup', asyncSpec (next) ->
         @stubAttach()
         Trigger.click(@$link)
-        next => expect(@attachSpy).toHaveBeenCalledWith(@$link)
+        next => expect(@attachSpy).toHaveBeenCalledWith(@$link, {})
 
       # IE does not call JavaScript and always performs the default action on right clicks
       unless navigator.userAgent.match(/Trident/)
@@ -366,7 +366,8 @@ describe 'up.popup', ->
           expect($('.outside')).toHaveText('new outside')
           expect($('.up-popup')).not.toExist()
 
-      it 'does not restore the covered URL when auto-closing', asyncSpec (next) ->
+      it 'does not restore the covered URL when auto-closing (since it would override the URL from the triggering update)', asyncSpec (next) ->
+        up.history.config.enabled = true
         up.motion.config.enabled = true
         up.popup.config.openDuration = 0
         up.popup.config.closeDuration = 20
@@ -377,7 +378,7 @@ describe 'up.popup', ->
         up.popup.attach($link, url: '/path', target: '.inside')
 
         next =>
-          @respondWith("<div class='inside'>old inside</div>")
+          @respondWith("<div class='inside'>old inside</div>") # Populate pop-up
 
         next =>
           up.extract('.outside', "<div class='outside'>new outside</div>",

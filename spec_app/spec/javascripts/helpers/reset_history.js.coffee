@@ -2,6 +2,16 @@ u = up.util
 
 replaceStateHelperCount = 0
 
+beforeAll ->
+  @hrefBeforeSuite = location.href
+  @titleBeforeSuite = document.title
+
+afterAll (done) ->
+  up.util.nextFrame =>
+    history.replaceState?({ fromResetPathHelper: true }, '', @hrefBeforeSuite)
+    document.title = @titleBeforeSuite
+    done()
+
 beforeEach ->
   # Webkit ignores replaceState() calls after 100 calls / 30 sec.
   # So specs need to explicitely activate history handling.
@@ -11,18 +21,17 @@ beforeEach ->
   @hrefBeforeExample = location.href
   @titleBeforeExample = document.title
 
-afterEach (done) ->
-  up.util.nextFrame =>
-
-    document.title = @titleBeforeExample
-
-    normalize = (url) -> u.normalizeUrl(url, hash: true)
-    # Webkit ignores replaceState() calls after 100 calls / 30 sec.
-    # So let's not call use up our budget unless we need it.
-    if normalize(@hrefBeforeExample) != normalize(location.href)
-      replaceStateHelperCount++
-      console.error("replaceState form helper %o (%o vs %o)", replaceStateHelperCount, normalize(@hrefBeforeExample), normalize(location.href))
-      history.replaceState?({ fromResetPathHelper: true }, '', @hrefBeforeExample)
-
-    done()
-
+#afterEach (done) ->
+#  up.util.nextFrame =>
+#
+#    document.title = @titleBeforeExample
+#
+#    normalize = (url) -> u.normalizeUrl(url, hash: true)
+#    # Webkit ignores replaceState() calls after 100 calls / 30 sec.
+#    # So let's not call use up our budget unless we need it.
+#    if normalize(@hrefBeforeExample) != normalize(location.href)
+#      replaceStateHelperCount++
+#      console.error("replaceState form helper %o (%o vs %o)", replaceStateHelperCount, normalize(@hrefBeforeExample), normalize(location.href))
+#      history.replaceState?({ fromResetPathHelper: true }, '', @hrefBeforeExample)
+#
+#    done()

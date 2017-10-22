@@ -645,7 +645,8 @@ describe 'up.link', ->
 
       it "calls up.follow with the clicked link", asyncSpec (next) ->
         Trigger.click(@$link)
-        next => expect(@followSpy).toHaveBeenCalledWith(@$link)
+        next =>
+          expect(@followSpy).toHaveBeenCalledWith(@$link, {})
 
       # IE does not call JavaScript and always performs the default action on right clicks
       unless navigator.userAgent.match(/Trident/)
@@ -657,7 +658,7 @@ describe 'up.link', ->
         Trigger.click(@$link, shiftKey: true)
         next => expect(@followSpy).not.toHaveBeenCalled()
 
-      it 'yyy does nothing if ctrl is pressed during the click', asyncSpec (next)->
+      it 'does nothing if ctrl is pressed during the click', asyncSpec (next)->
         Trigger.click(@$link, ctrlKey: true)
         next => expect(@followSpy).not.toHaveBeenCalled()
 

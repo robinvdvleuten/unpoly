@@ -3,13 +3,12 @@ afterEach (done) ->
   # Pending callbacks might change the URL or cause errors that bleed into
   # the next example.
 
-  console.debug('[reset_up helper] resetting framework in next frame')
-
   up.util.nextFrame =>
-    console.debug('[reset_up helper] resetting framework now')
     up.reset()
-    $('.up-toast').remove()
 
     # Give async reset behavior another frame to play out,
     # then start the next example.
-    up.util.nextFrame(done)
+    up.util.nextFrame ->
+      $('.up-toast').remove()
+      done()
+

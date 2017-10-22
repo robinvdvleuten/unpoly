@@ -1,12 +1,11 @@
 u = up.util
 
-LOG_ENABLED = true
+LOG_ENABLED = false
 
 window.asyncSpec = (args...) ->
   (done) ->
 
     plan = args.pop()
-    options = args.pop() || {}
 
     queue = []
 

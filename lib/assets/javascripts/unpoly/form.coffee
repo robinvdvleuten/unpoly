@@ -259,41 +259,9 @@ up.form = (($) ->
     u.sequence(destructors...)
 
   observeField = ($field, delay, callback) ->
-    scheduledValue = undefined
-    processedValue = u.submittedValue($field)
-    timer = undefined
-    lastCallbackDone = Promise.resolve()
-
-    runCallback = (value) ->
-      processedValue = value
-      scheduledValue = undefined
-      callbackReturnValue = callback.apply($field.get(0), [value, $field])
-      if u.isPromise(callbackReturnValue)
-        lastCallbackDone = callbackReturnValue
-      else
-        lastCallbackDone = callbackReturnValue
-
-    check = ->
-      value = u.submittedValue($field)
-      # don't run the callback for the check during initialization
-      if value != processedValue && (u.isUndefined(scheduledValue) || value != scheduledValue)
-        scheduledValue = value
-        nextCallback = -> runCallback(value)
-        timer?.cancel()
-        timer = u.promiseTimer(delay)
-        # We wait until both the delay has passed and a previous callback is done executing
-        Promise.all([timer, lastCallbackDone]).then(nextCallback)
-
-    # Although (depending on the browser) we only need/receive either input or change,
-    # we always bind to both events in case another script manually triggers it.
-    changeEvents = 'input change'
-
-    $field.on(changeEvents, check)
-
-    # return destructor
-    return ->
-      $field.off(changeEvents, check)
-      timer?.cancel()
+    observer = new up.FieldObserver($field, { delay, callback })
+    observer.start()
+    return observer.stop
 
   ###*
   [Observes](/up.observe) a field or form and submits the form when a value changes.

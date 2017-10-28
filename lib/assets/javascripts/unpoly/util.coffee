@@ -761,7 +761,7 @@ up.util = (($) ->
   Waits for the given number of milliseconds, the nruns the given callback.
 
   If the number of milliseconds is zero, the callback is run in the current execution frame.
-  See [`up.util.nextFrame()`](/up.util.nextFrame) for running a function in the next executation frame.
+  See [`up.util.nextFrame()`](/up.util.nextFrame) for running a function in the next execution frame.
 
   @function up.util.setTimer
   @param {number} millis
@@ -775,6 +775,8 @@ up.util = (($) ->
       callback()
       undefined
 
+  setTimer2 = (millis, callback) ->
+    setTimeout(callback, millis)
 
   ###*
   Schedules the given function to be called in the
@@ -1741,11 +1743,11 @@ up.util = (($) ->
   @internal
   ###
   promiseTimer = (ms) ->
-    deferred = newDeferred()
-    timeout = setTimer ms, ->
-      deferred.resolve()
-    deferred.cancel = -> clearTimeout(timeout)
-    deferred
+    timeout = undefined
+    promise = new Promise (resolve, reject) ->
+      timeout = setTimer(ms, resolve)
+    promise.cancel = -> clearTimeout(timeout)
+    promise
 
   ###*
   Returns `'left'` if the center of the given element is in the left 50% of the screen.
@@ -1900,6 +1902,7 @@ up.util = (($) ->
   nullJQuery: nullJQuery
   unJQuery: unJQuery
   setTimer: setTimer
+  setTimer2: setTimer2
   nextFrame: nextFrame
   inFrames: inFrames
   measure: measure

@@ -77,7 +77,7 @@ describe 'up.form', ->
               callbackCount = 0
               callback = ->
                 callbackCount += 1
-                u.promiseTimer(100)
+                return u.promiseTimer(100)
               up.observe($input, { delay: 1 }, callback)
               $input.val('new-value-1')
               $input.trigger(eventName)
@@ -92,24 +92,50 @@ describe 'up.form', ->
                 # Second callback is triggerd, but waits for first callback to complete
                 expect(callbackCount).toEqual(1)
 
-              next.after 100, ->
+              next.after 50, ->
                 expect(callbackCount).toEqual(2)
 
-            it 'does not run multiple callbacks if a long-running callback has been blocking multiple subsequent callbacks'
+            it 'only runs the last callback when a previous long-running callback has been delaying multiple callbacks', asyncSpec (next) ->
+              $input = affix('input[value="old-value"]')
+
+              callbackArgs = []
+              callback = (value, field) ->
+                callbackArgs.push(value)
+                return u.promiseTimer(100)
+
+              up.observe($input, { delay: 1 }, callback)
+              $input.val('new-value-1')
+              $input.trigger(eventName)
+
+              next.after 10, ->
+                # Callback has been called and takes 100 ms to complete
+                expect(callbackArgs).toEqual ['new-value-1']
+                $input.val('new-value-2')
+                $input.trigger(eventName)
+
+              next.after 10, ->
+                expect(callbackArgs).toEqual ['new-value-1']
+                $input.val('new-value-3')
+                $input.trigger(eventName)
+
+              next.after 100, ->
+                expect(callbackArgs).toEqual ['new-value-1', 'new-value-3']
 
         describe 'when the first argument is a checkbox', ->
 
           it 'runs the callback when the checkbox changes its checked state', asyncSpec (next) ->
             $form = affix('form')
-            $checkbox = $form.affix('input[type="checkbox"]')
+            $checkbox = $form.affix('input[type="checkbox"][value="checkbox-value"]')
             callback = jasmine.createSpy('change callback')
             up.observe($checkbox, callback)
             expect($checkbox.is(':checked')).toBe(false)
+            console.info("--- clicking box ---")
             Trigger.clickSequence($checkbox)
 
             next =>
               expect($checkbox.is(':checked')).toBe(true)
               expect(callback.calls.count()).toEqual(1)
+              console.info("--- clicking box again ---")
               Trigger.clickSequence($checkbox)
 
             next =>
@@ -118,7 +144,7 @@ describe 'up.form', ->
 
           it 'runs the callback when the checkbox is toggled by clicking its label', asyncSpec (next) ->
             $form = affix('form')
-            $checkbox = $form.affix('input#tick[type="checkbox"]')
+            $checkbox = $form.affix('input#tick[type="checkbox"][value="checkbox-value"]')
             $label = $form.affix('label[for="tick"]').text('tick label')
             callback = jasmine.createSpy('change callback')
             up.observe($checkbox, callback)

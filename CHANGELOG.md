@@ -11,6 +11,7 @@ Unreleased
 
 ### Compatible changes
 
+- [`up.observe()`](/up.observe) no longer sends multiple callbacks when a previous callback was slow to respond.
 - Fix a bug where [`[up-layer]`](/up-layer) attributes or `{ layer }` options were ignored.
 - [`a[up-target]`](/a-up-target) and [`form[up-target]`] get a new modifying attribute `[up-fail-layer]`.
   Use it to set the layer to update if the server sends a non-200 status code. Valid values are `auto`, `page`, `modal` and `popup`.

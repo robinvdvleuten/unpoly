@@ -481,7 +481,7 @@ describe 'up.modal', ->
       describe 'when modifier keys are held', ->
 
         # IE does not call JavaScript and always performs the default action on right clicks
-        unless navigator.userAgent.match(/Trident/)
+        unless navigator.userAgent.match(/\b(Trident|Edge)\b/)
           it 'does nothing if the right mouse button is used', asyncSpec (next) ->
             @stubFollow()
             Trigger.click(@$link, button: 2)
@@ -522,7 +522,7 @@ describe 'up.modal', ->
           next => expect(@followSpy).not.toHaveBeenCalled()
 
         # IE does not call JavaScript and always performs the default action on right clicks
-        unless navigator.userAgent.match(/Trident/)
+        unless navigator.userAgent.match(/\b(Trident|Edge)\b/)
           it 'does nothing if the right mouse button is pressed down', asyncSpec (next) ->
             Trigger.mousedown(@$link, button: 2)
             next => expect(@followSpy).not.toHaveBeenCalled()

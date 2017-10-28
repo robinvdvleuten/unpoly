@@ -649,7 +649,7 @@ describe 'up.link', ->
           expect(@followSpy).toHaveBeenCalledWith(@$link, {})
 
       # IE does not call JavaScript and always performs the default action on right clicks
-      unless navigator.userAgent.match(/Trident/)
+      unless navigator.userAgent.match(/\b(Trident|Edge)\b/)
         it 'does nothing if the right mouse button is used', asyncSpec (next) ->
           Trigger.click(@$link, button: 2)
           next => expect(@followSpy).not.toHaveBeenCalled()
@@ -684,7 +684,7 @@ describe 'up.link', ->
           next => expect(@followSpy).not.toHaveBeenCalled()
 
         # IE does not call JavaScript and always performs the default action on right clicks
-        unless navigator.userAgent.match(/Trident/)
+        unless navigator.userAgent.match(/\b(Trident|Edge)\b/)
           it 'does nothing if the right mouse button is pressed down', asyncSpec (next)->
             Trigger.mousedown(@$link, button: 2)
             next => expect(@followSpy).not.toHaveBeenCalled()

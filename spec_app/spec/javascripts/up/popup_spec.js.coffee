@@ -184,7 +184,7 @@ describe 'up.popup', ->
         next => expect(@attachSpy).toHaveBeenCalledWith(@$link, {})
 
       # IE does not call JavaScript and always performs the default action on right clicks
-      unless navigator.userAgent.match(/\b(Trident|Edge)\b/)
+      unless AgentDetector.isIE() || AgentDetector.isEdge()
         it 'does nothing if the right mouse button is used', asyncSpec (next) ->
           @stubAttach()
           Trigger.click(@$link, button: 2)
@@ -253,7 +253,7 @@ describe 'up.popup', ->
           next => expect(@attachSpy).not.toHaveBeenCalled()
 
         # IE does not call JavaScript and always performs the default action on right clicks
-        unless navigator.userAgent.match(/\b(Trident|Edge)\b/)
+        unless AgentDetector.isIE() || AgentDetector.isEdge()
           it 'does nothing if the right mouse button is pressed down', asyncSpec (next) ->
             Trigger.mousedown(@$link, button: 2)
             next => expect(@attachSpy).not.toHaveBeenCalled()

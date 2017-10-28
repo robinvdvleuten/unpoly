@@ -70,14 +70,14 @@ describe 'up.motion', ->
 
         it 'cancels an existing animation on the given element by instantly jumping to the last frame', asyncSpec (next) ->
           $element = affix('.element').text('content')
-          up.animate($element, { 'font-size': '40px', 'opacity': '0.33' }, duration: 30000)
+          up.animate($element, { 'font-size': '40px', 'opacity': '0.5' }, duration: 30000)
 
           next =>
             up.motion.finish($element)
 
           next =>
             expect($element.css('font-size')).toEqual('40px')
-            expect($element.css('opacity')).toEqual('0.33')
+            expect(parseFloat($element.css('opacity'))).toBeAround(0.5, 0.01) # Safari sometimes has rounding errors
 
         it 'cancels animations on children of the given element', asyncSpec (next) ->
           $parent = affix('.element')

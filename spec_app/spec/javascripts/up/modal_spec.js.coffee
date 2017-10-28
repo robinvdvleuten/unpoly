@@ -7,8 +7,9 @@ describe 'up.modal', ->
     up.modal.config.closeDuration = 5
 
   describe 'JavaScript functions', ->
-
-    assumedScrollbarWidth = 15
+    # Safari overlays the scrollbar tracker over the picture.
+    # The scrollbar does not take space.
+    assumedScrollbarWidth = if AgentDetector.isSafari() then 0 else 15
 
     describe 'up.modal.follow', ->
 
@@ -247,7 +248,8 @@ describe 'up.modal', ->
                     expect($('.container')).toHaveText('response3')
                     bodyPadding = parseInt($('body').css('padding-right'))
                     expect(bodyPadding).toBeAround(assumedScrollbarWidth, 10)
-                    expect(bodyPadding).not.toBeAround(2 * assumedScrollbarWidth, 2 * 5)
+                    if assumedScrollbarWidth > 0 # this test does not make sense on Safari
+                      expect(bodyPadding).not.toBeAround(2 * assumedScrollbarWidth, 2 * 5)
                     done()
 
         it 'closes the current modal and wait for its close animation to finish before starting the open animation of a second modal', asyncSpec (next) ->
@@ -481,7 +483,7 @@ describe 'up.modal', ->
       describe 'when modifier keys are held', ->
 
         # IE does not call JavaScript and always performs the default action on right clicks
-        unless navigator.userAgent.match(/\b(Trident|Edge)\b/)
+        unless AgentDetector.isIE() || AgentDetector.isEdge()
           it 'does nothing if the right mouse button is used', asyncSpec (next) ->
             @stubFollow()
             Trigger.click(@$link, button: 2)
@@ -522,7 +524,7 @@ describe 'up.modal', ->
           next => expect(@followSpy).not.toHaveBeenCalled()
 
         # IE does not call JavaScript and always performs the default action on right clicks
-        unless navigator.userAgent.match(/\b(Trident|Edge)\b/)
+        unless AgentDetector.isIE() || AgentDetector.isEdge()
           it 'does nothing if the right mouse button is pressed down', asyncSpec (next) ->
             Trigger.mousedown(@$link, button: 2)
             next => expect(@followSpy).not.toHaveBeenCalled()

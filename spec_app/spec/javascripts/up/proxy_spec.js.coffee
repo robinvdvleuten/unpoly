@@ -398,7 +398,7 @@ describe 'up.proxy', ->
         beforeEach ->
           up.proxy.config.slowDelay = 0
           @events = []
-          u.each ['up:proxy:load', 'up:proxy:received', 'up:proxy:slow', 'up:proxy:recover'], (eventName) =>
+          u.each ['up:proxy:load', 'up:proxy:loaded', 'up:proxy:slow', 'up:proxy:recover'], (eventName) =>
             up.on eventName, =>
               @events.push eventName
 
@@ -437,7 +437,7 @@ describe 'up.proxy', ->
             expect(@events).toEqual([
               'up:proxy:load',
               'up:proxy:slow',
-              'up:proxy:received',
+              'up:proxy:loaded',
               'up:proxy:recover'
             ])
             expect(up.proxy.isBusy()).toBe(false)
@@ -473,7 +473,7 @@ describe 'up.proxy', ->
             expect(@events).toEqual([
               'up:proxy:load',
               'up:proxy:slow',
-              'up:proxy:received',
+              'up:proxy:loaded',
               'up:proxy:recover'
             ])
 
@@ -496,7 +496,7 @@ describe 'up.proxy', ->
           next.after 150, =>
             expect(@events).toEqual([
               'up:proxy:load',
-              'up:proxy:received'
+              'up:proxy:loaded'
             ])
 
         it 'emits up:proxy:recover if a request returned but failed', asyncSpec (next) ->
@@ -519,7 +519,7 @@ describe 'up.proxy', ->
             expect(@events).toEqual([
               'up:proxy:load',
               'up:proxy:slow',
-              'up:proxy:received',
+              'up:proxy:loaded',
               'up:proxy:recover'
             ])
 

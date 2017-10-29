@@ -27,7 +27,7 @@ up.browser = (($) ->
   loadPage = (url, options = {}) ->
     method = u.option(options.method, 'get').toLowerCase()
     if method == 'get'
-      query = u.requestDataAsQuery(options.data)
+      query = u.requestDataAsQuery(options.data, purpose: url)
       url = "#{url}?#{query}" if query
       setLocationHref(url)
     else
@@ -37,8 +37,8 @@ up.browser = (($) ->
         $field.attr(field)
         $field.appendTo($form)
       addField(name: up.protocol.config.methodParam, value: method)
-      if csrfField = up.rails.csrfField()
-        addField(csrfField)
+      if csrfToken = up.protocol.csrfToken()
+        addField(name: up.protocol.csrfField(), value: csrfToken)
       u.each u.requestDataAsArray(options.data), addField
       $form.hide().appendTo('body')
       submitForm($form)
@@ -158,7 +158,7 @@ up.browser = (($) ->
   @return {boolean}
   @experimental
   ###
-  canPushState = u.memoize ->
+  canPushState = ->
     # We cannot use pushState if the initial request method is a POST for two reasons:
     #
     # 1. Unpoly replaces the initial state so it can handle the pop event when the
@@ -189,7 +189,7 @@ up.browser = (($) ->
   @return {boolean}
   @internal
   ###
-  canCssTransition = u.memoize ->
+  canCssTransition = ->
     'transition' of document.documentElement.style
 
   ###*
@@ -199,8 +199,18 @@ up.browser = (($) ->
   @return {boolean}
   @internal
   ###
-  canInputEvent = u.memoize ->
+  canInputEvent = ->
     'oninput' of document.createElement('input')
+
+  ###*
+  Returns whether this browser supports promises.
+
+  @function up.browser.canPromise
+  @return {boolean}
+  @internal
+  ###
+  canPromise = ->
+    !!window.Promise
 
   ###*
   Returns whether this browser supports the [`FormData`](https://developer.mozilla.org/en-US/docs/Web/API/FormData)
@@ -210,18 +220,18 @@ up.browser = (($) ->
   @return {boolean}
   @experimental
   ###
-  canFormData = u.memoize ->
+  canFormData = ->
     !!window.FormData
 
   ###*
   Returns whether this browser supports the [`DOMParser`](https://developer.mozilla.org/en-US/docs/Web/API/DOMParser)
   interface.
 
-  @function up.browser.canDomParser
+  @function up.browser.canDOMParser
   @return {boolean}
   @internal
   ###
-  canDomParser = u.memoize ->
+  canDOMParser = ->
     !!window.DOMParser
 
   ###*
@@ -231,7 +241,7 @@ up.browser = (($) ->
   @return {boolean}
   @internal
   ###
-  canConsole = u.memoize ->
+  canConsole = ->
     window.console &&
       console.debug &&
       console.info &&
@@ -241,7 +251,7 @@ up.browser = (($) ->
       console.groupCollapsed &&
       console.groupEnd
 
-  isRecentJQuery = u.memoize ->
+  isRecentJQuery = ->
     version = $.fn.jquery
     parts = version.split('.')
     major = parseInt(parts[0])
@@ -293,10 +303,11 @@ up.browser = (($) ->
       canConsole() &&
       # We don't require pushState in order to cater for Safari booting Unpoly with a non-GET method.
       # canPushState() &&
-      canDomParser() &&
+      canDOMParser() &&
       canFormData() &&
       canCssTransition() &&
-      canInputEvent()
+      canInputEvent() &&
+      canPromise()
 
   ###*
   @internal
@@ -347,6 +358,16 @@ up.browser = (($) ->
   sessionStorage: sessionStorage
   popCookie: popCookie
   hash: hash
+  isIE10OrWorse: isIE10OrWorse
+  isRecentJQuery: isRecentJQuery
+  canConsole:   canConsole
+  canPushState: canPushState
+  canDOMParser: canDOMParser
+  canFormData: canFormData
+  canCssTransition: canCssTransition
+  canInputEvent: canInputEvent
+  canPromise: canPromise
+
 
 )(jQuery)
 

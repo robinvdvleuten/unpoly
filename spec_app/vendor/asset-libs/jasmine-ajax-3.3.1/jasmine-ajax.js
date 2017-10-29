@@ -165,6 +165,7 @@ getJasmineRequireObj().AjaxEventBus = function(eventFactory) {
 
     if (eventListeners) {
       for (var i = 0; i < eventListeners.length; i++) {
+        console.error("Calling eventListener " + i);
         eventListeners[i].call(this.source, evt);
       }
     }
@@ -464,6 +465,8 @@ extend(FakeXMLHttpRequest, {
         } else {
           this.response = this.responseValue();
         }
+
+        console.error("triggering state change events")
 
         this.eventBus.trigger('readystatechange');
         this.eventBus.trigger('progress');

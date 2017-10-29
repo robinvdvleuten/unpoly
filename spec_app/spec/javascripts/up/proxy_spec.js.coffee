@@ -38,11 +38,14 @@ describe 'up.proxy', ->
 
         u.nextFrame =>
           @respondWith(
-            status: '201',
+            status: 201,
             responseText: 'response-text'
           )
 
           promise.then (response) ->
+
+            console.log("!!! response in callback is %o", response)
+
             expect(response.request.url).toMatchUrl('/url')
             expect(response.request.data).toEqual(key: 'value')
             expect(response.request.method).toEqual('POST')
@@ -52,7 +55,7 @@ describe 'up.proxy', ->
             expect(response.url).toMatchUrl('/url') # If the server signaled a redirect with X-Up-Location, this would be reflected here
             expect(response.method).toEqual('POST') # If the server sent a X-Up-Method header, this would be reflected here
             expect(response.body).toEqual('response-text')
-            expect(response.status).toEqual('201')
+            expect(response.status).toEqual(201)
             expect(response.xhr).toBePresent()
 
             done()
@@ -155,7 +158,7 @@ describe 'up.proxy', ->
               responseHeaders:
                 'X-Up-Location': '/bar'
                 'X-Up-Method': 'GET'
-              status: '500'
+              status: 500
 
           next =>
             up.ajax('/bar')
@@ -340,7 +343,7 @@ describe 'up.proxy', ->
         it 'should be set by default', ->
           expect(up.proxy.config.wrapMethods).toBePresent()
 
-        u.each ['GET', 'POST', 'HEAD', 'OPTIONS'], (method) ->
+        u.each ['GET', 'POST', 'HEAD', 'OPTIONS', 'PUT', 'PATCH', 'DELETE'], (method) ->
 
           it "does not change the method of a #{method} request", asyncSpec (next) ->
             up.ajax(url: '/foo', method: method)
@@ -349,16 +352,6 @@ describe 'up.proxy', ->
               request = @lastRequest()
               expect(request.method).toEqual(method)
               expect(request.data()['_method']).toBeUndefined()
-
-        u.each ['PUT', 'PATCH', 'DELETE'], (method) ->
-
-          it "turns a #{method} request into a POST request and sends the actual method as a { _method } param", asyncSpec (next) ->
-            up.ajax(url: '/foo', method: method)
-
-            next =>
-              request = @lastRequest()
-              expect(request.method).toEqual('POST')
-              expect(request.data()['_method']).toEqual([method])
 
       describe 'with config.maxRequests set', ->
 
@@ -449,7 +442,7 @@ describe 'up.proxy', ->
             ])
             expect(up.proxy.isBusy()).toBe(false)
 
-        it 'can delay the up:proxy:slow event to prevent flickering of spinners', asyncSpec { mockTime: true }, (next) ->
+        it 'can delay the up:proxy:slow event to prevent flickering of spinners', asyncSpec (next) ->
           next =>
             up.proxy.config.slowDelay = 100
             up.ajax(url: '/foo')

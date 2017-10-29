@@ -223,6 +223,8 @@ up.protocol = (($) ->
   @param [config.methodParam='_method']
     The name of the POST parameter when [wrapping HTTP methods](/up.form.config#config.wrapMethods)
     in a `POST` request.
+  @param [config.csrfParam]
+  @param [config.csrfToken]
   @experimental
   ###
   config = u.config
@@ -234,6 +236,14 @@ up.protocol = (($) ->
     methodHeader: 'X-Up-Method'
     methodCookie: '_up_method'
     methodParam: '_method'
+    csrfParam: -> $('meta[name="csrf-param"]').val('content')
+    csrfToken: -> $('meta[name="csrf-token"]').val('content')
+
+  csrfParam = ->
+    u.evalOption(config.csrfParam)
+
+  csrfToken = ->
+    u.evalOption(config.csrfToken)
 
   ## Unfortunately we cannot offer reset without introducing cycles
   ## in the asset load order
@@ -247,6 +257,8 @@ up.protocol = (($) ->
   locationFromXhr: locationFromXhr
   titleFromXhr: titleFromXhr
   methodFromXhr: methodFromXhr
+  csrfParam :csrfParam
+  csrfToken: csrfToken
   initialRequestMethod: initialRequestMethod
 
 )(jQuery)

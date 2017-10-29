@@ -1,4 +1,4 @@
-describe 'xyz up.feedback', ->
+describe 'up.feedback', ->
 
   u = up.util
 

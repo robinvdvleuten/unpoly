@@ -1444,6 +1444,8 @@ up.util = (($) ->
   @internal
   ###
   requestDataAsArray = (data) ->
+    if isArray(data)
+      data
     if isFormData(data)
       # Until FormData#entries is implemented in all major browsers we must give up here.
       # However, up.form will prefer to serialize forms as arrays, so we should be good
@@ -1469,7 +1471,10 @@ up.util = (($) ->
   @param {Object|Array|undefined|null} data
   @internal
   ###
-  requestDataAsQuery = (data) ->
+  requestDataAsQuery = (data, opts) ->
+    opts = options(opts, purpose: 'url')
+    if isString(data)
+      data
     if isFormData(data)
       # Until FormData#entries is implemented in all major browsers we must give up here.
       # However, up.form will prefer to serialize forms as arrays, so we should be good
@@ -1477,7 +1482,13 @@ up.util = (($) ->
       up.fail('Cannot convert FormData into a query string')
     else if isPresent(data)
       query = $.param(data)
-      query = query.replace(/\+/g, '%20')
+      switch opts.purpose
+        when 'url'
+          query = query.replace(/\+/g, '%20')
+        when 'form'
+          query = query.replace(/\%20/g, '+')
+        else
+          up.fail('Unknown purpose %o', opts.purpose)
       query
     else
       ""
@@ -1665,6 +1676,7 @@ up.util = (($) ->
       funValue = fun(args...)
       # If funValue is again a Promise, it will defer resolution of `deferred`
       # until `funValue` is resolved.
+      console.info("!!! resolving previewable with %o", funValue)
       deferred.resolve(funValue)
       funValue
     preview.promise = deferred.promise()

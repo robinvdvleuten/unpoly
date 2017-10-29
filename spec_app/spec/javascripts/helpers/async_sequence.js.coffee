@@ -1,6 +1,6 @@
 u = up.util
 
-LOG_ENABLED = false
+LOG_ENABLED = true
 
 window.asyncSpec = (args...) ->
   (done) ->

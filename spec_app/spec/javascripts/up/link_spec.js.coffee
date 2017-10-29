@@ -410,6 +410,11 @@ describe 'up.link', ->
 
       it 'should have tests'
 
+    describe 'up.link.isFollowable', ->
+
+      it 'must have a test', ->
+        raise 'test here!'
+
   describe 'unobtrusive behavior', ->
 
     describe 'a[up-target]', ->

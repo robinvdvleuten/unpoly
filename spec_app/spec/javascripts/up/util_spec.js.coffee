@@ -34,9 +34,9 @@ describe 'up.util', ->
         proxy()
         u.nextFrame ->
           expect(callback).not.toHaveBeenCalled()
-          funDeferred.resolve()
-          u.inFrames 4, ->
-            expect(callback).toHaveBeenCalled()
+          funDeferred.resolve('return value')
+          u.nextFrame ->
+            expect(callback).toHaveBeenCalledWith('return value')
             done()
 
     describe 'up.util.DivertibleChain', ->

@@ -356,8 +356,10 @@ up.proxy = (($) ->
 
   loadOrQueue = (request) ->
     if pendingCount < config.maxRequests
+      console.log("!!! loading %o", request)
       load(request)
     else
+      console.log("!!! queuing %o", request)
       queue(request)
 
   queue = (request) ->
@@ -369,64 +371,29 @@ up.proxy = (($) ->
 
   load = (request) ->
     up.emit('up:proxy:load', u.merge(request, message: ['Loading %s %s', request.method, request.url]))
+    responsePromise = request.send()
+    console.log("!!! request.send() returns %o", responsePromise)
+    responsePromise.then(registerAliasForRedirect)
+    u.always(responsePromise, responseReceived)
+    responsePromise
 
-    jqAjaxPromise = request.submitWithJQuery()
-
-    # We want to return a native promise, but jQuery's AJAX deferred pass multiple
-    # arguments to callbacks. Since native promises only have a single settlement
-    # value, we need to convert these args into a signle object.
-    convertJqueryAjaxtToNativePromise(request, jqAjaxPromise)
-
-  buildResponse = (request, textStatus, xhr) ->
-    response =
-      method: request.method
-      url: request.url
-      body: xhr.responseText
-      status: xhr.status
-      # A string "success", "notmodified", "nocontent", "error", "timeout", "abort", or "parsererror"
-      textStatus: textStatus
-      request: request
-      xhr: xhr
-
-    if urlFromServer = up.protocol.locationFromXhr(xhr)
-      response.url = urlFromServer
-      # If the server changes a URL, it is expected to signal a new method as well.
-      response.method = up.protocol.methodFromXhr(xhr) ? 'GET'
-
-    new up.Response(response)
-
-  convertJqueryAjaxtToNativePromise = (request, jqAjaxPromise) ->
-    new Promise (resolve, reject) ->
-
-      onSuccess = (data, textStatus, xhr) ->
-        response = buildResponse(request, textStatus, xhr)
-
-        if request.url != response.url
-          newRequest = request.copy(
-            method: response.method
-            url: response.url
-          )
-          up.proxy.alias(request, newRequest)
-
-        responseReceived(response)
-        resolve(response)
-
-      onFailure = (xhr, textStatus, errorThrown) ->
-        response = buildResponse(request, textStatus, xhr)
-        responseReceived(response)
-        reject(response)
-
-      jqAjaxPromise.then(onSuccess, onFailure)
+  registerAliasForRedirect = (response) ->
+    request = response.request
+    if request.url != response.url
+      newRequest = request.copy(
+        method: response.method
+        url: response.url
+      )
+      up.proxy.alias(request, newRequest)
 
   responseReceived = (response) ->
     if response.isMaterialError()
-      emitMessage = ['Request failed (%s)', response.textStatus]
-      eventProps = u.merge(response, message: emitMessage)
-      up.emit('up:proxy:failed', eventProps)
+      eventProps = u.merge(response, message: 'Error during request')
+      up.emit('up:proxy:error', eventProps)
     else
       emitMessage = ['Server responded with HTTP %d (%d bytes)', response.status, response.body.length]
       eventProps = u.merge(response, message: emitMessage)
-      up.emit('up:proxy:received', eventProps)
+      up.emit('up:proxy:loaded', eventProps)
 
     # Since we have just completed a request, we now have the worker to load the next request.
     if loader = queuedLoaders.shift()
@@ -500,7 +467,7 @@ up.proxy = (($) ->
   This event is [emitted](/up.emit) when the response to an [AJAX request](/up.ajax)
   has been received.
 
-  @event up:proxy:received
+  @event up:proxy:loaded
   @param event.url
   @param event.method
   @param event.target
@@ -534,11 +501,11 @@ up.proxy = (($) ->
 
     method = up.link.followMethod($link, options)
     if isIdempotentMethod(method)
-      up.log.group "Preloading link %o", $link, ->
+      up.log.group "Preloading link %o", $link.get(0), ->
         options.preload = true
         up.link.follow2($link, options)
     else
-      up.puts("Won't preload %o due to unsafe method %s", $link, method)
+      up.puts("Won't preload %o due to unsafe method %s", $link.get(0), method)
       Promise.resolve()
 
   ###*

@@ -27,34 +27,70 @@ class up.Request extends up.Record
     query = u.requestDataAsQuery(@data)
     separator = if u.contains(@url, '?') then '&' else '?'
     @url += separator + query
-    # Now that we have transfered the params into the URL,
-    # we delete them from the { data } option.
+    # Now that we have transfered the params into the URL, we delete them from the { data } option.
     @data = undefined
 
   isIdempotent: =>
     up.proxy.isIdempotentMethod(@method)
 
-  submitWithJQuery: =>
-    # We will modify the request below for features like method wrapping.
-    # Let's not change the original request which would confuse API clients
-    # and cache key logic.
-    jqRequest = u.copy(@)
-    jqRequest.data = u.copy(@data) unless u.isFormData(@data)
+  send: =>
+    # We will modify this request below.
+    # This would confuse API clients and cache key logic in up.proxy.
+    new Promise (resolve, reject) =>
+      xhr = new XMLHttpRequest()
+      xhr.open(@method, @url)
 
-    jqRequest.headers[up.protocol.config.targetHeader] = @target if @target
-    jqRequest.headers[up.protocol.config.failTargetHeader] = @failTarget if @failTarget
+      xhrHeaders = u.copy(@headers)
 
-    if u.contains(up.proxy.config.wrapMethods, jqRequest.method)
-      jqRequest.data = u.appendRequestData(jqRequest.data, up.protocol.config.methodParam, jqRequest.method)
-      jqRequest.method = 'POST'
+      xhrData = @data
+      if u.isPresent(xhrData)
+        if u.isFormData(xhrData)
+          delete xhrHeaders['Content-Type'] # let the browser set the content type
+        else
+          xhrData = u.requestDataAsQuery(xhrData, purpose: 'form')
+          xhrHeaders['Content-Type'] = 'application/x-www-form-urlencoded'
+      else
+        # XMLHttpRequest expects null for an empty body
+        xhrData = null
 
-    if u.isFormData(jqRequest.data)
-      # Disable jQuery's request data processing so we can pass
-      # a FormData object (http://stackoverflow.com/a/5976031)
-      jqRequest.contentType = false
-      jqRequest.processData = false
+      xhrHeaders[up.protocol.config.targetHeader] = @target if @target
+      xhrHeaders[up.protocol.config.failTargetHeader] = @failTarget if @failTarget
 
-    $.ajax(jqRequest)
+      for header, value of xhrHeaders
+        xhr.setRequestHeader(header, value)
+
+      resolveWithResponse = =>
+        response = @buildResponse(xhr)
+        console.info("!!! response is %o, status is %o, success is %o", response, response.status, response.isSuccess())
+        console.info("!!! resolving with %o", response)
+        if response.isSuccess()
+          resolve(response)
+        else
+          reject(response)
+
+      xhr.onload = resolveWithResponse
+      xhr.onerror = resolveWithResponse
+      xhr.ontimeout = resolveWithResponse
+
+      xhr.timeout = @timeout if @timeout
+
+      xhr.send(xhrData)
+
+  buildResponse: (xhr) =>
+    responseAttrs =
+      method: @method
+      url: @url
+      body: xhr.responseText
+      status: xhr.status
+      request: @
+      xhr: xhr
+
+    if urlFromServer = up.protocol.locationFromXhr(xhr)
+      responseAttrs.url = urlFromServer
+      # If the server changes a URL, it is expected to signal a new method as well.
+      responseAttrs.method = up.protocol.methodFromXhr(xhr) ? 'GET'
+
+    new up.Response(responseAttrs)
 
   isCachable: =>
     @isIdempotent() && !u.isFormData(@data)

@@ -5,13 +5,13 @@ u = up.util
 class up.Response extends up.Record
 
   fields: ->
-    ['method', 'url', 'body', 'status', 'textStatus', 'request', 'xhr']
+    ['method', 'url', 'body', 'status', 'request', 'xhr']
 
   constructor: (options) ->
     super(options)
 
   isSuccess: =>
-    @status && (@status[0] == '2')
+    @status && (@status >= 200 && @status <= 299)
 
   isError: =>
     !@isSuccess()

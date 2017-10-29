@@ -1,4 +1,4 @@
-describe 'xyz up.dom', ->
+describe 'up.dom', ->
 
   u = up.util
   
@@ -29,7 +29,9 @@ describe 'xyz up.dom', ->
           next =>
             @respond()
 
-          next =>
+          next.after 10, =>
+            console.log("--- expectations now ---")
+            console.log("--- middle text: " + $('.middle').text())
             expect($('.before')).toHaveText('old-before')
             expect($('.middle')).toHaveText('new-middle')
             expect($('.after')).toHaveText('old-after')

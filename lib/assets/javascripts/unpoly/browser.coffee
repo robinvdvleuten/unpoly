@@ -10,7 +10,6 @@ IE11, Edge
 IE 10 or lower
 : Unpoly prevents itself from booting itself, leaving you with a classic server-side application.
 
-
 @class up.browser
 ###
 up.browser = (($) ->
@@ -22,33 +21,30 @@ up.browser = (($) ->
   @param {string} url
   @param {string} [options.method='get']
   @param {Object|Array} [options.data]
-  @internal
+  @internal'
   ###
   loadPage = (url, options) ->
     options = u.options(options)
     method = u.normalizeMethod(options.method)
-    if method == 'GET'
-      query = u.requestDataAsQuery(options.data, purpose: 'url')
-      url = "#{url}?#{query}" if query
-      setLocationHref(url)
-    else
-      $form = $("<form method='POST' action='#{url}' class='up-page-loader'></form>")
 
-      addField = (field) ->
-        $field = $('<input type="hidden">').attr(field)
-        $field.appendTo($form)
+    formMethod = if method == 'GET' then 'GET' else 'POST'
 
-      # Since forms can only be GET or POST, and we're not making a GET,
-      # we always add a method param
+    $form = $("<form method='#{formMethod}' action='#{url}' class='up-page-loader'></form>")
+
+    addField = (field) ->
+      $field = $('<input type="hidden">').attr(field)
+      $field.appendTo($form)
+
+    unless method == 'GET'
       addField(name: up.protocol.config.methodParam, value: method)
 
-      if !u.isCrossDomain(url) && (csrfToken = up.protocol.csrfToken())
-        addField(name: up.protocol.config.csrfParam, value: csrfToken)
+    if !up.proxy.isIdempotentMethod(method) && !u.isCrossDomain(url) && (csrfToken = up.protocol.csrfToken())
+      addField(name: up.protocol.config.csrfParam, value: csrfToken)
 
-      u.each u.requestDataAsArray(options.data), addField
+    u.each u.requestDataAsArray(options.data), addField
 
-      $form.hide().appendTo('body')
-      submitForm($form)
+    $form.hide().appendTo('body')
+    submitForm($form)
 
   ###*
   For mocking in specs.
@@ -57,14 +53,6 @@ up.browser = (($) ->
   ###
   submitForm = ($form) ->
     $form.submit()
-
-  ###*
-  For mocking in specs.
-
-  @method setLocationHref
-  ###
-  setLocationHref = (url) ->
-    location.href = url
 
   ###*
   A cross-browser way to interact with `console.log`, `console.error`, etc.

@@ -187,17 +187,34 @@ describe 'up.proxy', ->
 
       describe 'CSRF', ->
 
-        it 'sets a CSRF token in the header', ->
-          throw "must have a test"
+        beforeEach ->
+          up.protocol.config.csrfHeader = 'csrf-header'
+          up.protocol.config.csrfToken = 'csrf-token'
 
-        it 'does not add a CSRF token if there is none', ->
-          throw "must have a test"
+        it 'sets a CSRF token in the header', asyncSpec (next) ->
+          up.proxy.ajax('/path', method: 'post')
+          next =>
+            headers = @lastRequest().requestHeaders
+            expect(headers['csrf-header']).toEqual('csrf-token')
 
-        it 'does not add a CSRF token for GET requests', ->
-          throw "must have a test"
+        it 'does not add a CSRF token if there is none', asyncSpec (next) ->
+          up.protocol.config.csrfToken = ''
+          up.proxy.ajax('/path', method: 'post')
+          next =>
+            headers = @lastRequest().requestHeaders
+            expect(headers['csrf-header']).toBeMissing()
 
-        it 'does not add a CSRF token when loading content from another domain', ->
-          throw "must have a test"
+        it 'does not add a CSRF token for GET requests', asyncSpec (next) ->
+          up.proxy.ajax('/path', method: 'get')
+          next =>
+            headers = @lastRequest().requestHeaders
+            expect(headers['csrf-header']).toBeMissing()
+
+        it 'does not add a CSRF token when loading content from another domain', asyncSpec (next) ->
+          up.proxy.ajax('http://other-domain.tld/path', method: 'post')
+          next =>
+            headers = @lastRequest().requestHeaders
+            expect(headers['csrf-header']).toBeMissing()
 
       describe 'with { data } option', ->
 

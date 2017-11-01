@@ -79,7 +79,7 @@ up.proxy = (($) ->
     An array of uppercase HTTP method names. AJAX requests with one of these methods
     will be converted into a `POST` request and carry their original method as a `_method`
     parameter. This is to [prevent unexpected redirect behavior](https://makandracards.com/makandra/38347).
-  @param {Array<string>} [config.safeMethods]
+  @param {Array<string>} [config.idempotentMethods]
     An array of uppercase HTTP method names that are considered idempotent.
     The proxy cache will only cache idempotent requests and will clear the entire
     cache after a non-idempotent request.
@@ -92,7 +92,7 @@ up.proxy = (($) ->
     cacheExpiry: 1000 * 60 * 5
     maxRequests: 4
     wrapMethods: ['PATCH', 'PUT', 'DELETE']
-    safeMethods: ['GET', 'OPTIONS', 'HEAD']
+    idempotentMethods: ['GET', 'OPTIONS', 'HEAD']
 
   cache = u.newCache
     size: -> config.cacheSize
@@ -512,7 +512,7 @@ up.proxy = (($) ->
   @internal
   ###
   isIdempotentMethod = (method) ->
-    u.contains(config.safeMethods, method)
+    u.contains(config.idempotentMethods, method)
 
   ###*
   @internal

@@ -59,7 +59,7 @@ class up.Request extends up.Record
       xhrHeaders[up.protocol.config.targetHeader] = @target if @target
       xhrHeaders[up.protocol.config.failTargetHeader] = @failTarget if @failTarget
 
-      if !u.isCrossDomain(xhrUrl) && (csrfToken = up.protocol.csrfToken())
+      if !@isIdempotent() && !u.isCrossDomain(xhrUrl) && (csrfToken = up.protocol.csrfToken())
         xhrHeaders[up.protocol.config.csrfHeader] = csrfToken
 
       xhr.open(xhrMethod, xhrUrl)

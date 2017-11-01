@@ -77,6 +77,11 @@ up.util = (($) ->
     normalized += parts.search unless options?.search == false
     normalized
 
+  isCrossDomain = (targetUrl) ->
+    currentUrl = parseUrl(location.href)
+    targetUrl = parseUrl(targetUrl)
+    currentUrl.protocol != targetUrl.protocol || currentUrl.host != targetUrl.host
+
   ###*
   Parses the given URL into components such as hostname and path.
 
@@ -91,20 +96,19 @@ up.util = (($) ->
   @experimental
   ###
   parseUrl = (urlOrAnchor) ->
+    # In case someone passed us a $link, unwrap it
+    urlOrAnchor = unJQuery(urlOrAnchor)
+
     # If we are handed a parsed URL, just return it
     if urlOrAnchor.pathname
       return urlOrAnchor
 
-    anchor = null
-    if isString(urlOrAnchor)
-      anchor = $('<a>').attr(href: urlOrAnchor).get(0)
-      # In IE11 the #hostname and #port properties of such a link are empty
-      # strings. However, we can fix this by assigning the anchor its own
-      # href because computer:
-      # https://gist.github.com/jlong/2428561#comment-1461205
-      anchor.href = anchor.href if isBlank(anchor.hostname)
-    else
-      anchor = unJQuery(urlOrAnchor)
+    anchor = $('<a>').attr(href: urlOrAnchor).get(0)
+    # In IE11 the #hostname and #port properties of such a link are empty
+    # strings. However, we can fix this by assigning the anchor its own
+    # href because computer:
+    # https://gist.github.com/jlong/2428561#comment-1461205
+    anchor.href = anchor.href if isBlank(anchor.hostname)
     anchor
 
   ###*
@@ -788,16 +792,6 @@ up.util = (($) ->
   ###
   nextFrame = (block) ->
     setTimeout(block, 0)
-
-  ###*
-  Useful in tests to defeat setTimeout(fn, 0) clamping caused
-  by jQuery's promise implementation.
-
-  @internal
-  ###
-  inFrames = (count, block) ->
-    clampedDelay = (count - 1) * 4
-    setTimeout(block, clampedDelay)
 
   ###*
   Returns the last element of the given array.
@@ -1538,19 +1532,17 @@ up.util = (($) ->
   @param {string|Blob|File} value
   @internal
   ###
-  appendRequestData = (data, name, value) ->
-    if isFormData(data)
-      data.append(name, value)
-    else if isArray(data)
+  appendRequestData = (data, name, value, opts) ->
+    if isArray(data) || isBlank(data)
+      data ||= []
       data.push(name: name, value: value)
+    else if isFormData(data)
+      data.append(name, value)
     else if isObject(data)
       data[name] = value
-    else if isString(data) || isMissing(data)
-      newPair = requestDataAsQuery([ name: name, value: value ])
-      if isPresent(data)
-        data = [data, newPair].join('&')
-      else
-        data = newPair
+    else if isString(data)
+      newPair = requestDataAsQuery([ name: name, value: value ], opts)
+      data = [data, newPair].join('&')
     data
 
   ###*
@@ -1916,7 +1908,6 @@ up.util = (($) ->
   setTimer: setTimer
   setTimer2: setTimer2
   nextFrame: nextFrame
-  inFrames: inFrames
   measure: measure
   temporaryCss: temporaryCss
   cssAnimate: cssAnimate
@@ -1969,6 +1960,7 @@ up.util = (($) ->
   always: always
   rejectOnError: rejectOnError
   isBodyDescendant: isBodyDescendant
+  isCrossDomain: isCrossDomain
 
 
 )(jQuery)

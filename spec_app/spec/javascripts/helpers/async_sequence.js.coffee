@@ -2,8 +2,20 @@ u = up.util
 
 LOG_ENABLED = true
 
+unstubbedSetTimeout = window.setTimeout
+
 window.asyncSpec = (args...) ->
-  (done) ->
+  (originalDone) ->
+
+    done = ->
+      # For some reason Jasmine ignores done() calls if its own clock is stubbed
+      jasmine.clock().uninstall()
+      originalDone()
+
+    fail = (args...) ->
+      # For some reason Jasmine ignores done() calls if its own clock is stubbed
+      jasmine.clock().uninstall()
+      done.fail(args...)
 
     plan = args.pop()
 
@@ -43,7 +55,7 @@ window.asyncSpec = (args...) ->
         block()
         pokeQueue()
       catch e
-        done.fail(e)
+        fail(e)
         throw e
 
     runBlockAsyncThenPoke = (blockOrPromise) ->
@@ -51,8 +63,8 @@ window.asyncSpec = (args...) ->
       # On plan-level people will usually pass a function returning a promise.
       # During runtime people will usually pass a promise to delay the next step.
       promise = if u.isPromise(blockOrPromise) then blockOrPromise else blockOrPromise()
-      promise.then => pokeQueue()
-      promise.catch (e) => done.fail(e)
+      promise.then -> pokeQueue()
+      promise.catch (e) -> fail(e)
 
     pokeQueue = ->
       if entry = queue[runtimeCursor]
@@ -79,7 +91,7 @@ window.asyncSpec = (args...) ->
                   runBlockAsyncThenPoke(block)
 
             # Also move to the next frame
-            setTimeout(fun, timing)
+            unstubbedSetTimeout(fun, timing)
       else
         log('calling done()')
         done()

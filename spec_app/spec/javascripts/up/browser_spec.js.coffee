@@ -32,21 +32,9 @@ describe 'up.browser', ->
           $form = $('form.up-page-loader')
           expect($form).toExist()
           expect($form.attr('action')).toEqual('/foo')
-          expect($form.attr('method')).toEqual('post')
+          expect($form.attr('method')).toEqual('POST')
           expect($form.find('input[name="param1"][value="param1 value"]')).toExist()
           expect($form.find('input[name="param2"][value="param2 value"]')).toExist()
-
-        it 'submits the Rails CSRF token as another hidden field', ->
-          submitForm = up.browser.knife.mock('submitForm')
-          spyOn(up.rails, 'csrfField').and.returnValue
-            name: 'authenticity-param-name',
-            value: 'authenticity-token'
-          up.browser.loadPage('/foo', method: 'post')
-          expect(submitForm).toHaveBeenCalled()
-          $form = $('form.up-page-loader')
-          $tokenInput = $form.find('input[name="authenticity-param-name"]')
-          expect($tokenInput).toExist()
-          expect($tokenInput.val()).toEqual('authenticity-token')
 
       u.each ['PUT', 'PATCH', 'DELETE'], (method) ->
 
@@ -58,8 +46,30 @@ describe 'up.browser', ->
             expect(submitForm).toHaveBeenCalled()
             $form = $('form.up-page-loader')
             expect($form).toExist()
-            expect($form.attr('method')).toEqual('post')
-            expect($form.find('input[name="_method"]').val()).toEqual(method.toLowerCase())
+            expect($form.attr('method')).toEqual('POST')
+            expect($form.find('input[name="_method"]').val()).toEqual(method)
+
+      describe 'CSRF', ->
+
+        it 'submits an CSRF token as another hidden field', ->
+          submitForm = up.browser.knife.mock('submitForm')
+          up.protocol.config.csrfToken = -> 'csrf-token-value'
+          up.protocol.config.csrfParam = 'csrf-param'
+          up.browser.loadPage('/foo', method: 'post')
+          expect(submitForm).toHaveBeenCalled()
+          $form = $('form.up-page-loader')
+          $tokenInput = $form.find('input[name="csrf-param"]')
+          expect($tokenInput).toExist()
+          expect($tokenInput.val()).toEqual('csrf-token-value')
+
+        it 'does not add a CSRF token if there is none', ->
+          throw "must have a test"
+
+        it 'does not add a CSRF token for GET requests', ->
+          throw "must have a test"
+
+        it 'does not add a CSRF token when loading content from another domain', ->
+          throw "must have a test"
 
     describe 'up.browser.sprintf', ->
 

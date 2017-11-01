@@ -669,6 +669,26 @@ describe 'up.util', ->
         $matches = up.util.selectInDynasty($element, '.match')
         expect($matches).toEqual $element
 
+    describe 'up.util.isCrossDomain', ->
+
+      it 'returns false for an absolute path', ->
+        expect(up.util.isCrossDomain('/foo')).toBe(false)
+
+      it 'returns false for an relative path', ->
+        expect(up.util.isCrossDomain('foo')).toBe(false)
+
+      it 'returns false for a fully qualified URL with the same protocol and hostname as the current location', ->
+        fullUrl = "#{location.protocol}//#{location.host}/foo"
+        expect(up.util.isCrossDomain(fullUrl)).toBe(false)
+
+      it 'returns true for a fully qualified URL with a different protocol than the current location', ->
+        fullUrl = "otherprotocol://#{location.host}/foo"
+        expect(up.util.isCrossDomain(fullUrl)).toBe(true)
+
+      it 'returns false for a fully qualified URL with a different hostname than the current location', ->
+        fullUrl = "#{location.protocol}//other-host.tld/foo"
+        expect(up.util.isCrossDomain(fullUrl)).toBe(true)
+
     describe 'up.util.memoize', ->
 
       it 'returns a function that calls the memoized function', ->

@@ -515,6 +515,15 @@ up.proxy = (($) ->
     u.contains(config.safeMethods, method)
 
   ###*
+  @internal
+  ###
+  wrapMethod = (method, data, appendOpts) ->
+    if u.contains(config.wrapMethods, method)
+      data = u.appendRequestData(data, up.protocol.config.methodParam, method, appendOpts)
+      method = 'POST'
+    [method, data]
+
+  ###*
   Links with an `up-preload` attribute will silently fetch their target
   when the user hovers over the click area, or when the user puts her
   mouse/finger down (before releasing). This way the
@@ -546,6 +555,7 @@ up.proxy = (($) ->
   isIdle: isIdle
   isBusy: isBusy
   isIdempotentMethod: isIdempotentMethod
+  wrapMethod: wrapMethod
   config: config
   
 )(jQuery)

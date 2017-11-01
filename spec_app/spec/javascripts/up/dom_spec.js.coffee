@@ -144,17 +144,28 @@ describe 'up.dom', ->
 
         describe 'when the request times out', ->
 
-          it "doesn't crash and rejects the returned promise", (done) ->
+          it "doesn't crash and rejects the returned promise", asyncSpec (next) ->
+            jasmine.clock().install() # required by responseTimeout()
             affix('.target')
-            promise = up.replace('.middle', '/path', timeout: 25)
+            promise = up.replace('.middle', '/path', timeout: 50)
 
-            u.nextFrame ->
-              promiseState promise, (state) ->
-                expect(state).toEqual('pending')
-                u.setTimer 50, ->
-                  promiseState promise, (state) ->
-                    expect(state).toEqual('rejected')
-                    done()
+            next =>
+              # See that the correct timeout value has been set on the XHR instance
+              expect(@lastRequest().timeout).toEqual(50)
+
+            next.await =>
+              # See that the promise is still pending before the timeout
+              promiseState2(promise).then (result) -> expect(result.state).toEqual('pending')
+
+            next =>
+              @lastRequest().responseTimeout()
+
+            next.await =>
+              promiseState2(promise).then (result) -> console.info("!!! resut state is %o", result.state); expect(result.state).toEqual('rejected'); 1
+
+            next =>
+              console.info("fooooo")
+              "foo"
 
         describe 'when there is a network issue', ->
 

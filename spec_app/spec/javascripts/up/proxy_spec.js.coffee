@@ -185,6 +185,19 @@ describe 'up.proxy', ->
               # See that the promise was not rejected due to an internal error.
               expect(result.state).toEqual('pending')
 
+      describe 'CSRF', ->
+
+        it 'sets a CSRF token in the header', ->
+          throw "must have a test"
+
+        it 'does not add a CSRF token if there is none', ->
+          throw "must have a test"
+
+        it 'does not add a CSRF token for GET requests', ->
+          throw "must have a test"
+
+        it 'does not add a CSRF token when loading content from another domain', ->
+          throw "must have a test"
 
       describe 'with { data } option', ->
 
@@ -343,7 +356,7 @@ describe 'up.proxy', ->
         it 'should be set by default', ->
           expect(up.proxy.config.wrapMethods).toBePresent()
 
-        u.each ['GET', 'POST', 'HEAD', 'OPTIONS', 'PUT', 'PATCH', 'DELETE'], (method) ->
+        u.each ['GET', 'POST', 'HEAD', 'OPTIONS'], (method) ->
 
           it "does not change the method of a #{method} request", asyncSpec (next) ->
             up.ajax(url: '/foo', method: method)
@@ -352,6 +365,16 @@ describe 'up.proxy', ->
               request = @lastRequest()
               expect(request.method).toEqual(method)
               expect(request.data()['_method']).toBeUndefined()
+
+        u.each ['PUT', 'PATCH', 'DELETE'], (method) ->
+
+          it "turns a #{method} request into a POST request and sends the actual method as a { _method } param to prevent unexpected redirect behavior (https://makandracards.com/makandra/38347)", asyncSpec (next) ->
+            up.ajax(url: '/foo', method: method)
+
+            next =>
+              request = @lastRequest()
+              expect(request.method).toEqual('POST')
+              expect(request.data()['_method']).toEqual([method])
 
       describe 'with config.maxRequests set', ->
 

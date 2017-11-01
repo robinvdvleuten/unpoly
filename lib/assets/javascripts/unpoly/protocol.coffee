@@ -213,18 +213,19 @@ up.protocol = (($) ->
   Configures strings used in the optional [server protocol](/up.protocol).
 
   @property up.protocol.config
-  @param [config.targetHeader='X-Up-Target']
-  @param [config.failTargetHeader='X-Up-Fail-Target']
-  @param [config.locationHeader='X-Up-Location']
-  @param [config.titleHeader='X-Up-Title']
-  @param [config.validateHeader='X-Up-Validate']
-  @param [config.methodHeader='X-Up-Method']
-  @param [config.methodCookie='_up_method']
-  @param [config.methodParam='_method']
+  @param {String} [config.targetHeader='X-Up-Target']
+  @param {String} [config.failTargetHeader='X-Up-Fail-Target']
+  @param {String} [config.locationHeader='X-Up-Location']
+  @param {String} [config.titleHeader='X-Up-Title']
+  @param {String} [config.validateHeader='X-Up-Validate']
+  @param {String} [config.methodHeader='X-Up-Method']
+  @param {String} [config.methodCookie='_up_method']
+  @param {String} [config.methodParam='_method']
     The name of the POST parameter when [wrapping HTTP methods](/up.form.config#config.wrapMethods)
     in a `POST` request.
-  @param [config.csrfParam]
-  @param [config.csrfToken]
+  @param {String} [config.csrfHeader]
+  @param {String|Function} [config.csrfParam]
+  @param {String|Function} [config.csrfToken]
   @experimental
   ###
   config = u.config
@@ -238,6 +239,7 @@ up.protocol = (($) ->
     methodParam: '_method'
     csrfParam: -> $('meta[name="csrf-param"]').val('content')
     csrfToken: -> $('meta[name="csrf-token"]').val('content')
+    csrfHeader: 'X-CSRF-Token'
 
   csrfParam = ->
     u.evalOption(config.csrfParam)

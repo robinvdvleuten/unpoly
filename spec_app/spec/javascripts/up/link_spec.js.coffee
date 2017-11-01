@@ -412,8 +412,11 @@ describe 'up.link', ->
 
     describe 'up.link.isFollowable', ->
 
-      it 'must have a test', ->
-        raise 'test here!'
+      it 'returns true if the given link will be handled by Unpoly', ->
+        throw 'must have a test'
+
+      it 'returns true if the given link will be handled by the browser', ->
+        throw 'must have a test'
 
   describe 'unobtrusive behavior', ->
 

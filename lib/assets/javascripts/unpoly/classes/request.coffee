@@ -38,11 +38,14 @@ class up.Request extends up.Record
     # This would confuse API clients and cache key logic in up.proxy.
     new Promise (resolve, reject) =>
       xhr = new XMLHttpRequest()
-      xhr.open(@method, @url)
 
       xhrHeaders = u.copy(@headers)
-
       xhrData = @data
+      xhrMethod = @method
+      xhrUrl = @url
+
+      [xhrMethod, xhrData] = up.proxy.wrapMethod(xhrMethod, xhrData)
+
       if u.isPresent(xhrData)
         if u.isFormData(xhrData)
           delete xhrHeaders['Content-Type'] # let the browser set the content type
@@ -56,13 +59,17 @@ class up.Request extends up.Record
       xhrHeaders[up.protocol.config.targetHeader] = @target if @target
       xhrHeaders[up.protocol.config.failTargetHeader] = @failTarget if @failTarget
 
+      if !u.isCrossDomain(xhrUrl) && (csrfToken = up.protocol.csrfToken())
+        xhrHeaders[up.protocol.config.csrfHeader] = csrfToken
+
+      xhr.open(xhrMethod, xhrUrl)
+
       for header, value of xhrHeaders
         xhr.setRequestHeader(header, value)
 
+      # Convert from XHR API to promise API
       resolveWithResponse = =>
         response = @buildResponse(xhr)
-        console.info("!!! response is %o, status is %o, success is %o", response, response.status, response.isSuccess())
-        console.info("!!! resolving with %o", response)
         if response.isSuccess()
           resolve(response)
         else
@@ -70,8 +77,9 @@ class up.Request extends up.Record
 
       xhr.onload = resolveWithResponse
       xhr.onerror = resolveWithResponse
-      xhr.ontimeout = resolveWithResponse
+      xhr.ontimeout = -> console.info("*** ontimeout"); resolveWithResponse()
 
+      console.info("!!! setting timeout to %o", @timeout)
       xhr.timeout = @timeout if @timeout
 
       xhr.send(xhrData)

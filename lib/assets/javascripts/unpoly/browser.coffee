@@ -24,22 +24,29 @@ up.browser = (($) ->
   @param {Object|Array} [options.data]
   @internal
   ###
-  loadPage = (url, options = {}) ->
-    method = u.option(options.method, 'get').toLowerCase()
-    if method == 'get'
-      query = u.requestDataAsQuery(options.data, purpose: url)
+  loadPage = (url, options) ->
+    options = u.options(options)
+    method = u.normalizeMethod(options.method)
+    if method == 'GET'
+      query = u.requestDataAsQuery(options.data, purpose: 'url')
       url = "#{url}?#{query}" if query
       setLocationHref(url)
     else
-      $form = $("<form method='post' action='#{url}' class='up-page-loader'></form>")
+      $form = $("<form method='POST' action='#{url}' class='up-page-loader'></form>")
+
       addField = (field) ->
-        $field = $('<input type="hidden">')
-        $field.attr(field)
+        $field = $('<input type="hidden">').attr(field)
         $field.appendTo($form)
+
+      # Since forms can only be GET or POST, and we're not making a GET,
+      # we always add a method param
       addField(name: up.protocol.config.methodParam, value: method)
-      if csrfToken = up.protocol.csrfToken()
-        addField(name: up.protocol.csrfField(), value: csrfToken)
+
+      if !u.isCrossDomain(url) && (csrfToken = up.protocol.csrfToken())
+        addField(name: up.protocol.config.csrfParam, value: csrfToken)
+
       u.each u.requestDataAsArray(options.data), addField
+
       $form.hide().appendTo('body')
       submitForm($form)
 

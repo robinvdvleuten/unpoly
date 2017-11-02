@@ -689,6 +689,68 @@ describe 'up.util', ->
         fullUrl = "#{location.protocol}//other-host.tld/foo"
         expect(up.util.isCrossDomain(fullUrl)).toBe(true)
 
+    describe 'up.util.isHash', ->
+
+      it 'returns true for an Object instance', ->
+        expect(up.util.isHash(new Object())).toBe(true)
+
+      it 'returns true for an object literal', ->
+        expect(up.util.isHash({ foo: 'bar'})).toBe(true)
+
+      it 'returns false for undefined', ->
+        expect(up.util.isHash(undefined)).toBe(false)
+
+      it 'returns false for null', ->
+        expect(up.util.isHash(null)).toBe(false)
+
+      it 'returns false for a function (which is technically an object)', ->
+        fn = -> 'foo'
+        fn.key = 'value'
+        expect(up.util.isHash(fn)).toBe(false)
+
+      it 'returns false for an array', ->
+        expect(up.util.isHash(['foo'])).toBe(false)
+
+      it 'returns false for a jQuery collection', ->
+        expect(up.util.isHash($('body'))).toBe(false)
+
+      it 'returns false for a promise', ->
+        expect(up.util.isHash(Promise.resolve())).toBe(false)
+
+      it 'returns false for a FormData object', ->
+        expect(up.util.isHash(new FormData())).toBe(false)
+
+    describe 'up.util.isObject', ->
+
+      it 'returns true for an Object instance', ->
+        expect(up.util.isObject(new Object())).toBe(true)
+
+      it 'returns true for an object literal', ->
+        expect(up.util.isObject({ foo: 'bar'})).toBe(true)
+
+      it 'returns false for undefined', ->
+        expect(up.util.isObject(undefined)).toBe(false)
+
+      it 'returns false for null', ->
+        expect(up.util.isObject(null)).toBe(false)
+
+      it 'returns true for a function (which is technically an object)', ->
+        fn = -> 'foo'
+        fn.key = 'value'
+        expect(up.util.isObject(fn)).toBe(true)
+
+      it 'returns true for an array', ->
+        expect(up.util.isObject(['foo'])).toBe(true)
+
+      it 'returns true for a jQuery collection', ->
+        expect(up.util.isObject($('body'))).toBe(true)
+
+      it 'returns true for a promise', ->
+        expect(up.util.isObject(Promise.resolve())).toBe(true)
+
+      it 'returns true for a FormData object', ->
+        expect(up.util.isObject(new FormData())).toBe(true)
+
     describe 'up.util.memoize', ->
 
       it 'returns a function that calls the memoized function', ->

@@ -450,7 +450,7 @@ up.util = (($) ->
   @stable
   ###
   isHash = (object) ->
-    typeof(object) == 'object' && !!object
+    typeof(object) == 'object' && !isNull(object) && !isJQuery(object) && !isPromise(object) && !isFormData(object) && !isArray(object)
 
   ###*
   Returns whether the given argument is an object.
@@ -464,7 +464,8 @@ up.util = (($) ->
   @stable
   ###
   isObject = (object) ->
-    isHash(object) || (typeof object == 'function')
+    typeOfResult = typeof(object)
+    (typeOfResult == 'object' && !isNull(object)) || typeOfResult == 'function'
 
   ###*
   Returns whether the given argument is a DOM element.
@@ -508,8 +509,7 @@ up.util = (($) ->
   @stable
   ###
   # https://developer.mozilla.org/de/docs/Web/JavaScript/Reference/Global_Objects/Array/isArray
-  isArray = Array.isArray || 
-      (object) -> Object.prototype.toString.call(object) == '[object Array]'
+  isArray = Array.isArray
 
   ###*
   Returns whether the given argument is a `FormData` instance.
@@ -1617,7 +1617,7 @@ up.util = (($) ->
 
   extractOptions = (args) ->
     lastArg = last(args)
-    if isHash(lastArg) && !isJQuery(lastArg)
+    if isHash(lastArg)
       args.pop()
     else
       {}

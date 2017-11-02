@@ -378,6 +378,7 @@ describe 'up.form', ->
         describe 'in a form with file inputs', ->
 
           beforeEach ->
+            @$form.affix('input[name="text-field"][type="text"]').val("value")
             @$form.affix('input[name="file-field"][type="file"]')
 
           it 'transfers the form fields via FormData', asyncSpec (next) ->

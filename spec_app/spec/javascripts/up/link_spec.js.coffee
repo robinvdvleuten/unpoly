@@ -412,11 +412,45 @@ describe 'up.link', ->
 
     describe 'up.link.isFollowable', ->
 
-      it 'returns true if the given link will be handled by Unpoly', ->
-        throw 'must have a test'
+      it 'returns true for an [up-target] link', ->
+        $link = affix('a[href="/foo"][up-target=".target"]')
+        up.hello $link
+        expect(up.link.isFollowable($link)).toBe(true)
 
-      it 'returns true if the given link will be handled by the browser', ->
-        throw 'must have a test'
+      it 'returns true for an [up-follow] link', ->
+        $link = affix('a[href="/foo"][up-follow]')
+        up.hello $link
+        expect(up.link.isFollowable($link)).toBe(true)
+
+      it 'returns true for an [up-modal] link', ->
+        $link = affix('a[href="/foo"][up-modal=".target"]')
+        up.hello $link
+        expect(up.link.isFollowable($link)).toBe(true)
+
+      it 'returns true for an [up-popup] link', ->
+        $link = affix('a[href="/foo"][up-popup=".target"]')
+        up.hello $link
+        expect(up.link.isFollowable($link)).toBe(true)
+
+      it 'returns true for an [up-drawer] link', ->
+        $link = affix('a[href="/foo"][up-drawer=".target"]')
+        up.hello $link
+        expect(up.link.isFollowable($link)).toBe(true)
+
+      it 'returns true for an [up-target] span with [up-href]', ->
+        $link = affix('span[up-href="/foo"][up-target=".target"]')
+        up.hello $link
+        expect(up.link.isFollowable($link)).toBe(true)
+
+      it 'returns false if the given link will be handled by the browser', ->
+        $link = affix('a[href="/foo"]')
+        up.hello $link
+        expect(up.link.isFollowable($link)).toBe(false)
+
+      it 'returns false if the given link will be handled by Rails UJS', ->
+        $link = affix('a[href="/foo"][data-method="put"]')
+        up.hello $link
+        expect(up.link.isFollowable($link)).toBe(false)
 
   describe 'unobtrusive behavior', ->
 

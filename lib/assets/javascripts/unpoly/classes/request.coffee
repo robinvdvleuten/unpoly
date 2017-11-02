@@ -46,12 +46,11 @@ class up.Request extends up.Record
 
       [xhrMethod, xhrData] = up.proxy.wrapMethod(xhrMethod, xhrData)
 
-      if u.isPresent(xhrData)
-        if u.isFormData(xhrData)
-          delete xhrHeaders['Content-Type'] # let the browser set the content type
-        else
-          xhrData = u.requestDataAsQuery(xhrData, purpose: 'form')
-          xhrHeaders['Content-Type'] = 'application/x-www-form-urlencoded'
+      if u.isFormData(xhrData)
+        delete xhrHeaders['Content-Type'] # let the browser set the content type
+      else if u.isPresent(xhrData)
+        xhrData = u.requestDataAsQuery(xhrData, purpose: 'form')
+        xhrHeaders['Content-Type'] = 'application/x-www-form-urlencoded'
       else
         # XMLHttpRequest expects null for an empty body
         xhrData = null
@@ -77,9 +76,8 @@ class up.Request extends up.Record
 
       xhr.onload = resolveWithResponse
       xhr.onerror = resolveWithResponse
-      xhr.ontimeout = -> console.info("*** ontimeout"); resolveWithResponse()
+      xhr.ontimeout = resolveWithResponse
 
-      console.info("!!! setting timeout to %o", @timeout)
       xhr.timeout = @timeout if @timeout
 
       xhr.send(xhrData)

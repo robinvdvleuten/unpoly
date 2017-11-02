@@ -120,7 +120,6 @@ up.form = (($) ->
   @stable
   ###
   submit = (formOrSelector, options) ->
-    
     $form = $(formOrSelector).closest('form')
 
     options = u.options(options)

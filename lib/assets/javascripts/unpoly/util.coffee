@@ -1533,8 +1533,9 @@ up.util = (($) ->
   @internal
   ###
   appendRequestData = (data, name, value, opts) ->
-    if isArray(data) || isBlank(data)
-      data ||= []
+    data ||= []
+
+    if isArray(data)
       data.push(name: name, value: value)
     else if isFormData(data)
       data.append(name, value)

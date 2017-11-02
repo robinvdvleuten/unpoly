@@ -15,7 +15,7 @@ window.asyncSpec = (args...) ->
     fail = (args...) ->
       # For some reason Jasmine ignores done() calls if its own clock is stubbed
       jasmine.clock().uninstall()
-      done.fail(args...)
+      originalDone.fail(args...)
 
     plan = args.pop()
 

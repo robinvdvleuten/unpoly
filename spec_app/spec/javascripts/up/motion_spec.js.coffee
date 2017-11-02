@@ -53,7 +53,7 @@ describe 'up.motion', ->
             expect(callback).toHaveBeenCalled()
             done()
 
-      [false, null, undefined, 'none', up.motion.none()].forEach (noneAnimation) ->
+      [false, null, undefined, 'none', '', {}].forEach (noneAnimation) ->
 
         describe "when called with a `#{noneAnimation}` animation", ->
 
@@ -346,7 +346,6 @@ describe 'up.motion', ->
             # was at the scroll position before we revealed $new.
             expect($oldGhost.offset().top).toEqual(-300)
 
-
       describe 'with animations disabled globally', ->
 
         beforeEach ->
@@ -362,6 +361,22 @@ describe 'up.motion', ->
             expect($new).toBeVisible()
             expect($new.css('opacity')).toEqual('1')
 
+
+      [false, null, undefined, 'none', 'none/none', '', [], [undefined, null], ['none', 'none'], ['none', {}]].forEach (noneTransition) ->
+
+        describe "when called with a `#{noneTransition}` transition", ->
+
+          it "doesn't animate and hides the old element instead", asyncSpec (next) ->
+            $old = affix('.old').text('old content')
+            $new = affix('.new').text('new content')
+            up.morph($old, $new, noneTransition, duration: 1000)
+
+            next =>
+              expect($old).toBeHidden()
+              expect($new).toBeVisible()
+              expect($new.css('opacity')).toEqual('1')
+
+
     describe 'up.transition', ->
 
       it 'should have tests'
@@ -370,10 +385,6 @@ describe 'up.motion', ->
 
       it 'should have tests'
       
-    describe 'up.motion.none', ->
-
-      it 'should have tests'
-
     describe 'up.motion.prependCopy', ->
 
       afterEach ->

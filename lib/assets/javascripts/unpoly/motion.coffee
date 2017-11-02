@@ -183,8 +183,11 @@ up.motion = (($) ->
 
   skipAnimate = ($element, animation) ->
     if u.isHash(animation)
+      # If we are given the final animation frame as an object of CSS properties,
+      # the best we can do is to set the final frame without animation.
       $element.css(animation)
-    none()
+    # Signal that the animation is already done.
+    Promise.resolve()
 
   ###*
   Animates the given element's CSS properties using CSS transitions.
@@ -465,13 +468,15 @@ up.motion = (($) ->
     $old = $(source)
     $new = $(target)
     $both = $old.add($new)
-    willMorph = willAnimate($both, transitionObject, options)
+
+    transitionFn = findTransitionFn(transitionObject)
+    willMorph = willAnimate($both, transitionFn, options)
 
     up.log.group ('Morphing %o to %o with transition %o' if willMorph), $old.get(0), $new.get(0), transitionObject, ->
       finishOnce($both, options).then ->
         if !willMorph
           skipMorph($old, $new, options)
-        else if transitionFn = findTransitionFn(transitionObject)
+        else if transitionFn
           withGhosts($old, $new, options, transitionFn)
         else
           # Exception will be converted to rejected Promise inside a then() handler
@@ -487,14 +492,19 @@ up.motion = (($) ->
       finish($elements)
 
   findTransitionFn = (object) ->
-    if u.isFunction(object)
+    if isNone(object)
+      undefined
+    else if u.isFunction(object)
       object
     else if u.isArray(object)
-      ($old, $new, options) ->
-        Promise.all [
+      if isNone(object[0]) && isNone(object[1])
+        # A composition of two "none" animations is again a "none" animation
+        undefined
+      else
+        ($old, $new, options) -> Promise.all([
           animate($old, object[0], options),
           animate($new, object[1], options)
-        ]
+        ])
     else if u.isString(object)
       if object.indexOf('/') >= 0 # Compose a transition from two animation names
         findTransitionFn(object.split('/'))
@@ -641,30 +651,15 @@ up.motion = (($) ->
     defaultNamedTransitions = u.copy(namedTransitions)
 
   ###*
-  Returns a no-op animation or transition which has no visual effects
-  and completes instantly.
-
-  @function up.motion.none
-  @return {Promise}
-    A resolved promise
-  @stable
-  ###
-  none = ->
-    promise = Promise.resolve()
-    promise.isNone = true
-    promise
-
-  ###*
   Returns whether the given animation option will cause the animation
   to be skipped.
 
   @function up.motion.isNone
   @internal
   ###
-  isNone = (animation) ->
-    animation is false || animation is 'none' || u.isMissing(animation) || (u.isPromise(animation) && animation.isNone)
-
-  registerAnimation('none', none)
+  isNone = (animationOrTransition) ->
+    # false, undefined, null and the string "none" are all ways to skip animations
+    !animationOrTransition || animationOrTransition == 'none' || (u.isHash(animationOrTransition) && u.isBlank(animationOrTransition))
 
   registerAnimation('fade-in', ($ghost, options) ->
     $ghost.css(opacity: 0)
@@ -746,7 +741,6 @@ up.motion = (($) ->
     deferred
   )
 
-  registerTransition('none', none)
   registerTransition('move-left', 'move-to-left/move-from-right')
   registerTransition('move-right', 'move-to-right/move-from-left')
   registerTransition('move-up', 'move-to-top/move-from-bottom')
@@ -764,7 +758,6 @@ up.motion = (($) ->
   animation: registerAnimation
   config: config
   isEnabled: isEnabled
-  none: none
   prependCopy: prependCopy
   isNone: isNone
 

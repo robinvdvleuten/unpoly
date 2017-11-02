@@ -46,6 +46,8 @@ window.asyncSpec = (args...) ->
     next.await = (block) ->
       insertAtCursor  [0, block, 'async']
 
+    next.fail = fail
+
     # Call example body
     plan.call(this, next)
 

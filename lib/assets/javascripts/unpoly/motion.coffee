@@ -182,7 +182,7 @@ up.motion = (($) ->
     isEnabled() && !isNone(animationOrTransition) && options.duration > 0 && u.all($elements, u.isBodyDescendant)
 
   skipAnimate = ($element, animation) ->
-    if u.isHash(animation)
+    if u.isHash(animation) && !u.isPromise(animation)
       $element.css(animation)
     none()
 

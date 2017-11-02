@@ -6,7 +6,7 @@
 
   <ul>
     <li>
-      <%= link_to 'Jasmine specs', '/specs' %>
+      <%= link_to 'Jasmine specs with jQuery 3', '/specs?jquery=3' %>
       <ul>
         <% %w[
           up.dom
@@ -30,6 +30,12 @@
           <li><%= link_to mod, "/specs?spec=#{mod}" %></li>
         <% end %>
       </ul>
+    </li>
+    <li>
+      <%= link_to 'Jasmine specs with jQuery 2', '/specs?jquery=2' %>
+    </li>
+    <li>
+      <%= link_to 'Jasmine specs with jQuery 1', '/specs?jquery=1' %>
     </li>
   </ul>
 

@@ -8,10 +8,6 @@
     "dist/unpoly.min.js",
     "dist/unpoly.css",
     "dist/unpoly.min.css",
-    "dist/unpoly-legacy.js",
-    "dist/unpoly-legacy.min.js",
-    "dist/unpoly-legacy.css",
-    "dist/unpoly-legacy.min.css"
     "dist/unpoly-bootstrap3.js",
     "dist/unpoly-bootstrap3.min.js",
     "dist/unpoly-bootstrap3.css",

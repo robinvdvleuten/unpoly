@@ -432,11 +432,10 @@ up.bus = (($) ->
   @internal
   ###
   boot = ->
-    # window.Promise ||= window.Zousan
     if up.browser.isSupported()
       emit('up:framework:boot', message: 'Booting framework')
+      # Unpoly modules now snapshot themselves to suppot reset()
       emit('up:framework:booted', message: 'Framework booted')
-      # User-provided compiler definitions will be registered once this function terminates.
       u.nextFrame ->
         # At this point all user-provided compilers have been registered.
         u.whenReady().then ->
@@ -444,7 +443,7 @@ up.bus = (($) ->
           emit('up:app:boot', message: 'Booting user application')
           emit('up:app:booted', message: 'User application booted')
     else
-      console.log?("Unpoly doesn't support this browser. Framework was not booted. If you're using unpoly-legacy, load it before Unpoly.")
+      console.log?("Unpoly doesn't support this browser. Framework was not booted.")
 
   ###*
   This event is [emitted](/up.emit) when Unpoly [starts to boot](/up.boot).

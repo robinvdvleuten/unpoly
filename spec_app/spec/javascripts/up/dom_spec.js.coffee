@@ -30,8 +30,6 @@ describe 'up.dom', ->
             @respond()
 
           next.after 10, =>
-            console.log("--- expectations now ---")
-            console.log("--- middle text: " + $('.middle').text())
             expect($('.before')).toHaveText('old-before')
             expect($('.middle')).toHaveText('new-middle')
             expect($('.after')).toHaveText('old-after')
@@ -161,11 +159,7 @@ describe 'up.dom', ->
               @lastRequest().responseTimeout()
 
             next.await =>
-              promiseState2(promise).then (result) -> console.info("!!! resut state is %o", result.state); expect(result.state).toEqual('rejected'); 1
-
-            next =>
-              console.info("fooooo")
-              "foo"
+              promiseState2(promise).then (result) -> expect(result.state).toEqual('rejected')
 
         describe 'when there is a network issue', ->
 

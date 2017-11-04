@@ -356,10 +356,8 @@ up.proxy = (($) ->
 
   loadOrQueue = (request) ->
     if pendingCount < config.maxRequests
-      console.log("!!! loading %o", request)
       load(request)
     else
-      console.log("!!! queuing %o", request)
       queue(request)
 
   queue = (request) ->
@@ -372,7 +370,6 @@ up.proxy = (($) ->
   load = (request) ->
     up.emit('up:proxy:load', u.merge(request, message: ['Loading %s %s', request.method, request.url]))
     responsePromise = request.send()
-    console.log("!!! request.send() returns %o", responsePromise)
     responsePromise.then(registerAliasForRedirect)
     u.always(responsePromise, responseReceived)
     responsePromise

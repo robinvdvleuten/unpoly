@@ -147,17 +147,11 @@ up.history = (($) ->
   @experimental
   ###
 
-  manipulateStateCount = 0
-
   manipulate = (method, url) ->
     if up.browser.canPushState() && config.enabled
       state = buildState()
       window.history[method](state, '', url)
       observeNewUrl(currentUrl())
-
-      manipulateStateCount++
-      console.error("manipulateState from up.history: %o", manipulateStateCount)
-
       true
     else
       false

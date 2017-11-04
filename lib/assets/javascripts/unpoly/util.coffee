@@ -1669,7 +1669,6 @@ up.util = (($) ->
       funValue = fun(args...)
       # If funValue is again a Promise, it will defer resolution of `deferred`
       # until `funValue` is resolved.
-      console.info("!!! resolving previewable with %o", funValue)
       deferred.resolve(funValue)
       funValue
     preview.promise = deferred.promise()

@@ -129,13 +129,11 @@ describe 'up.form', ->
             callback = jasmine.createSpy('change callback')
             up.observe($checkbox, callback)
             expect($checkbox.is(':checked')).toBe(false)
-            console.info("--- clicking box ---")
             Trigger.clickSequence($checkbox)
 
             next =>
               expect($checkbox.is(':checked')).toBe(true)
               expect(callback.calls.count()).toEqual(1)
-              console.info("--- clicking box again ---")
               Trigger.clickSequence($checkbox)
 
             next =>

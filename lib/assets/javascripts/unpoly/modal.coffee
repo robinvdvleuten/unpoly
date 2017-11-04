@@ -256,11 +256,9 @@ up.modal = (($) ->
     u.$createPlaceholder(target, $content)
     $modal.hide()
     $modal.appendTo(document.body)
-    console.debug('--- setting state.$modal ---')
     state.$modal = $modal
 
   unveilFrame = ->
-    console.debug('--- unveiled frame with %o ---', state.$modal.get(0))
     state.$modal.show()
 
   # Gives `<body>` a right padding in the width of a scrollbar.

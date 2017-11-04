@@ -43,9 +43,6 @@ describe 'up.proxy', ->
           )
 
           promise.then (response) ->
-
-            console.log("!!! response in callback is %o", response)
-
             expect(response.request.url).toMatchUrl('/url')
             expect(response.request.data).toEqual(key: 'value')
             expect(response.request.method).toEqual('POST')

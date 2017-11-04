@@ -1,6 +1,6 @@
 u = up.util
 
-LOG_ENABLED = true
+LOG_ENABLED = false
 
 unstubbedSetTimeout = window.setTimeout
 

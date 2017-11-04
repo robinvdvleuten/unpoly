@@ -273,11 +273,11 @@ up.dom = (($) ->
 
     onFailure = (response) ->
       rejection = -> Promise.reject(response)
-      if response.body
+      if response.isMaterialError()
+        rejection()
+      else
         promise = processResponse(false, improvedFailTarget, response, failureOptions)
         u.always(promise, rejection)
-      else
-        rejection()
 
     promise = up.ajax(request)
     promise = promise.then(onSuccess, onFailure)
@@ -322,7 +322,7 @@ up.dom = (($) ->
     if options.preload
       Promise.resolve()
     else
-      extract(selector, response.body, options)
+      extract(selector, response.text, options)
 
   shouldExtractTitle = (options) ->
     not (options.title is false || u.isString(options.title) || (options.history is false && options.title isnt true))

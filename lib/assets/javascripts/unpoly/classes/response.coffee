@@ -5,7 +5,7 @@ u = up.util
 class up.Response extends up.Record
 
   fields: ->
-    ['method', 'url', 'body', 'status', 'request', 'xhr']
+    ['method', 'url', 'text', 'status', 'request', 'xhr']
 
   constructor: (options) ->
     super(options)
@@ -17,4 +17,4 @@ class up.Response extends up.Record
     !@isSuccess()
 
   isMaterialError: =>
-    @isError() && u.isBlank(@body)
+    @isError() && u.isBlank(@text)

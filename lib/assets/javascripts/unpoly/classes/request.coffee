@@ -86,7 +86,7 @@ class up.Request extends up.Record
     responseAttrs =
       method: @method
       url: @url
-      body: xhr.responseText
+      text: xhr.responseText
       status: xhr.status
       request: @
       xhr: xhr

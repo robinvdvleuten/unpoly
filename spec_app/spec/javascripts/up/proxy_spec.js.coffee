@@ -54,7 +54,7 @@ describe 'up.proxy', ->
 
             expect(response.url).toMatchUrl('/url') # If the server signaled a redirect with X-Up-Location, this would be reflected here
             expect(response.method).toEqual('POST') # If the server sent a X-Up-Method header, this would be reflected here
-            expect(response.body).toEqual('response-text')
+            expect(response.text).toEqual('response-text')
             expect(response.status).toEqual(201)
             expect(response.xhr).toBePresent()
 
@@ -247,9 +247,7 @@ describe 'up.proxy', ->
         up.proxy.config.cacheExpiry = 200 # 1 second for test
 
         responses = []
-        trackResponse = (response) ->
-          console.debug('Tracking response %s', response.body)
-          responses.push(response.body)
+        trackResponse = (response) -> responses.push(response.text)
 
         next =>
           up.ajax(url: '/foo').then(trackResponse)
@@ -404,7 +402,7 @@ describe 'up.proxy', ->
 
         it 'limits the number of concurrent requests', asyncSpec (next) ->
           responses = []
-          trackResponse = (response) -> responses.push(response.body)
+          trackResponse = (response) -> responses.push(response.text)
 
           next =>
             up.ajax(url: '/foo').then(trackResponse)

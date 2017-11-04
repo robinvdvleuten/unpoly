@@ -391,7 +391,7 @@ up.proxy = (($) ->
       eventProps = u.merge(response, message: 'Error during request')
       up.emit('up:proxy:error', eventProps)
     else
-      emitMessage = ['Server responded with HTTP %d (%d bytes)', response.status, response.body.length]
+      emitMessage = ['Server responded with HTTP %d (%d bytes)', response.status, response.text.length]
       eventProps = u.merge(response, message: emitMessage)
       up.emit('up:proxy:loaded', eventProps)
 

@@ -31,7 +31,6 @@ After the form's action performs a redirect, the next response should include th
 URL in the HTTP headers:
 
 ```http
-X-Up-Method: GET
 X-Up-Location: /current-url
 ```
 

@@ -189,7 +189,7 @@ up.dom = (($) ->
     (compare to jQuery's [`serializeArray`](https://api.jquery.com/serializeArray/)).
   @param {string} [options.transition='none']
   @param {string|boolean} [options.history=true]
-    If a `string` is given, it is used as the URL the browser's location bar and history.
+    If a string is given, it is used as the URL the browser's location bar and history.
     If omitted or true, the `url` argument will be used.
     If set to `false`, the history will remain unchanged.
   @param {boolean|string} [options.source=true]
@@ -291,7 +291,6 @@ up.dom = (($) ->
     sourceUrl = response.url
     historyUrl = sourceUrl
     hash = request.hash
-    xhr = response.xhr
 
     if options.reveal == true && hash
       # If the request URL had a #hash and options.reveal is not given, we reveal that #hash.
@@ -303,7 +302,7 @@ up.dom = (($) ->
     if isSuccess
       if isReloadable # e.g. GET returns 200 OK
         options.history = historyUrl unless options.history is false || u.isString(options.history)
-        options.source  = sourceUrl unless options.source  is false || u.isString(options.source)
+        options.source  = sourceUrl unless options.source is false || u.isString(options.source)
       else # e.g. POST returns 200 OK
         # We allow the developer to pass GETable URLs as { history } and { source } options.
         options.history = false unless u.isString(options.history)
@@ -311,13 +310,13 @@ up.dom = (($) ->
     else
       if isReloadable # e.g. GET returns 500 Internal Server Error
         options.history = historyUrl unless options.history is false
-        options.source  = sourceUrl unless options.source  is false
+        options.source  = sourceUrl unless options.source is false
       else # e.g. POST returns 500 Internal Server Error
         options.history = false
         options.source  = 'keep'
 
-    if shouldExtractTitle(options) && titleFromXhr = up.protocol.titleFromXhr(xhr)
-      options.title = titleFromXhr
+    if shouldExtractTitle(options) && response.title
+      options.title = response.title
 
     if options.preload
       Promise.resolve()
@@ -378,10 +377,10 @@ up.dom = (($) ->
       try
         # Allow callers to create the targeted element right before we swap.
         options.provideTarget?()
-        response = parseResponse(html)
-        extractSteps = bestMatchingSteps(selectorOrElement, response, options)
+        responseDoc = parseResponseDoc(html)
+        extractSteps = bestMatchingSteps(selectorOrElement, responseDoc, options)
 
-        if shouldExtractTitle(options) && responseTitle = response.title()
+        if shouldExtractTitle(options) && responseTitle = responseDoc.title()
           options.title = responseTitle
         updateHistoryAndTitle(options)
 
@@ -393,8 +392,9 @@ up.dom = (($) ->
             swapPromises.push(swapPromise)
             # When extracting multiple selectors, we only want to reveal the first element.
             # So we set the { reveal } option to false for the next iteration.
-            # Note that we must copy the options hash in-place, since the async swapElements()
-            # is scheduled for the next microtask.
+            # Note that we must copy the options hash instead of changing it in-place,  since the
+            # async swapElements() is scheduled for the next microtask and we must not change the options
+            # for the previous iteration.
             options = u.merge(options, reveal: false)
 
         # Delay all further links in the promise chain until all fragments have been swapped
@@ -425,7 +425,7 @@ up.dom = (($) ->
       unless (isLinked && runLinkedScripts) || (isInline && runInlineScripts)
         $script.remove()
 
-  parseResponse = (html) ->
+  parseResponseDoc = (html) ->
     # jQuery cannot construct transient elements that contain <html> or <body> tags
     htmlElement = u.createElementFromHtml(html)
     title: ->
@@ -514,7 +514,7 @@ up.dom = (($) ->
 
       # Wrap the replacement as a destroy animation, so $old will
       # get marked as .up-destroying right away.
-      promise = destroy($old, beforeWipe: replacement)
+      promise = destroy($old, beforeWipe: replacement, log: false)
 
     promise
 
@@ -826,7 +826,7 @@ up.dom = (($) ->
     options = u.options(options, animation: false)
     animateOptions = up.motion.animateOptions(options)
 
-    if shouldLogDestruction($element)
+    if shouldLogDestruction($element, options)
       destroyMessage = ['Destroying fragment %o', $element.get(0)]
       destroyedMessage = ['Destroyed fragment %o', $element.get(0)]
 
@@ -854,9 +854,9 @@ up.dom = (($) ->
 
       animate().then(beforeWipe).then(wipe)
 
-  shouldLogDestruction = ($element) ->
+  shouldLogDestruction = ($element, options) ->
     # Don't log destruction for elements that are either Unpoly internals or frequently destroyed
-    not $element.is('.up-placeholder, .up-tooltip, .up-modal, .up-popup')
+    options.log != false && !$element.is('.up-placeholder, .up-tooltip, .up-modal, .up-popup')
 
   ###*
   Before a page fragment is being [destroyed](/up.destroy), this

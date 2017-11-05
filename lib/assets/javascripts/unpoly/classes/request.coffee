@@ -125,6 +125,8 @@ class up.Request extends up.Record
       # If the server changes a URL, it is expected to signal a new method as well.
       responseAttrs.method = up.protocol.methodFromXhr(xhr) ? 'GET'
 
+    responseAttrs.title = up.protocol.titleFromXhr(xhr)
+
     new up.Response(responseAttrs)
 
   isCachable: =>

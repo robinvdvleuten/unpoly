@@ -11,4 +11,3 @@ afterEach (done) ->
     up.util.nextFrame ->
       $('.up-toast').remove()
       done()
-

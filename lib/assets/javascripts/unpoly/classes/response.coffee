@@ -5,7 +5,7 @@ u = up.util
 class up.Response extends up.Record
 
   fields: ->
-    ['method', 'url', 'text', 'status', 'request', 'xhr']
+    ['method', 'url', 'text', 'status', 'request', 'xhr', 'title']
 
   constructor: (options) ->
     super(options)

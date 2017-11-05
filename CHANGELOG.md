@@ -18,7 +18,8 @@ Unreleased
 - JavaScript functions like [`up.replace()`](/up.replace) or [`up.submit()`](/up.submit) now have a `{ failLayer }` option.
 - Fix a bug where Unpoly would not boot on Safari 9 and 10 if the initial page was loaded with a POST method.
 - When a selector was not found in the response, the error notification now offers a link to show the unexpected response.
-
+- When the server [signals a redirect with a `X-Up-Location` header](/up.protocol#redirect-detection), sending a `X-Up-Method` header is now optional. If it is missing, `GET` is assumed.
+- The event [`up:fragment:destroy](/up:fragment:destroy) can no longer be prevented.
 
 
 0.36.2

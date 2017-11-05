@@ -80,7 +80,7 @@ up.form = (($) ->
     location bar if the form either uses the `GET` method or the response redirected
     to another page (this requires the `unpoly-rails` gem).
     If you want to prevent history changes in any case, set this to `false`.
-    If you pass a `string`, it is used as the URL for the browser history.
+    If you pass a string, it is used as the URL for the browser history.
   @param {string} [options.transition='none']
     The transition to use when a successful form submission updates the `options.target` selector.
     Defaults to the form's `up-transition` attribute, or to `'none'`.

@@ -229,6 +229,8 @@ up.history = (($) ->
   Note that this will *not* call `location.back()`, but will set
   the link's `up-href` attribute to the actual, previous URL.
 
+  If no previous URL is known, the link will not be changed.
+
   \#\#\# Example
 
   This link ...
@@ -248,14 +250,11 @@ up.history = (($) ->
   ###
   up.compiler '[up-back]', ($link) ->
     if u.isPresent(previousUrl)
-      console.error("setting [up-back] with previous url %o", previousUrl)
       u.setMissingAttrs $link,
         'up-href': previousUrl,
         'up-restore-scroll': ''
       $link.removeAttr 'up-back'
       up.link.makeFollowable($link)
-    else
-      console.error("cannot set [up-back]")
 
   up.on 'up:framework:reset', reset
 

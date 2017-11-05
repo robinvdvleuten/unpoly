@@ -213,3 +213,16 @@ describe 'up.feedback', ->
             expect('.main').toHaveText('new-text')
             expect($link).not.toHaveClass('up-active')
 
+        it 'removes .up-active from a clicked link if the request fails (bugfix)', asyncSpec (next) ->
+          $link = affix('a[href="/foo"][up-target=".main"]')
+          affix('.main')
+          Trigger.clickSequence($link)
+
+          next =>
+            expect($link).toHaveClass('up-active')
+            @respondWith
+              responseText: '<div class="main">failed</div>'
+              status: 400
+
+          next =>
+            expect($link).not.toHaveClass('up-active')

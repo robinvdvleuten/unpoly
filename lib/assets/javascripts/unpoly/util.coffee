@@ -1227,7 +1227,7 @@ up.util = (($) ->
   @param {string} [config.log]
     A prefix for log entries printed by this cache object.
   @param {Function(any): string} [config.key]
-    A function that takes an argument and returns a `string` key
+    A function that takes an argument and returns a string key
     for storage. If omitted, `toString()` is called on the argument.
   @param {Function(any): boolean} [config.cachable]
     A function that takes a potential cache entry and returns whether
@@ -1523,7 +1523,7 @@ up.util = (($) ->
   Adds a key/value pair to the given request data representation.
 
   This mutates the given `data` if `data` is a `FormData`, an object
-  or an array. When `data` is `string` a new string with the appended key/value
+  or an array. When `data` is a string a new string with the appended key/value
   pair is returned.
 
   @function up.util.appendRequestData

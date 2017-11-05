@@ -20,6 +20,8 @@ Unreleased
 - When a selector was not found in the response, the error notification now offers a link to show the unexpected response.
 - When the server [signals a redirect with a `X-Up-Location` header](/up.protocol#redirect-detection), sending a `X-Up-Method` header is now optional. If it is missing, `GET` is assumed.
 - The event [`up:fragment:destroy](/up:fragment:destroy) can no longer be prevented.
+- [`up.motion.finish()`](/up.motion.finish) is now async. It returns a promise that is fulfulled when all animations are finished.
+- [`up.motion.finish()`](/up.motion.finish) now also ...
 
 
 0.36.2

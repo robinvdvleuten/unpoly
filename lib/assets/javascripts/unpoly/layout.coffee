@@ -149,7 +149,6 @@ up.layout = (($) ->
     scrollingTracker.claim($scrollable, start)
 
   scrollAbruptlyNow = ($scrollable, scrollTop) ->
-    scrollingTracker.finish($scrollable)
     $scrollable.scrollTop(scrollTop)
     Promise.resolve()
 
@@ -162,8 +161,8 @@ up.layout = (($) ->
   @internal
   ###
   finishScrolling = (element) ->
-    $element = scrollableElementForViewport(element)
-    scrollingTracker.finish($element)
+    $scrollable = scrollableElementForViewport(element)
+    scrollingTracker.finish($scrollable)
 
   ###*
   @function up.layout.anchoredRight
@@ -175,6 +174,7 @@ up.layout = (($) ->
   ###*
   @function measureObstruction
   @return {Object}
+  @internal
   ###
   measureObstruction = ->
     measurePosition = (obstructor, cssAttr) ->
@@ -444,12 +444,12 @@ up.layout = (($) ->
     scrollTopsForUrl = lastScrollTops.get(url) || {}
 
     up.log.group 'Restoring scroll positions for URL %s to %o', url, scrollTopsForUrl, ->
-      whenRestored = u.map $viewports, (viewport) ->
+      allScrollPromises = u.map $viewports, (viewport) ->
         key = scrollTopKey(viewport)
         scrollTop = scrollTopsForUrl[key] || 0
         scroll(viewport, scrollTop, duration: 0)
 
-      Promise.all(whenRestored)
+      Promise.all(allScrollPromises)
 
   ###*
   @function up.layout.revealOrRestoreScroll

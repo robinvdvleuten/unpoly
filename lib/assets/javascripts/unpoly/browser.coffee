@@ -335,15 +335,7 @@ up.browser = (($) ->
   sessionStorage: sessionStorage
   popCookie: popCookie
   hash: hash
-  isIE10OrWorse: isIE10OrWorse
-  isRecentJQuery: isRecentJQuery
-  canConsole:   canConsole
   canPushState: canPushState
-  canDOMParser: canDOMParser
-  canFormData: canFormData
-  canCssTransition: canCssTransition
-  canInputEvent: canInputEvent
-  canPromise: canPromise
 
 )(jQuery)
 

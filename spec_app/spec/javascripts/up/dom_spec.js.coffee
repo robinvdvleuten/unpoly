@@ -649,17 +649,41 @@ describe 'up.dom', ->
                 expect('.target').toHaveText('old target')
                 expect('.fallback').toHaveText('new fallback')
 
-            it 'rejects the promise if all alternatives are exhausted', (done) ->
-              $target = affix('.target').text('old target')
-              $fallback = affix('.fallback').text('old fallback')
-              promise = up.replace('.target', '/path', fallback: '.fallback')
+            describe 'if all alternatives are exhausted', ->
 
-              u.nextFrame =>
-                @respondWith '<div class="unexpected">new unexpected</div>'
+              it 'rejects the promise', (done) ->
+                $target = affix('.target').text('old target')
+                $fallback = affix('.fallback').text('old fallback')
+                promise = up.replace('.target', '/path', fallback: '.fallback')
 
-              promise.catch (e) ->
-                expect(e).toBeError(/Could not find target in response/i)
-                done()
+                u.nextFrame =>
+                  @respondWith '<div class="unexpected">new unexpected</div>'
+
+                promise.catch (e) ->
+                  expect(e).toBeError(/Could not find target in response/i)
+                  done()
+
+              it 'shows a link to open the unexpected response', (done) ->
+                $target = affix('.target').text('old target')
+                $fallback = affix('.fallback').text('old fallback')
+                promise = up.replace('.target', '/path', fallback: '.fallback')
+                loadPage = spyOn(up.browser, 'loadPage')
+
+                u.nextFrame =>
+                  @respondWith '<div class="unexpected">new unexpected</div>'
+
+                promise.catch (e) ->
+                  $toast = $('.up-toast')
+                  expect($toast).toExist()
+                  $inspectLink = $toast.find(".up-toast-action:contains('Open response')")
+                  expect($inspectLink).toExist()
+                  expect(loadPage).not.toHaveBeenCalled()
+
+                  Trigger.clickSequence($inspectLink)
+
+                  u.nextFrame =>
+                    expect(loadPage).toHaveBeenCalledWith('/path', {})
+                    done()
 
             it 'considers a union selector to be missing if one of its selector-atoms are missing', asyncSpec (next) ->
               $target = affix('.target').text('old target')

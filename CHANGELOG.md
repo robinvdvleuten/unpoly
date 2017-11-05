@@ -15,7 +15,10 @@ Unreleased
 - Fix a bug where [`[up-layer]`](/up-layer) attributes or `{ layer }` options were ignored.
 - [`a[up-target]`](/a-up-target) and [`form[up-target]`] get a new modifying attribute `[up-fail-layer]`.
   Use it to set the layer to update if the server sends a non-200 status code. Valid values are `auto`, `page`, `modal` and `popup`.
-- JavaScript functions like [`up.replace()`](/up.replace) or [`up.submit()`](/up.submit) now have a `{ failLayer }` option. 
+- JavaScript functions like [`up.replace()`](/up.replace) or [`up.submit()`](/up.submit) now have a `{ failLayer }` option.
+- Fix a bug where Unpoly would not boot on Safari 9 and 10 if the initial page was loaded with a POST method.
+- When a selector was not found in the response, the error notification now offers a link to show the unexpected response.
+
 
 
 0.36.2

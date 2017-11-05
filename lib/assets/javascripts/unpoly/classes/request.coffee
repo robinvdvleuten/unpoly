@@ -58,7 +58,7 @@ class up.Request extends up.Record
       xhrHeaders[up.protocol.config.targetHeader] = @target if @target
       xhrHeaders[up.protocol.config.failTargetHeader] = @failTarget if @failTarget
 
-      if !@isIdempotent() && !u.isCrossDomain(xhrUrl) && (csrfToken = up.protocol.csrfToken())
+      if csrfToken = @csrfToken()
         xhrHeaders[up.protocol.config.csrfHeader] = csrfToken
 
       xhr.open(xhrMethod, xhrUrl)
@@ -81,6 +81,35 @@ class up.Request extends up.Record
       xhr.timeout = @timeout if @timeout
 
       xhr.send(xhrData)
+
+  replacePage: =>
+    $form = $('<form class="up-page-loader"></form>')
+
+    addField = (field) -> $('<input type="hidden">').attr(field).appendTo($form)
+
+    if @method == 'GET'
+      formMethod = 'GET'
+    else
+      # Browser forms can only have GET or POST methods.
+      # When we want to make a request with another method, most backend
+      # frameworks allow to pass the method as a param.
+      addField(name: up.protocol.config.methodParam, value: @method)
+      formMethod = 'POST'
+
+    $form.attr(method: formMethod, action: @url)
+
+    if csrfToken = @csrfToken()
+      addField(name: up.protocol.config.csrfParam, value: csrfToken)
+
+    u.each u.requestDataAsArray(@data), addField
+
+    $form.hide().appendTo('body')
+    up.browser.submitForm($form)
+
+  # Returns a csrfToken if this request requires it
+  csrfToken: =>
+    if !@isIdempotent() && !u.isCrossDomain(@url)
+      up.protocol.csrfToken()
 
   buildResponse: (xhr) =>
     responseAttrs =

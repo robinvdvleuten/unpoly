@@ -23,28 +23,9 @@ up.browser = (($) ->
   @param {Object|Array} [options.data]
   @internal
   ###
-  loadPage = (url, options) ->
-    options = u.options(options)
-    method = u.normalizeMethod(options.method)
-
-    formMethod = if method == 'GET' then 'GET' else 'POST'
-
-    $form = $("<form method='#{formMethod}' action='#{url}' class='up-page-loader'></form>")
-
-    addField = (field) ->
-      $field = $('<input type="hidden">').attr(field)
-      $field.appendTo($form)
-
-    unless method == 'GET'
-      addField(name: up.protocol.config.methodParam, value: method)
-
-    if !up.proxy.isIdempotentMethod(method) && !u.isCrossDomain(url) && (csrfToken = up.protocol.csrfToken())
-      addField(name: up.protocol.config.csrfParam, value: csrfToken)
-
-    u.each u.requestDataAsArray(options.data), addField
-
-    $form.hide().appendTo('body')
-    submitForm($form)
+  loadPage = (url, options = {}) ->
+    request = new up.Request(u.merge(options, { url }))
+    request.replacePage()
 
   ###*
   For mocking in specs.
@@ -344,6 +325,7 @@ up.browser = (($) ->
   knife: eval(Knife?.point)
   url: url
   loadPage: loadPage
+  submitForm: submitForm
   canPushState: canPushState
   whenConfirmed: whenConfirmed
   isSupported: isSupported
@@ -362,7 +344,6 @@ up.browser = (($) ->
   canCssTransition: canCssTransition
   canInputEvent: canInputEvent
   canPromise: canPromise
-
 
 )(jQuery)
 

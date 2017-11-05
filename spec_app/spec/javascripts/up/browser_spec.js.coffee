@@ -11,27 +11,37 @@ describe 'up.browser', ->
         # so we need to remove it manually after each example.
         $('form.up-page-loader').remove()
 
-      u.each ['GET', 'POST'], (method) ->
+      describe "for GET requests", ->
 
-        describe "for #{method} requests", ->
+        it "creates a GET form, adds all { data } params to the form action and submits the form", ->
+          submitForm = spyOn(up.browser, 'submitForm')
+          up.browser.loadPage('/foo', method: 'GET', data: { param1: 'param1 value', param2: 'param2 value' })
+          expect(submitForm).toHaveBeenCalled()
+          $form = $('form.up-page-loader')
+          expect($form).toExist()
+          expect($form.attr('action')).toMatchUrl('/foo?param1=param1%20value&param2=param2%20value')
+          # No params should be left in the form
+          expect($form.find('input')).not.toExist()
 
-          it "creates a #{method} form, adds all { data } params a hidden fields and submits the form", ->
-            submitForm = up.browser.knife.mock('submitForm')
-            up.browser.loadPage('/foo', method: method, data: { param1: 'param1 value', param2: 'param2 value' })
-            expect(submitForm).toHaveBeenCalled()
-            $form = $('form.up-page-loader')
-            expect($form).toExist()
-            expect($form.attr('action')).toEqual('/foo')
-            expect($form.attr('method')).toEqual(method)
-            expect($form.find('input[name="param1"][value="param1 value"]')).toExist()
-            expect($form.find('input[name="param2"][value="param2 value"]')).toExist()
+      describe "for POST requests", ->
+
+        it "creates a POST form, adds all { data } params a hidden fields and submits the form", ->
+          submitForm = spyOn(up.browser, 'submitForm')
+          up.browser.loadPage('/foo', method: 'POST', data: { param1: 'param1 value', param2: 'param2 value' })
+          expect(submitForm).toHaveBeenCalled()
+          $form = $('form.up-page-loader')
+          expect($form).toExist()
+          expect($form.attr('action')).toMatchUrl('/foo')
+          expect($form.attr('method')).toEqual('POST')
+          expect($form.find('input[name="param1"][value="param1 value"]')).toExist()
+          expect($form.find('input[name="param2"][value="param2 value"]')).toExist()
 
       u.each ['PUT', 'PATCH', 'DELETE'], (method) ->
 
         describe "for #{method} requests", ->
 
           it "uses a POST form and sends the actual method as a { _method } param", ->
-            submitForm = up.browser.knife.mock('submitForm')
+            submitForm = spyOn(up.browser, 'submitForm')
             up.browser.loadPage('/foo', method: method)
             expect(submitForm).toHaveBeenCalled()
             $form = $('form.up-page-loader')
@@ -44,7 +54,7 @@ describe 'up.browser', ->
         beforeEach ->
           up.protocol.config.csrfToken = -> 'csrf-token'
           up.protocol.config.csrfParam = 'csrf-param'
-          @submitForm = up.browser.knife.mock('submitForm')
+          @submitForm = spyOn(up.browser, 'submitForm')
 
         it 'submits an CSRF token as another hidden field', ->
           up.browser.loadPage('/foo', method: 'post')

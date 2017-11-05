@@ -21,7 +21,7 @@ up.browser = (($) ->
   @param {string} url
   @param {string} [options.method='get']
   @param {Object|Array} [options.data]
-  @internal'
+  @internal
   ###
   loadPage = (url, options) ->
     options = u.options(options)

@@ -518,8 +518,6 @@ up.modal = (($) ->
     unless isOpen() # this can happen when a request fails and the chain proceeds to the next task
       return Promise.resolve()
 
-    console.debug('*** closeNow')
-
     options = u.options(options)
     viewportCloseAnimation = u.option(options.animation, flavorDefault('closeAnimation'))
     viewportCloseAnimation = u.evalOption(viewportCloseAnimation, position: state.position)

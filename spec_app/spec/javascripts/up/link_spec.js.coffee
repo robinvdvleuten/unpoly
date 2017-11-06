@@ -370,19 +370,19 @@ describe 'up.link', ->
 
         it 'follows the given link', asyncSpec (next) ->
           $link = affix('a[href="/path"]')
-          spyOn(up.browser, 'loadPage')
+          spyOn(up.browser, 'navigate')
           up.follow($link)
 
           next =>
-            expect(up.browser.loadPage).toHaveBeenCalledWith('/path', jasmine.anything())
+            expect(up.browser.navigate).toHaveBeenCalledWith('/path', jasmine.anything())
 
         it 'uses the method from a data-method attribute', asyncSpec (next) ->
           $link = affix('a[href="/path"][data-method="PUT"]')
-          spyOn(up.browser, 'loadPage')
+          spyOn(up.browser, 'navigate')
           up.follow($link)
 
           next =>
-            expect(up.browser.loadPage).toHaveBeenCalledWith('/path', { method: 'PUT' })
+            expect(up.browser.navigate).toHaveBeenCalledWith('/path', { method: 'PUT' })
 
     describe 'up.link.makeFollowable', ->
 

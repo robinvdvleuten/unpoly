@@ -424,6 +424,29 @@ describe 'up.layout', ->
         lookup = -> up.layout.viewportOf($element)
         expect(lookup).toThrowError(/Could not find viewport/i)
 
+    describe 'up.layout.restoreScroll', ->
+
+      it "restores a viewport's previously saved scroll position", (done) ->
+        $viewport = affix('#viewport[up-viewport]').css(height: '100px', overflowY: 'scroll')
+        $content = $viewport.affix('.content').css(height: '1000px')
+        up.hello($viewport)
+        $viewport.scrollTop(50)
+        up.layout.saveScroll()
+        $viewport.scrollTop(70)
+
+        up.layout.restoreScroll().then ->
+          expect($viewport.scrollTop()).toEqual(50)
+          done()
+
+      it "scrolls a viewport to the top (and does not crash) if no previous scroll position is known", (done) ->
+        $viewport = affix('#viewport[up-viewport]').css(height: '100px', overflowY: 'scroll')
+        $content = $viewport.affix('.content').css(height: '1000px')
+        $viewport.scrollTop(70)
+
+        up.layout.restoreScroll().then ->
+          expect($viewport.scrollTop()).toEqual(0)
+          done()
+
     describe 'up.scroll', ->
 
       it 'should have tests'

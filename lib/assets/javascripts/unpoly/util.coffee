@@ -1513,7 +1513,7 @@ up.util = (($) ->
     # We try to stick with an array representation, whose contents we can inspect.
     # We cannot inspect FormData on IE11 because it has no support for `FormData.entries`.
     # Inspection is needed to generate a cache key (see `up.proxy`) and to make
-    # vanilla requests when `pushState` is unavailable (see `up.browser.loadPage`).
+    # vanilla requests when `pushState` is unavailable (see `up.browser.navigate`).
     data = if hasFileInputs then new FormData($form.get(0)) else $form.serializeArray()
     appendRequestData(data, buttonName, buttonValue) if isPresent(buttonName)
     data

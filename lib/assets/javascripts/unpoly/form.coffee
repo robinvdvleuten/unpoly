@@ -151,7 +151,7 @@ up.form = (($) ->
 
     # If we can't update the location URL, fall back to a vanilla form submission.
     unless up.browser.canPushState() || options.history == false
-      # Don't use up.browser.loadPage(); It cannot deal with file inputs.
+      # Don't use up.browser.navigate(); It cannot deal with file inputs.
       $form.get(0).submit()
       return u.unresolvablePromise()
 

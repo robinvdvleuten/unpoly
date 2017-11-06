@@ -26,6 +26,7 @@ Unreleased
 - [`up.motion.finish()`](/up.motion.finish) is now async. It returns a promise that is fulfulled when all animations are finished.
 - [`up.motion.finish()`](/up.motion.finish) now also ...
 - [`up.follow()`](/up.follow) will now open modals or popup if the given link has [`[up-modal]`](/up-modal) or [`[up-popup]`](/up-popup) attribute.
+- Clicking a link with `[up-restore-scroll]` will no longer crash if the previous scroll position for the new URL is unknown ([#25](https://github.com/unpoly/unpoly/issues/25)) 
 
 
 0.36.2

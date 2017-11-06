@@ -17,15 +17,15 @@ up.browser = (($) ->
   u = up.util
 
   ###*
-  @method up.browser.loadPage
+  @method up.browser.navigate
   @param {string} url
   @param {string} [options.method='get']
   @param {Object|Array} [options.data]
   @internal
   ###
-  loadPage = (url, options = {}) ->
+  navigate = (url, options = {}) ->
     request = new up.Request(u.merge(options, { url }))
-    request.replacePage()
+    request.navigate()
 
   ###*
   For mocking in specs.
@@ -324,7 +324,7 @@ up.browser = (($) ->
 
   knife: eval(Knife?.point)
   url: url
-  loadPage: loadPage
+  navigate: navigate
   submitForm: submitForm
   canPushState: canPushState
   whenConfirmed: whenConfirmed

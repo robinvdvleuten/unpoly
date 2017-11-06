@@ -4,7 +4,7 @@ describe 'up.browser', ->
 
   describe 'JavaScript functions', ->
 
-    describe 'up.browser.loadPage', ->
+    describe 'up.browser.navigate', ->
 
       afterEach ->
         # We're preventing the form to be submitted during tests,
@@ -15,7 +15,7 @@ describe 'up.browser', ->
 
         it "creates a GET form, adds all { data } params to the form action and submits the form", ->
           submitForm = spyOn(up.browser, 'submitForm')
-          up.browser.loadPage('/foo', method: 'GET', data: { param1: 'param1 value', param2: 'param2 value' })
+          up.browser.navigate('/foo', method: 'GET', data: { param1: 'param1 value', param2: 'param2 value' })
           expect(submitForm).toHaveBeenCalled()
           $form = $('form.up-page-loader')
           expect($form).toExist()
@@ -27,7 +27,7 @@ describe 'up.browser', ->
 
         it "creates a POST form, adds all { data } params a hidden fields and submits the form", ->
           submitForm = spyOn(up.browser, 'submitForm')
-          up.browser.loadPage('/foo', method: 'POST', data: { param1: 'param1 value', param2: 'param2 value' })
+          up.browser.navigate('/foo', method: 'POST', data: { param1: 'param1 value', param2: 'param2 value' })
           expect(submitForm).toHaveBeenCalled()
           $form = $('form.up-page-loader')
           expect($form).toExist()
@@ -42,7 +42,7 @@ describe 'up.browser', ->
 
           it "uses a POST form and sends the actual method as a { _method } param", ->
             submitForm = spyOn(up.browser, 'submitForm')
-            up.browser.loadPage('/foo', method: method)
+            up.browser.navigate('/foo', method: method)
             expect(submitForm).toHaveBeenCalled()
             $form = $('form.up-page-loader')
             expect($form).toExist()
@@ -57,7 +57,7 @@ describe 'up.browser', ->
           @submitForm = spyOn(up.browser, 'submitForm')
 
         it 'submits an CSRF token as another hidden field', ->
-          up.browser.loadPage('/foo', method: 'post')
+          up.browser.navigate('/foo', method: 'post')
           expect(@submitForm).toHaveBeenCalled()
           $form = $('form.up-page-loader')
           $tokenInput = $form.find('input[name="csrf-param"]')
@@ -66,21 +66,21 @@ describe 'up.browser', ->
 
         it 'does not add a CSRF token if there is none', ->
           up.protocol.config.csrfToken = -> ''
-          up.browser.loadPage('/foo', method: 'post')
+          up.browser.navigate('/foo', method: 'post')
           expect(@submitForm).toHaveBeenCalled()
           $form = $('form.up-page-loader')
           $tokenInput = $form.find('input[name="csrf-param"]')
           expect($tokenInput).not.toExist()
 
         it 'does not add a CSRF token for GET requests', ->
-          up.browser.loadPage('/foo', method: 'get')
+          up.browser.navigate('/foo', method: 'get')
           expect(@submitForm).toHaveBeenCalled()
           $form = $('form.up-page-loader')
           $tokenInput = $form.find('input[name="csrf-param"]')
           expect($tokenInput).not.toExist()
 
         it 'does not add a CSRF token when loading content from another domain', ->
-          up.browser.loadPage('http://other-domain.tld/foo', method: 'get')
+          up.browser.navigate('http://other-domain.tld/foo', method: 'get')
           expect(@submitForm).toHaveBeenCalled()
           $form = $('form.up-page-loader')
           $tokenInput = $form.find('input[name="csrf-param"]')

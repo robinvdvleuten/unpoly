@@ -66,7 +66,6 @@ class up.Request extends up.Record
       for header, value of xhrHeaders
         xhr.setRequestHeader(header, value)
 
-      # Convert from XHR API to promise API
       resolveWithResponse = =>
         response = @buildResponse(xhr)
         if response.isSuccess()
@@ -74,6 +73,7 @@ class up.Request extends up.Record
         else
           reject(response)
 
+      # Convert from XHR API to promise API
       xhr.onload = resolveWithResponse
       xhr.onerror = resolveWithResponse
       xhr.ontimeout = resolveWithResponse
@@ -82,7 +82,7 @@ class up.Request extends up.Record
 
       xhr.send(xhrData)
 
-  replacePage: =>
+  navigate: =>
     $form = $('<form class="up-page-loader"></form>')
 
     addField = (field) -> $('<input type="hidden">').attr(field).appendTo($form)

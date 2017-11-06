@@ -667,7 +667,7 @@ describe 'up.dom', ->
                 $target = affix('.target').text('old target')
                 $fallback = affix('.fallback').text('old fallback')
                 promise = up.replace('.target', '/path', fallback: '.fallback')
-                loadPage = spyOn(up.browser, 'loadPage')
+                navigate = spyOn(up.browser, 'navigate')
 
                 u.nextFrame =>
                   @respondWith '<div class="unexpected">new unexpected</div>'
@@ -677,12 +677,12 @@ describe 'up.dom', ->
                   expect($toast).toExist()
                   $inspectLink = $toast.find(".up-toast-action:contains('Open response')")
                   expect($inspectLink).toExist()
-                  expect(loadPage).not.toHaveBeenCalled()
+                  expect(navigate).not.toHaveBeenCalled()
 
                   Trigger.clickSequence($inspectLink)
 
                   u.nextFrame =>
-                    expect(loadPage).toHaveBeenCalledWith('/path', {})
+                    expect(navigate).toHaveBeenCalledWith('/path', {})
                     done()
 
             it 'considers a union selector to be missing if one of its selector-atoms are missing', asyncSpec (next) ->
@@ -971,11 +971,11 @@ describe 'up.dom', ->
       describeFallback 'canPushState', ->
 
         it 'makes a full page load', asyncSpec (next) ->
-          spyOn(up.browser, 'loadPage')
+          spyOn(up.browser, 'navigate')
           up.replace('.selector', '/path')
 
           next =>
-            expect(up.browser.loadPage).toHaveBeenCalledWith('/path', jasmine.anything())
+            expect(up.browser.navigate).toHaveBeenCalledWith('/path', jasmine.anything())
 
     describe 'up.extract', ->
 
@@ -1548,11 +1548,11 @@ describe 'up.dom', ->
 
         it 'makes a page load from the closest known source URL', asyncSpec (next) ->
           affix('.container[up-source="/source"] .element').find('.element').text('old text')
-          spyOn(up.browser, 'loadPage')
+          spyOn(up.browser, 'navigate')
           up.reload('.element')
 
           next =>
-            expect(up.browser.loadPage).toHaveBeenCalledWith('/source', jasmine.anything())
+            expect(up.browser.navigate).toHaveBeenCalledWith('/source', jasmine.anything())
 
 
     describe 'up.reset', ->

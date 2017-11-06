@@ -234,7 +234,7 @@ up.dom = (($) ->
   replace = (selectorOrElement, url, options) ->
     options = u.options(options)
 
-    options.inspectResponse = fullLoad = -> up.browser.loadPage(url, u.only(options, 'method', 'data'))
+    options.inspectResponse = fullLoad = -> up.browser.navigate(url, u.only(options, 'method', 'data'))
 
     if !up.browser.canPushState() && options.history != false
       fullLoad() unless options.preload

@@ -9,8 +9,11 @@ This project mostly adheres to [Semantic Versioning](http://semver.org/).
 Unreleased
 ----------
 
-### Compatible changes
-
+- jQuery 3 is now supported ...
+- Native promise, more speed ...
+- Native AJAX, more speed ...
+- Fix bug with back button ....
+- Internet Explorer 11 needs a Polyfill for `Promise`. We recommend ...
 - [`up.observe()`](/up.observe) no longer sends multiple callbacks when a previous callback was slow to respond.
 - Fix a bug where [`[up-layer]`](/up-layer) attributes or `{ layer }` options were ignored.
 - [`a[up-target]`](/a-up-target) and [`form[up-target]`] get a new modifying attribute `[up-fail-layer]`.
@@ -22,6 +25,7 @@ Unreleased
 - The event [`up:fragment:destroy](/up:fragment:destroy) can no longer be prevented.
 - [`up.motion.finish()`](/up.motion.finish) is now async. It returns a promise that is fulfulled when all animations are finished.
 - [`up.motion.finish()`](/up.motion.finish) now also ...
+- [`up.follow()`](/up.follow) will now open modals or popup if the given link has [`[up-modal]`](/up-modal) or [`[up-popup]`](/up-popup) attribute.
 
 
 0.36.2

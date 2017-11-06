@@ -652,7 +652,6 @@ describe 'up.proxy', ->
       it 'triggers a separate AJAX request when hovered multiple times and the cache expires between hovers', asyncSpec (next)  ->
         up.proxy.config.cacheExpiry = 20
         up.proxy.config.preloadDelay = 0
-        # spyOn(up, 'follow')
         $element = affix('a[href="/foo"][up-preload]')
         Trigger.mouseover($element)
 

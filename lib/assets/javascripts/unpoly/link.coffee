@@ -74,7 +74,7 @@ up.link = (($) ->
   ###*
   Visits the given URL without a full page load.
   This is done by fetching `url` through an AJAX request
-  and replacing the current `<body>` element with the response's `<body>` element.
+  and [replacing](/up.replace) the current `<body>` element with the response's `<body>` element.
 
   For example, this would fetch the `/users` URL:
 
@@ -95,70 +95,33 @@ up.link = (($) ->
     up.replace(selector, url, options)
 
   ###*
-  Follows the given link via AJAX and [replaces](/up.replace) a CSS selector in the current page
-  with corresponding elements from a new page fetched from the server.
+  Follows the given link via AJAX and [replaces](/up.replace) the current page
+  with HTML from the response.
 
-  Any Unpoly UJS attributes on the given link will be honored. E. g. you have this link:
+  By default the page's `<body>` element will be replaced.
+  If the link has an attribute like [`[up-target]`](/up-target)
+  or [`[up-modal]`](/up-modal), the corresponding UJS behavior will be activated
+  just as if the user had clicked on the link.
+
+  \#\#\# Examples
+
+  Let's say you have a link with an [`a[up-target]`](/a-up-target) attribute:
 
       <a href="/users" up-target=".main">Users</a>
 
-  You can update the page's `.main` selector with the `.main` from `/users` like this:
+  Calling `up.follow()` with this link will replace the page's `.main` fragment
+  as if the user had clicked on the link:
 
-      var $link = $('a:first'); // select link with jQuery
+      var $link = $('a:first');
       up.follow($link);
-
-  The unobtrusive variant of this are the [`a[up-target]`](/a-up-target) and [`a[up-follow]`](/a-up-follow) selectors.
 
   @function up.follow
   @param {Element|jQuery|string} linkOrSelector
-    An element or selector which resolves to an `<a>` tag
-    or any element that is marked up with an `up-href` attribute.
+    An element or selector which is either an `<a>` tag or any element with an `up-href` attribute.
   @param {string} [options.target]
     The selector to replace.
-    Defaults to the `up-target` attribute on `link`, or to `body` if such an attribute does not exist.
-  @param {string} [options.failTarget]
-    The selector to replace if the server responds with a non-200 status code.
-    Defaults to the `up-fail-target` attribute on `link`, or to `body` if such an attribute does not exist.
-  @param {string} [options.fallback]
-    The selector to update when the original target was not found in the page.
-  @param {string} [options.method='get']
-    The HTTP method to use for the request.
-  @param {string} [options.confirm]
-    A message that will be displayed in a cancelable confirmation dialog
-    before the link is followed.
-  @param {Function|string} [options.transition]
-    A transition function or name.
-  @param {Function|string} [options.failTransition]
-    The transition to use if the server responds with a non-200 status code.
-  @param {number} [options.duration]
-    The duration of the transition. See [`up.morph()`](/up.morph).
-  @param {number} [options.delay]
-    The delay before the transition starts. See [`up.morph()`](/up.morph).
-  @param {string} [options.easing]
-    The timing function that controls the transition's acceleration. [`up.morph()`](/up.morph).
-  @param {Element|jQuery|string} [options.reveal=true]
-    Whether to reveal the target  element within its viewport before updating.
-  @param {boolean} [options.restoreScroll]
-    If set to `true`, this will attempt to [restore scroll positions](/up.restoreScroll)
-    previously seen on the destination URL.
-  @param {boolean} [options.cache]
-    Whether to force the use of a cached response (`true`)
-    or never use the cache (`false`)
-    or make an educated guess (`undefined`).
-  @param {Object} [options.headers={}]
-    An object of additional header key/value pairs to send along
-    with the request.
-  @param {number} [options.timeout]
-    A timeout in milliseconds for the request.
-  @param {string} [options.layer='auto']
-    The name of the layer that ought to be updated. Valid values are
-    `auto`, `page`, `modal` and `popup`.
-
-    If set to `auto` (default), Unpoly will try to find a match in the
-    same layer as the given link. If no match was found in that layer,
-    Unpoly will search in other layers, starting from the topmost layer.
-  @param {string} [options.failLayer='auto']
-    The name of the layer that ought to be updated if the server sends a non-200 status code.
+    Defaults to the `[up-target]`, `[up-modal]` or `[up-popup]` attribute on `link`.
+    If no target is given, the `<body>` element will be replaced.
 
   @return {Promise}
     A promise that will be fulfilled when the link destination
@@ -166,6 +129,15 @@ up.link = (($) ->
   @stable
   ###
   follow = (linkOrSelector, options) ->
+    $link = $(linkOrSelector)
+    variant = followVariantForLink($link)
+    variant.followLink($link, options)
+
+  ###*
+  @function defaultFollow
+  @internal
+  ###
+  defaultFollow = (linkOrSelector, options) ->
     $link = $(linkOrSelector)
 
     options = u.options(options)
@@ -189,14 +161,6 @@ up.link = (($) ->
 
     up.browser.whenConfirmed(options).then ->
       up.replace(target, url, options)
-
-  ###*
-  @internal
-  ###
-  follow2 = (linkOrSelector, options) ->
-    $link = $(linkOrSelector)
-    variant = followVariantForLink($link)
-    variant.followLink($link, options)
 
   ###*
   Returns the HTTP method that should be used when following the given link.
@@ -375,9 +339,9 @@ up.link = (($) ->
     Set this to a URL string to update the history with the given URL.
   @stable
   ###
-  DEFAULT_FOLLOW_VARIANT = onAction '[up-target]',
+  onAction '[up-target]',
     # Don't just pass the `follow` function reference so we can stub it in tests
-    ($element, options) ->follow($element, options)
+    ($element, options) -> defaultFollow($element, options)
 
   ###*
   By adding an `up-instant` attribute to a link, the destination will be
@@ -451,9 +415,9 @@ up.link = (($) ->
     within the response.
   @stable
   ###
-  onAction '[up-follow]',
+  DEFAULT_FOLLOW_VARIANT = onAction '[up-follow]',
     # Don't just pass the `follow` function so we can stub it in tests
-    ($link, options) -> follow($link, options)
+    ($link, options) -> defaultFollow($link, options)
 
   ###*
   Marks up the current link to be followed *as fast as possible*.
@@ -554,7 +518,6 @@ up.link = (($) ->
   knife: eval(Knife?.point)
   visit: visit
   follow: follow
-  follow2: follow2
   makeFollowable: makeFollowable
   isFollowable: isFollowable
   childClicked: childClicked

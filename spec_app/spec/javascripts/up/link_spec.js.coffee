@@ -459,7 +459,7 @@ describe 'up.link', ->
       it 'does not follow a form with up-target attribute (bugfix)', asyncSpec (next) ->
         $form = affix('form[up-target]')
         up.hello($form)
-        followSpy = up.link.knife.mock('follow').and.returnValue(Promise.resolve())
+        followSpy = up.link.knife.mock('defaultFollow').and.returnValue(Promise.resolve())
         Trigger.clickSequence($form)
 
         next =>
@@ -682,7 +682,7 @@ describe 'up.link', ->
 
       beforeEach ->
         @$link = affix('a[href="/follow-path"][up-follow]')
-        @followSpy = up.link.knife.mock('follow').and.returnValue(Promise.resolve())
+        @followSpy = up.link.knife.mock('defaultFollow').and.returnValue(Promise.resolve())
         @defaultSpy = spyOn(up.link, 'allowDefault').and.callFake((event) -> event.preventDefault())
 
       it "calls up.follow with the clicked link", asyncSpec (next) ->

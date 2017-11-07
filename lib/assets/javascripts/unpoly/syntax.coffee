@@ -129,10 +129,10 @@ up.syntax = (($) ->
   For instance, a container for a [Google Map](https://developers.google.com/maps/documentation/javascript/tutorial)
   might attach the location and names of its marker pins:
 
-      <div class="google-map" up-data="[
-        { lat: 48.36, lng: 10.99, title: 'Friedberg' },
-        { lat: 48.75, lng: 11.45, title: 'Ingolstadt' }
-      ]"></div>
+      <div class='google-map' up-data='[
+        { "lat": 48.36, "lng": 10.99, "title": "Friedberg" },
+        { "lat": 48.75, "lng": 11.45, "title": "Ingolstadt" }
+      ]'></div>
 
   The JSON will parsed and handed to your compiler as a second argument:
 
@@ -282,22 +282,32 @@ up.syntax = (($) ->
       value = if u.isString(compiler.keep) then compiler.keep else ''
       $jqueryElement.attr('up-keep', value)
     returnValue = compiler.callback.apply(nativeElement, [$jqueryElement, data($jqueryElement)])
-    for destructor in discoverDestructors(returnValue)
-      addDestructor($jqueryElement, destructor)
+    addDestructor($jqueryElement, returnValue)
 
-  discoverDestructors = (returnValue) ->
+  ###*
+  Tries to find a list of destructors in a compiler's return value.
+
+  @param {Object} returnValue
+  @return {Function|undefined}
+  @internal
+  ###
+  normalizeDestructor = (returnValue) ->
     if u.isFunction(returnValue)
-      [returnValue]
-    else if u.isArray(returnValue) && u.all(returnValue, u.isFunction)
       returnValue
-    else
-      []
+    else if u.isArray(returnValue) && u.all(returnValue, u.isFunction)
+      u.sequence(returnValue...)
 
-  addDestructor = ($jqueryElement, destructor) ->
-    $jqueryElement.addClass(DESTRUCTIBLE_CLASS)
-    destructors = $jqueryElement.data(DESTRUCTORS_KEY) || []
-    destructors.push(destructor)
-    $jqueryElement.data(DESTRUCTORS_KEY, destructors)
+  addDestructor = ($element, newDestructor) ->
+    if newDestructor = normalizeDestructor(newDestructor)
+      $element.addClass(DESTRUCTIBLE_CLASS)
+      # The initial destructor function is a function that removes the destructor class and data.
+      elementDestructor = $element.data(DESTRUCTORS_KEY) || -> removeDestructors($element)
+      elementDestructor = u.sequence(elementDestructor, newDestructor)
+      $element.data(DESTRUCTORS_KEY, elementDestructor)
+
+  removeDestructors = ($element) ->
+    $element.removeData(DESTRUCTORS_KEY)
+    $element.removeClass(DESTRUCTIBLE_CLASS)
 
   ###*
   Applies all compilers on the given element and its descendants.
@@ -317,10 +327,11 @@ up.syntax = (($) ->
         for compiler in queue
           $matches = u.selectInSubtree($fragment, compiler.selector)
 
+          # Exclude all elements that are descendants of the subtrees we want to keep.
           $matches = $matches.filter ->
             $match = $(this)
-            u.all $skipSubtrees, (element) ->
-              $match.closest(element).length == 0
+            u.all $skipSubtrees, (skipSubtree) ->
+              $match.closest(skipSubtree).length == 0
 
           if $matches.length
             up.log.group ("Compiling '%s' on %d element(s)" unless compiler.isDefault), compiler.selector, $matches.length, ->
@@ -338,16 +349,22 @@ up.syntax = (($) ->
   @internal
   ###
   clean = ($fragment) ->
-    u.selectInSubtree($fragment, ".#{DESTRUCTIBLE_CLASS}").each ->
-      $element = $(this)
-      destructors = $element.data(DESTRUCTORS_KEY)
-      # Although destructible elements should always have an array of destructors, we might be
-      # destroying a clone of such an element. E.g. Unpoly creates a clone when keeping an
-      # [up-keep] element, and that clone still has the .up-destructible class.
-      if destructors
-        destructor() for destructor in destructors
-        $element.removeData(DESTRUCTORS_KEY)
-        $element.removeClass(DESTRUCTIBLE_CLASS)
+    prepareClean($fragment)()
+
+  ###*
+  @function up.syntax.prepareClean
+  @param {jQuery} $fragment
+  @return {Function}
+  @internal
+  ###
+  prepareClean = ($fragment) ->
+    $candidates = u.selectInSubtree($fragment, ".#{DESTRUCTIBLE_CLASS}")
+    destructors = u.map $candidates, (candidate) -> $(candidate).data(DESTRUCTORS_KEY)
+    # Although destructible elements should always have an destructor function, we might be
+    # destroying a clone of such an element. E.g. Unpoly creates a clone when keeping an
+    # [up-keep] element, and that clone still has the .up-destructible class.
+    destructors = u.compact destructors
+    u.sequence(destructors...)
 
   ###*
   Checks if the given element has an [`up-data`](/up-data) attribute.
@@ -359,7 +376,7 @@ up.syntax = (($) ->
 
   You have an element with JSON data serialized into an `up-data` attribute:
 
-      <span class="person" up-data="{ age: 18, name: 'Bob' }">Bob</span>
+      <span class='person' up-data='{ "age": 18, "name": "Bob" }'>Bob</span>
 
   Calling `up.syntax.data()` will deserialize the JSON string into a JavaScript object:
 
@@ -382,10 +399,10 @@ up.syntax = (($) ->
   For instance, a container for a [Google Map](https://developers.google.com/maps/documentation/javascript/tutorial)
   might attach the location and names of its marker pins:
 
-      <div class="google-map" up-data="[
-        { lat: 48.36, lng: 10.99, title: 'Friedberg' },
-        { lat: 48.75, lng: 11.45, title: 'Ingolstadt' }
-      ]"></div>
+      <div class='google-map' up-data='[
+        { "lat": 48.36, "lng": 10.99, "title": "Friedberg" },
+        { "lat": 48.75, "lng": 11.45, "title": "Ingolstadt" }
+      ]'></div>
 
   The JSON will parsed and handed to your compiler as a second argument:
 
@@ -454,6 +471,7 @@ up.syntax = (($) ->
   macro: macro
   compile: compile
   clean: clean
+  prepareClean: prepareClean
   data: data
 
 )(jQuery)

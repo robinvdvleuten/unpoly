@@ -15,10 +15,7 @@ Unreleased
 - Fix bug with back button ....
 - Internet Explorer 11 needs a Polyfill for `Promise`. We recommend ...
 - [`up.observe()`](/up.observe) no longer sends multiple callbacks when a previous callback was slow to respond.
-- Fix a bug where [`[up-layer]`](/up-layer) attributes or `{ layer }` options were ignored.
-- [`a[up-target]`](/a-up-target) and [`form[up-target]`] get a new modifying attribute `[up-fail-layer]`.
-  Use it to set the layer to update if the server sends a non-200 status code. Valid values are `auto`, `page`, `modal` and `popup`.
-- JavaScript functions like [`up.replace()`](/up.replace) or [`up.submit()`](/up.submit) now have a `{ failLayer }` option.
+
 - Fix a bug where Unpoly would not boot on Safari 9 and 10 if the initial page was loaded with a POST method.
 - When a selector was not found in the response, the error notification now offers a link to show the unexpected response.
 - When the server [signals a redirect with a `X-Up-Location` header](/up.protocol#redirect-detection), sending a `X-Up-Method` header is now optional. If it is missing, `GET` is assumed.
@@ -29,6 +26,22 @@ Unreleased
 - Clicking a link with `[up-restore-scroll]` will no longer crash if the previous scroll position for the new URL is unknown ([#25](https://github.com/unpoly/unpoly/issues/25)) 
 - Unpoly will often update a different selector in case the request fails. This second selector is now sent to the server as a `X-Up-Fail-Target` header.
 - You can now [configure how CSRF tokens are sent your server-side framework](/up.protocol.config). 
+
+
+0.37.0
+------
+
+### Compatible changes
+
+- Fix a bug where [replacing](/up.replace) the `<body>` element would not trigger [destructor functions](/up.compiler#cleaning-up-after-yourself) in the old `<body>`.
+- Fix a bug where [`[up-layer]`](/up-layer) attributes or `{ layer }` options were ignored.
+- [`a[up-target]`](/a-up-target) and [`form[up-target]`] get a new modifying attribute `[up-fail-layer]`.
+  Use it to set the layer to update if the server sends a non-200 status code. Valid values are `auto`, `page`, `modal` and `popup`.
+- JavaScript functions like [`up.replace()`](/up.replace) or [`up.submit()`](/up.submit) now have a `{ failLayer }` option.
+
+
+0.36.2
+------
 
 ### Compatible changes
 

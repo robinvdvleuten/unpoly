@@ -31,7 +31,7 @@ describe 'up.syntax', ->
           next =>
             expect(destructor).toHaveBeenCalled()
 
-        it 'allows compilers to return an array of functions to clal when the compiled element is destroyed', asyncSpec (next) ->
+        it 'allows compilers to return an array of functions to call when the compiled element is destroyed', asyncSpec (next) ->
           destructor1 = jasmine.createSpy('destructor1')
           destructor2 = jasmine.createSpy('destructor2')
           up.compiler '.child', ($element) ->

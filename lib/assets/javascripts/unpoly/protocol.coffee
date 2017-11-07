@@ -219,12 +219,39 @@ up.protocol = (($) ->
   @param {String} [config.validateHeader='X-Up-Validate']
   @param {String} [config.methodHeader='X-Up-Method']
   @param {String} [config.methodCookie='_up_method']
+    The name of the optional cookie the server can send to
+    [signal the initial request method](/up.protocol#signaling-the-initial-request-method).
   @param {String} [config.methodParam='_method']
     The name of the POST parameter when [wrapping HTTP methods](/up.form.config#config.wrapMethods)
     in a `POST` request.
-  @param {String} [config.csrfHeader]
+  @param {String} [config.csrfHeader='X-CSRF-Token']
+    The name of the HTTP header that will include the
+    [CSRF token](https://en.wikipedia.org/wiki/Cross-site_request_forgery#Synchronizer_token_pattern)
+    for AJAX requests.
   @param {String|Function} [config.csrfParam]
+    The `name` of the hidden `<input>` used for sending a
+    [CSRF token](https://en.wikipedia.org/wiki/Cross-site_request_forgery#Synchronizer_token_pattern) when
+    submitting a default, non-AJAX form. For AJAX request the token is sent as an HTTP header instead.
+
+    The parameter name can be configured as a string or as function that returns the parameter name.
+    If no name is set, no token will be sent.
+
+    Defaults to the `content` attribute of a `<meta>` tag named `csrf-token`:
+
+        <meta name="csrf-param" content="authenticity_token" />
+
   @param {String|Function} [config.csrfToken]
+    The [CSRF token](https://en.wikipedia.org/wiki/Cross-site_request_forgery#Synchronizer_token_pattern)
+    to send for non-idempotent requests. The token will be sent as either a HTTP header (for AJAX requests)
+    or hidden form `<input>` (for default, non-AJAX form submissions).
+
+    The token can either be configured as a string or as function that returns the token.
+    If no token is set, no token will be sent.
+
+    Defaults to the `content` attribute of a `<meta>` tag named `csrf-token`:
+
+        <meta name='csrf-token' content='secret12345'>
+
   @experimental
   ###
   config = u.config

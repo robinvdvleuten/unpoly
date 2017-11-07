@@ -98,8 +98,8 @@ class up.Request extends up.Record
 
     $form.attr(method: formMethod, action: @url)
 
-    if csrfToken = @csrfToken()
-      addField(name: up.protocol.config.csrfParam, value: csrfToken)
+    if (csrfParam = up.protocol.csrfParam()) && (csrfToken = @csrfToken())
+      addField(name: csrfParam, value: csrfToken)
 
     u.each u.requestDataAsArray(@data), addField
 

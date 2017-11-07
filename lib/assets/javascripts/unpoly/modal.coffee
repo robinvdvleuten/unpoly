@@ -558,7 +558,7 @@ up.modal = (($) ->
       promise
 
   markAsAnimating = (isAnimating = true) ->
-    state.$modal?.toggleClass('up-modal-animating', isAnimating)
+    state.$modal.toggleClass('up-modal-animating', isAnimating)
 
   animate = (viewportAnimation, backdropAnimation, animateOptions) ->
     # If we're not animating the dialog, don't animate the backdrop either

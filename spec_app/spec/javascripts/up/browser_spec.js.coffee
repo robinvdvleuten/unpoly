@@ -53,7 +53,7 @@ describe 'up.browser', ->
 
         beforeEach ->
           up.protocol.config.csrfToken = -> 'csrf-token'
-          up.protocol.config.csrfParam = 'csrf-param'
+          up.protocol.config.csrfParam = -> 'csrf-param'
           @submitForm = spyOn(up.browser, 'submitForm')
 
         it 'submits an CSRF token as another hidden field', ->

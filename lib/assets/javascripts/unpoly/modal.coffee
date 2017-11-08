@@ -611,7 +611,7 @@ up.modal = (($) ->
     $element.closest('.up-modal').length > 0
 
   flavor = (name, overrideConfig = {}) ->
-    up.log.warn 'The up.modal.flavor function is deprecated. Use the up.modal.flavors property instead.'
+    up.log.warn 'up.modal.flavor() is deprecated. Use the up.modal.flavors property instead.'
     u.assign(flavorOverrides(name), overrideConfig)
 
   ###*

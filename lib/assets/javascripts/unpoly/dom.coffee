@@ -279,7 +279,7 @@ up.dom = (($) ->
         promise = processResponse(false, improvedFailTarget, response, failureOptions)
         u.always(promise, rejection)
 
-    promise = up.ajax(request)
+    promise = up.request(request)
     promise = promise.then(onSuccess, onFailure)
     promise
 

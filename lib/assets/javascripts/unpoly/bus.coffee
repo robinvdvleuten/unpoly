@@ -55,6 +55,9 @@ up.bus = (($) ->
   liveUpDescriptions = {}
   nextUpDescriptionNumber = 0
 
+  # A hash mapping oldEventName => newEventName
+  renamedEvents = {}
+
   ###*
   Convert an Unpoly style listener (second argument is the event target
   as a jQuery collection) to a vanilla jQuery listener
@@ -76,6 +79,13 @@ up.bus = (($) ->
   ###
   upDescriptionToJqueryDescription = (upDescription, isNew) ->
     jqueryDescription = u.copy(upDescription)
+
+    # Prefer to rename events in the copied jQuery description instead of
+    # changing the original up description.
+    fixRenamedEvents(jqueryDescription)
+
+    # We remove the listener function from the end of the description.
+    # We will re-push it to the description at the end.
     upListener = jqueryDescription.pop()
     jqueryListener = undefined
     if isNew
@@ -88,6 +98,15 @@ up.bus = (($) ->
     jqueryDescription.push(jqueryListener)
     jqueryDescription
 
+  fixRenamedEvents = (description) ->
+    events = description[0].split(/\s+/)
+    events = u.map events, (event) ->
+      if newEvent = renamedEvents[event]
+        up.log.warn("#{event} has been renamed to #{newEvent}")
+        newEvent
+      else
+        event
+    description[0] = events.join(' ')
 
   ###*
   Listens to an event on `document`.
@@ -387,15 +406,12 @@ up.bus = (($) ->
     for description in liveUpDescriptions
       description.isDefault = true
 
-  ###*
-  Resets the list of registered event listeners to the
-  moment when the framework was booted.
-
-  @internal
-  ###
-  restoreSnapshot = ->
+  resetBus = ->
+    # Resets the list of registered event listeners to the
+    # moment when the framework was booted.
     doomedDescriptions = u.reject(liveUpDescriptions, (description) -> description.isDefault)
     unbind(description...) for description in doomedDescriptions
+    renamedEvents = {}
 
   ###*
   Resets Unpoly to the state when it was booted.
@@ -419,6 +435,9 @@ up.bus = (($) ->
   @event up:framework:reset
   @experimental
   ###
+
+  renamedEvent = (oldEvent, newEvent) ->
+    renamedEvents[oldEvent] = newEvent
 
   ###*
   Boots the Unpoly framework.
@@ -453,7 +472,7 @@ up.bus = (($) ->
   ###
 
   live 'up:framework:booted', snapshot
-  live 'up:framework:reset', restoreSnapshot
+  live 'up:framework:reset', resetBus
 
   knife: eval(Knife?.point)
   on: live # can't name symbols `on` in Coffeescript
@@ -465,6 +484,7 @@ up.bus = (($) ->
   emitReset: emitReset
   haltEvent: haltEvent
   consumeAction: consumeAction
+  renamedEvent: renamedEvent
   boot: boot
 
 )(jQuery)

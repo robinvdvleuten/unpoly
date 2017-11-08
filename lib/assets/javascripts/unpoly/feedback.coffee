@@ -147,7 +147,7 @@ up.feedback = (($) ->
       $button.on('click', function() {
         up.feedback.start($button, function() {
           // the .up-active class will be removed when this promise resolves:
-          return up.ajax(...);
+          return up.request(...);
         });
       });
 

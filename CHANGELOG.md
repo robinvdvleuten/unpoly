@@ -36,6 +36,11 @@ Unreleased
 - up.util.isString() now also returns true for `String` instances (in addition to string literals)
 - up.util.isNumber() now also returns true for `Number` instances (in addition to number literals)
 - up.util.isHash() has been removed without replacement. In your code you can replace `up.util.isHash(x)` with `up.util.isObject(x) && !up.util.isFunction(x)`.
+- up.util.resolvedDeferred() has been removed without replacement. Use Promise.resolve() instead.
+- up.util.resolvedPromise() has been removed without replacement. Use Promise.resolve() instead.
+- up.util.rejectedPromise() has been removed without replacement. Use Promise.reject() instead.
+- up.util.unresolvableDeferred() has been removed without replacement. Use new Promise(function() {}) instead.
+- up.motion.when() has been removed without replacement. Use Promise.all() instead.
 
 
 0.37.0

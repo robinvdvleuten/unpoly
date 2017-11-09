@@ -1800,9 +1800,21 @@ up.util = (($) ->
         flattened.push(object)
     flattened
 
+  ###*
+  Returns whether the given value is truthy.
+
+  @function up.util.isTruthy
+  @internal
+  ###
   isTruthy = (object) ->
     !!object
 
+  ###*
+  Sets the given callback as both fulfillment and rejection handler for the given promise.
+
+  @function up.util.always
+  @internal
+  ###
   always = (promise, callback) ->
     promise.then(callback, callback)
 
@@ -1821,27 +1833,27 @@ up.util = (($) ->
     nativePromise.promise = -> nativePromise # just return self
     nativePromise
 
+  ###*
+  Calls the given block. If the block throws an exception,
+  a rejected promise is returned instead.
+
+  @function up.util.rejectOnError
+  @internal
+  ###
   rejectOnError = (block) ->
     try
       block()
     catch error
       Promise.reject(error)
 
+  ###*
+  Returns whether the given element is a descendant of the `<body>` element.
+
+  @function up.util.isBodyDescendant
+  @internal
+  ###
   isBodyDescendant = (element) ->
     $(element).parents('body').length > 0
-
-#  timerList = ->
-#    timers = []
-#
-#    addTimer: (delay, block) ->
-#      timer = undefined
-#      timer = setTimer delay, ->
-#        remove(timers, timer)
-#        block()
-#      timers.push(timer)
-#    clearAll: ->
-#      each timers, (timer) ->
-#        clearTimeout(timer)
 
   requestDataAsArray: requestDataAsArray
   requestDataAsQuery: requestDataAsQuery

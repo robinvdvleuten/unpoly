@@ -172,7 +172,7 @@ up.motion = (($) ->
         animation($element, options)
       else if u.isString(animation)
         animate($element, findNamedAnimation(animation), options)
-      else if u.isHash(animation)
+      else if u.isOptions(animation)
         animateWithCss($element, animation, options)
       else
         # Error will be converted to rejected promise in a then() callback
@@ -182,7 +182,7 @@ up.motion = (($) ->
     isEnabled() && !isNone(animationOrTransition) && options.duration > 0 && u.all($elements, u.isBodyDescendant)
 
   skipAnimate = ($element, animation) ->
-    if u.isHash(animation)
+    if u.isOptions(animation)
       # If we are given the final animation frame as an object of CSS properties,
       # the best we can do is to set the final frame without animation.
       $element.css(animation)
@@ -659,7 +659,7 @@ up.motion = (($) ->
   ###
   isNone = (animationOrTransition) ->
     # false, undefined, null and the string "none" are all ways to skip animations
-    !animationOrTransition || animationOrTransition == 'none' || (u.isHash(animationOrTransition) && u.isBlank(animationOrTransition))
+    !animationOrTransition || animationOrTransition == 'none' || (u.isOptions(animationOrTransition) && u.isBlank(animationOrTransition))
 
   registerAnimation('fade-in', ($ghost, options) ->
     $ghost.css(opacity: 0)

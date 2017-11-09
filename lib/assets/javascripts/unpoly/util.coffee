@@ -442,21 +442,23 @@ up.util = (($) ->
     typeof(object) == 'number' || object instanceof Number
 
   ###*
-  Returns whether the given argument is an object, but not a function.
+  Returns whether the given argument is an options hash,
 
-  @function up.util.isHash
+  Differently from [`up.util.isObject()`], this returns false for
+  functions, jQuery collections, promises, `FormData` instances and arrays.
+
+  @function up.util.isOptions
   @param object
   @return {boolean}
-  @stable
+  @internal
   ###
-  isHash = (object) ->
+  isOptions = (object) ->
     typeof(object) == 'object' && !isNull(object) && !isJQuery(object) && !isPromise(object) && !isFormData(object) && !isArray(object)
 
   ###*
   Returns whether the given argument is an object.
 
   This also returns `true` for functions, which may behave like objects in JavaScript.
-  For an alternative that returns `false` for functions, see [`up.util.isHash()`](/up.util.isHash).
 
   @function up.util.isObject
   @param object
@@ -538,31 +540,21 @@ up.util = (($) ->
     Array.prototype.slice.call(object)
 
   ###*
-  Copies the given array or object into a new array or object.
-
-  Will make a shallow copy by default. You can make a deep copy by passing a `{ deep: true }` option.
-
-  Returns the new array or object.
+  Returns a shallow copy of the given array or object.
 
   @function up.util.copy
   @param {Object|Array} object
-  @param {boolean} [options.deep=false]
-    If set to `true`, recursively copies values.
   @return {Object|Array}
   @stable
   ###
-  copy = (object, options = {})  ->
+  copy = (object)  ->
     if isArray(object)
       object = object.slice()
-      if options.deep
-        object = map object, (element) -> copy(element, options)
-    else if isHash(object)
+    else if isObject(object) && !isFunction(object)
       object = assign({}, object)
-      if options.deep
-        for key, value of object
-          object[key] = copy(value, options)
+    else
+      up.fail('Cannot copy %o', object)
     object
-
 
   ###*
   If given a jQuery collection, returns the underlying array of DOM element.
@@ -1617,7 +1609,7 @@ up.util = (($) ->
 
   extractOptions = (args) ->
     lastArg = last(args)
-    if isHash(lastArg)
+    if isOptions(lastArg)
       args.pop()
     else
       {}
@@ -1902,7 +1894,7 @@ up.util = (($) ->
   isElement: isElement
   isJQuery: isJQuery
   isPromise: isPromise
-  isHash: isHash
+  isOptions: isOptions
   isArray: isArray
   isFormData: isFormData
   isUnmodifiedKeyEvent: isUnmodifiedKeyEvent

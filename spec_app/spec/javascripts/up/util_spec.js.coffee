@@ -689,36 +689,36 @@ describe 'up.util', ->
         fullUrl = "#{location.protocol}//other-host.tld/foo"
         expect(up.util.isCrossDomain(fullUrl)).toBe(true)
 
-    describe 'up.util.isHash', ->
+    describe 'up.util.isOptions', ->
 
       it 'returns true for an Object instance', ->
-        expect(up.util.isHash(new Object())).toBe(true)
+        expect(up.util.isOptions(new Object())).toBe(true)
 
       it 'returns true for an object literal', ->
-        expect(up.util.isHash({ foo: 'bar'})).toBe(true)
+        expect(up.util.isOptions({ foo: 'bar'})).toBe(true)
 
       it 'returns false for undefined', ->
-        expect(up.util.isHash(undefined)).toBe(false)
+        expect(up.util.isOptions(undefined)).toBe(false)
 
       it 'returns false for null', ->
-        expect(up.util.isHash(null)).toBe(false)
+        expect(up.util.isOptions(null)).toBe(false)
 
       it 'returns false for a function (which is technically an object)', ->
         fn = -> 'foo'
         fn.key = 'value'
-        expect(up.util.isHash(fn)).toBe(false)
+        expect(up.util.isOptions(fn)).toBe(false)
 
       it 'returns false for an array', ->
-        expect(up.util.isHash(['foo'])).toBe(false)
+        expect(up.util.isOptions(['foo'])).toBe(false)
 
       it 'returns false for a jQuery collection', ->
-        expect(up.util.isHash($('body'))).toBe(false)
+        expect(up.util.isOptions($('body'))).toBe(false)
 
       it 'returns false for a promise', ->
-        expect(up.util.isHash(Promise.resolve())).toBe(false)
+        expect(up.util.isOptions(Promise.resolve())).toBe(false)
 
       it 'returns false for a FormData object', ->
-        expect(up.util.isHash(new FormData())).toBe(false)
+        expect(up.util.isOptions(new FormData())).toBe(false)
 
     describe 'up.util.isObject', ->
 

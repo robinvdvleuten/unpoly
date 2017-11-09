@@ -32,6 +32,10 @@ Unreleased
 - You can now [configure how CSRF tokens are sent your server-side framework](/up.protocol.config).
 - up.popup.attach() now throws an error if neither { url } nor { html } options are given.
 - Fix a bug where tooltips would sometimes stay open when many tooltips are opened and closed concurrently.
+- CSRF tokens are no longer sent for cross-domain requests.
+- up.util.isString() now also returns true for `String` instances (in addition to string literals)
+- up.util.isNumber() now also returns true for `Number` instances (in addition to number literals)
+- up.util.isHash() has been removed without replacement. In your code you can replace `up.util.isHash(x)` with `up.util.isObject(x) && !up.util.isFunction(x)`.
 
 
 0.37.0

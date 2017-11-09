@@ -131,3 +131,23 @@ describe 'up.bus', ->
           expect($emittedTarget).toEqual($element)
 
           expect(emittedEvent.$element).toEqual($element)
+
+    describe 'up.bus.renamedEvent', ->
+
+      it 'prints a warning and registers the event listener for the new event name', ->
+        warnSpy = spyOn(up.log, 'warn')
+        listener = jasmine.createSpy('listener')
+
+        # Reister listener for the old event name
+        up.on('up:proxy:received', listener)
+        expect(warnSpy).toHaveBeenCalled()
+
+        # Emit event with new name and see that it invokes the legacy listener
+        up.emit('up:proxy:loaded')
+        expect(listener.calls.count()).toBe(1)
+
+        # Check that up.off works with the old event name
+        up.off('up:proxy:received', listener)
+
+        up.emit('up:proxy:loaded')
+        expect(listener.calls.count()).toBe(1)

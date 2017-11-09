@@ -94,7 +94,7 @@ up.bus = (($) ->
       upListener._descriptionNumber = ++nextUpDescriptionNumber
     else
       jqueryListener = upListener._asJqueryListener
-      jqueryListener or up.fail('up.off: The event listener %o was never registered through up.on')
+      jqueryListener or up.fail('up.off(): The callback %o was never registered through up.on()', upListener)
     jqueryDescription.push(jqueryListener)
     jqueryDescription
 
@@ -411,7 +411,6 @@ up.bus = (($) ->
     # moment when the framework was booted.
     doomedDescriptions = u.reject(liveUpDescriptions, (description) -> description.isDefault)
     unbind(description...) for description in doomedDescriptions
-    renamedEvents = {}
 
   ###*
   Resets Unpoly to the state when it was booted.

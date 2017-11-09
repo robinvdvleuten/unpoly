@@ -293,7 +293,6 @@ up.proxy = (($) ->
     up.log.warn('up.ajax() has been deprecated. Use up.request() instead.')
     new Promise (resolve, reject) ->
       pickResponseText = (response) -> resolve(response.text)
-
       makeRequest(args...).then(pickResponseText, reject)
 
   ###*
@@ -521,7 +520,7 @@ up.proxy = (($) ->
   @experimental
   ###
 
-  up.bus.renamedEvent('up:proxy:receive', 'up:proxy:loaded')
+  up.bus.renamedEvent('up:proxy:received', 'up:proxy:loaded')
 
   checkPreload = ($link) ->
     delay = parseInt(u.presentAttr($link, 'up-delay')) || config.preloadDelay 

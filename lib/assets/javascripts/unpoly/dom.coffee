@@ -379,8 +379,11 @@ up.dom = (($) ->
         swapPromises = []
         for step in extractSteps
           up.log.group 'Updating %s', step.selector, ->
+            up.puts('Before fixScripts on %o', step.$new.get(0))
             fixScripts(step.$new.get(0))
+            up.puts('Before swapElements on %o / %o', step.$new.get(0))
             swapPromise = swapElements(step.$old, step.$new, step.pseudoClass, step.transition, options)
+            up.puts('Got promise %o', swapPromise)
             swapPromises.push(swapPromise)
             # When extracting multiple selectors, we only want to reveal the first element.
             # So we set the { reveal } option to false for the next iteration.

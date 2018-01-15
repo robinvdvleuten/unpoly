@@ -428,6 +428,7 @@ up.dom = (($) ->
       element.parentNode.removeChild(element)
     else
       for child in element.children
+        up.puts('Before recursive fixScripts for %o', child)
         fixScripts(child)
 
   parseResponseDoc = (html) ->

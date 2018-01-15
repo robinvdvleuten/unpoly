@@ -385,6 +385,12 @@ up.syntax = (($) ->
     # destroying a clone of such an element. E.g. Unpoly creates a clone when keeping an
     # [up-keep] element, and that clone still has the .up-destructible class.
     destructors = u.compact destructors
+    loggingDestructor = (d) ->
+      ->
+        up.puts("Running destructor %o on %o", d, $fragment.get(0))
+        d()
+
+    destructors = u.map destructors, loggingDestructor
     u.sequence(destructors...)
 
   ###*

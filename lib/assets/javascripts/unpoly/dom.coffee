@@ -380,7 +380,7 @@ up.dom = (($) ->
         for step in extractSteps
           up.log.group 'Updating %s', step.selector, ->
             up.puts('Before fixScripts on %o', step.$new.get(0))
-            fixScripts(step.$new.get(0))
+            fixScripts(step.$new)
             up.puts('Before swapElements on %o / %o', step.$new.get(0))
             swapPromise = swapElements(step.$old, step.$new, step.pseudoClass, step.transition, options)
             up.puts('Got promise %o', swapPromise)
@@ -404,7 +404,12 @@ up.dom = (($) ->
     cascade = new up.ExtractCascade(selector, options)
     cascade.bestMatchingSteps()
 
-  fixScripts = (element) ->
+  fixScripts = ($element) ->
+    changes = []
+    fixScriptsRecursive($element.get(0), changes)
+    change() for change in changes
+
+  fixScriptsRecursive = (element, changes) ->
     # IE11 and Edge cannot find <noscript> tags with jQuery or querySelector() or getElementsByTagName()
     # when the tag was created by DOMParser. That's why we traverse the DOM manually.
     # https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/12453464/
@@ -418,18 +423,18 @@ up.dom = (($) ->
       # work with <noscript> tags, such as lazysizes.
       # http://w3c.github.io/DOM-Parsing/#dom-domparser-parsefromstring
       clone.textContent = element.innerHTML
-      element.parentNode.replaceChild(clone, element)
+      changes.push -> element.parentNode.replaceChild(clone, element)
     else if element.tagName == 'SCRIPT'
       # We don't support the execution of <script> tags in new fragments.
       # This is a feature that we had in Unpoly once, but no one used it for years.
       # It's also tricky to implement since <script> tags created by DOMParser are
       # marked as non-executable.
       # http://w3c.github.io/DOM-Parsing/#dom-domparser-parsefromstring
-      element.parentNode.removeChild(element)
+      changes.push -> element.parentNode.removeChild(element)
     else
       for child in element.children
         up.puts('Before recursive fixScripts for %o', child)
-        fixScripts(child)
+        fixScriptsRecursive(child, changes)
 
   parseResponseDoc = (html) ->
     # jQuery cannot construct transient elements that contain <html> or <body> tags

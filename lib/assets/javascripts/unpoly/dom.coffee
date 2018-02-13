@@ -231,6 +231,7 @@ up.dom = (($) ->
     options = u.options(options)
 
     options.inspectResponse = fullLoad = -> up.browser.navigate(url, u.only(options, 'method', 'data'))
+    options.hungry = u.option(options.hungry, true)
 
     if !up.browser.canPushState() && options.history != false
       fullLoad() unless options.preload
@@ -243,6 +244,8 @@ up.dom = (($) ->
       humanizedTarget: 'failure target'
       provideTarget: undefined # don't provide a target if we're targeting the failTarget
       restoreScroll: false
+      hungry: false
+
     u.renameKey(failureOptions, 'failTransition', 'transition')
     u.renameKey(failureOptions, 'failLayer', 'layer')
     u.renameKey(failureOptions, 'failReveal', 'reveal')
@@ -380,6 +383,15 @@ up.dom = (($) ->
         if shouldExtractTitle(options) && responseTitle = responseDoc.title()
           options.title = responseTitle
         updateHistoryAndTitle(options)
+
+        if options.hungry
+          for hungry in $('[up-hungry]')
+            $hungry = $(hungry)
+            selector = u.selectorForElement($hungry)
+            if $newHungry = responseDoc.first(selector)
+              extractSteps.push
+                $old: $hungry
+                $new: $newHungry
 
         swapPromises = []
         for step in extractSteps

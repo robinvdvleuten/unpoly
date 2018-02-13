@@ -10,6 +10,12 @@ This project mostly adheres to [Semantic Versioning](http://semver.org/).
 Unreleased
 ----------
 
+### General
+
+- When generating CSS selectors for elements, `[aria-label]` attributes are used if no better attributes exist.
+- When generating CSS selectors for elements, attribute values with quotes are now escaped if they appear in an attribute selector.
+- When generating CSS selectors for elements, attribute selectors now use double quotes instead of single quotes.
+
 ### Forms
 
 - You can give forms an `[up-fail-reveal]` attribute to indicate which element should be [revealed](/up.reveal) when the server responds with an error. You may use this, for example, to reveal the first validation error message:
@@ -21,6 +27,7 @@ Unreleased
 - Forms with an `[up-reveal]` attribute will now only honor the attribute when the form submission was successful.
 - Forms with an `[up-restore-scroll]` attribute will now only honor the attribute when the form submission was successful.
 - Forms with an `[up-reveal="css-selector"]` attribute will no longer crash when the selector could not be found.
+- Fix a bug where you couldn't submit a form if it's ID contains a slash characters ([#46](https://github.com/unpoly/unpoly/issues/46)).
 
 
 ### Links

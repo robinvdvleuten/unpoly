@@ -568,6 +568,10 @@ up.util = (($) ->
     else
       object
 
+  eachJQuery = (collection, block) ->
+    each collection, (element, index) ->
+      block($(element), index)
+
   ###*
   Creates a new object by merging together the properties from the given objects.
 
@@ -1909,6 +1913,7 @@ up.util = (($) ->
   microtask: microtask
   separatedValues : separatedValues
   isEqual: isEqual
+  eachJQuery: eachJQuery
 
 )(jQuery)
 

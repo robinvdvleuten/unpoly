@@ -125,9 +125,9 @@ up.form = (($) ->
     with the request.
   @param {string} [options.layer='auto']
     The name of the layer that ought to be updated. Valid values are
-    `auto`, `page`, `modal` and `popup`.
+    `'auto'`, `'page'`, `'modal'` and `'popup'`.
 
-    If set to `auto` (default), Unpoly will try to find a match in the form's layer.
+    If set to `'auto'` (default), Unpoly will try to find a match in the form's layer.
   @param {string} [options.failLayer='auto']
     The name of the layer that ought to be updated if the server sends a non-200 status code.
   @return {Promise}
@@ -547,9 +547,9 @@ up.form = (($) ->
     or `method` (vanilla HTML) for the same purpose.
   @param {string} [up-layer='auto']
     The name of the layer that ought to be updated. Valid values are
-    `auto`, `page`, `modal` and `popup`.
+    `'auto'`, `'page'`, `'modal'` and `'popup'`.
 
-    If set to `auto` (default), Unpoly will try to find a match in the form's layer.
+    If set to `'auto'` (default), Unpoly will try to find a match in the form's layer.
     If no match was found in that layer,
     Unpoly will search in other layers, starting from the topmost layer.
   @param {string} [up-fail-layer='auto']

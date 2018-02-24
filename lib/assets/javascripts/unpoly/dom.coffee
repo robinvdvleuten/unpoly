@@ -216,9 +216,9 @@ up.dom = (($) ->
     The element's selector will be substituted for the `&` shorthand in the target selector.
   @param {string} [options.layer='auto']
     The name of the layer that ought to be updated. Valid values are
-    `auto`, `page`, `modal` and `popup`.
+    `'auto'`, `'page'`, `'modal'` and `'popup'`.
 
-    If set to `auto` (default), Unpoly will try to find a match in the
+    If set to `'auto'` (default), Unpoly will try to find a match in the
     same layer as the element that triggered the replacement (see `options.origin`).
     If that element is not known, or no match was found in that layer,
     Unpoly will search in other layers, starting from the topmost layer.
@@ -772,7 +772,7 @@ up.dom = (($) ->
   @param {string|Element|jQuery|Array<Element>} selectorOrElement
   @param {string} [options.layer='auto']
     The name of the layer in which to find the element. Valid values are
-    `auto`, `page`, `modal` and `popup`.
+    `'auto'`, `'page'`, `'modal'` and `'popup'`.
   @param {string|Element|jQuery} [options.origin]
     An second element or selector that can be referenced as `&` in the first selector:
 
@@ -842,7 +842,7 @@ up.dom = (($) ->
         up.first('.field:has(&)', $input); // returns the .field containing $input
   @param {string} [options.layer]
     The name of the layer in which to find the element. Valid values are
-    `page`, `modal` and `popup`.
+    `'page'`, `'modal'` and `'popup'`.
   @return {jQuery}
     A jQuery collection of matching elements.
   @experimental

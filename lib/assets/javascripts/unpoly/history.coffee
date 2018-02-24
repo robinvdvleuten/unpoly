@@ -43,12 +43,12 @@ up.history = (($) ->
   previousUrl = undefined
   nextPreviousUrl = undefined
 
-  waypoints = new up.Cache
+  savedScreens = new up.Cache
     size: -> config.maxWaypoints
 
   reset = ->
     config.reset()
-    waypoints.clear()
+    savedScreens.clear()
     previousUrl = undefined
     nextPreviousUrl = undefined
 
@@ -211,6 +211,78 @@ up.history = (($) ->
   @experimental
   ###
 
+  ###*
+  DOCUMENT ME
+
+  @function up.history.restoreScreen
+  @experimental
+  ###
+  restoreScreen = (screenUrl, options) ->
+    if props = restoreScreenProps(screenUrl, options)
+      visit(props.url, props)
+    else
+      Promise.reject(new Error("No saved screen named \"#{screenUrl}\""))
+
+  restoreScreenProps = (screenUrl, options) ->
+    options = u.options(options, forget: true)
+
+    screenUrl = new up.URLEditor(screenUrl)
+    screen = screenUrl.pathname
+
+    if waypoint = savedScreens.get(screen)
+      forgetScreen(screen) if options.forget
+
+      restoredUrl = new up.UrlEditor(waypoint.url)
+      restoredUrl.appendParams(waypoint.formParams)
+      restoredUrl.appendParams(waypoint.contextParams)
+      restoredUrl.appendParams(screenUrl.params)
+
+      url: restoredUrl.toURLString()
+      restoreScroll: waypoint.scrollTops
+
+  manipulateFollowFromRestoredScreen = (event, restoreOptions) ->
+    if screenUrl = u.option(event.followOptions.restoreScreen, event.$link.attr('up-restore-screen'))
+      if props = restoreScreenProps(screenUrl, restoreOptions)
+        u.assign(event.followOptions, props)
+
+  ###*
+  DOCUMENT ME
+
+  @function up.history.saveScreen
+  @experimental
+  ###
+  saveScreen = (screenUrl, options) ->
+    screenUrl = new URLEditor(screenUrl)
+
+    layer = options.layer || up.dom.topLayer()
+
+    $forms = up.all('form:not([up-save-form="false"])', { layer })
+    formParams = u.flatMap $forms, (form) ->
+      u.requestDataFromForm(form, representation: 'array')
+
+    name = screenUrl.pathname
+    waypoint =
+      url: currentUrl(),             # we start with params in the URL
+      formParams: formParams         # then add params from visible forms in this layer
+      contextParams: screenUrl.params  # then add params fron the waypoint definitions
+      scrollTops: scrollTops
+    savedScreens.put(name, waypoint)
+
+  saveScreenBeforeFollow = (event) ->
+    $link = event.$link
+    if screenUrl = u.option(event.followOptions.saveScreen, $link.attr('up-save-screen'))
+      layer = up.dom.layerOf($link)
+      saveScreen(screenUrl, { layer })
+
+  ###*
+  DOCUMENT ME
+
+  @function up.history.forgetScreen
+  @experimental
+  ###
+  forgetScreen = (screen) ->
+    savedScreens.remove(screen)
+
   if up.browser.canPushState()
     register = ->
       $(window).on "popstate", pop
@@ -258,46 +330,12 @@ up.history = (($) ->
       $link.removeAttr 'up-back'
       up.link.makeFollowable($link)
 
-  considerRestoreScreen = ($link, options, deleteStateKey) ->
-    if slotWithQuery = $link.attr('up-restore-screen')
-      slotUrl = new up.URLEditor(slotWithQuery)
-
-      name = slotUrl.pathname
-      if waypoint = waypoints.get(name)
-        waypoints.remove(name) if deleteStateKey
-
-        restoredUrl = new up.UrlEditor(waypoint.url)
-        restoredUrl.appendParams(waypoint.formParams)
-        restoredUrl.appendParams(waypoint.contextParams)
-        restoredUrl.appendParams(slotUrl.params)
-
-        options.url = restoredUrl.toURLString()
-        options.restoreScroll = waypoint.scrollTops
-
-  considerSaveScreen = ($link) ->
-    if slotWithQuery = $link.attr('up-save-screen')
-      slotUrl = new URLEditor(slotWithQuery)
-
-      layer = up.dom.layerOf($link)
-
-      $forms = up.all('form:not([up-save-form="false"])', { layer })
-      formParams = u.flatMap $forms, (form) ->
-        u.requestDataFromForm(form, representation: 'array')
-
-      name = slotUrl.pathname
-      waypoint =
-        url: currentUrl(),             # we start with params in the URL
-        formParams: formParams         # then add params from visible forms in this layer
-        contextParams: slotUrl.params  # then add params fron the waypoint definitions
-        scrollTops: scrollTops
-      waypoints.put(name, waypoint)
-
   up.bus.on 'up:link:follow', (event) ->
-    considerSaveScreen(event.$link)
-    considerRestoreScreen(event.$link, event.options, true)
+    saveScreenBeforeFollow(event)
+    manipulateFollowFromRestoredScreen(event, forget: true)
 
   up.bus.on 'up:link:preload', (event) ->
-    considerRestoreScreen(event.$link, event.options, false)
+    manipulateFollowFromRestoredScreen(event, forget: false)
 
   up.on 'up:framework:reset', reset
 
@@ -308,5 +346,8 @@ up.history = (($) ->
   isUrl: isCurrentUrl
   previousUrl: -> previousUrl
   normalizeUrl: normalizeUrl
+  saveScreen: saveScreen
+  restoreScreen: restoreScreen
+  forgetScreen: forgetScreen
 
 )(jQuery)

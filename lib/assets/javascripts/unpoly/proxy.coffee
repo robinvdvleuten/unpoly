@@ -601,7 +601,7 @@ up.proxy = (($) ->
     options = u.options(options)
 
     if up.link.isSafe($link)
-      preloadEventAttrs = { message: ['Preloading link %o', $link.get(0)], $element: $link, options }
+      preloadEventAttrs = { message: ['Preloading link %o', $link.get(0)], $element: $link, followOptions: options }
       up.bus.whenEmitted('up:link:preload', preloadEventAttrs).then ->
         variant = up.link.followVariantForLink($link)
         variant.preloadLink($link)

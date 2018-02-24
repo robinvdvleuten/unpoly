@@ -85,14 +85,25 @@ up.link = (($) ->
     The URL to visit.
   @param {string} [options.target='body']
     The selector to replace.
+  @param {string} [options.layer='page']
+    The layer in which to open the URL.
+
+    Valid options are
   @param {Object} [options]
     See options for [`up.replace()`](/up.replace)
   @stable
   ###
   visit = (url, options) ->
-    options = u.options(options)
-    selector = u.option(options.target, 'body')
-    up.replace(selector, url, options)
+    options = u.options(options, layer: 'page')
+
+    switch options.layer
+      when 'page'
+        selector = u.option(options.target, 'body')
+        up.replace(selector, url, options)
+      when 'modal'
+        up.modal.visit(url, options)
+      else
+        up.fail("Cannot directly visit a URL in layer \"#{options.layer}\"")
 
   ###*
   Follows the given link via AJAX and [replaces](/up.replace) the current page
@@ -384,9 +395,9 @@ up.link = (($) ->
     or make an educated guess (default).
   @param {string} [up-layer='auto']
     The name of the layer that ought to be updated. Valid values are
-    `auto`, `page`, `modal` and `popup`.
+    `'auto'`, `'page'`, `'modal'` and `'popup'`.
 
-    If set to `auto` (default), Unpoly will try to find a match in the link's layer.
+    If set to `'auto'` (default), Unpoly will try to find a match in the link's layer.
     If no match was found in that layer,
     Unpoly will search in other layers, starting from the topmost layer.
   @param {string} [up-fail-layer='auto']

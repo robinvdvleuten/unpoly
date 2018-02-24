@@ -770,7 +770,7 @@ up.dom = (($) ->
 
   @function up.first
   @param {string|Element|jQuery|Array<Element>} selectorOrElement
-  @param {string} options.layer
+  @param {string} [options.layer='auto']
     The name of the layer in which to find the element. Valid values are
     `auto`, `page`, `modal` and `popup`.
   @param {string|Element|jQuery} [options.origin]
@@ -824,7 +824,7 @@ up.dom = (($) ->
       'page'
 
   matchesLayer = (selectorOrElement, layer) ->
-    layerOf(selectorOrElement) == layer
+    !layer || layerOf(selectorOrElement) == layer
 
   ###*
   Returns all elements matching the given selector, but
@@ -840,6 +840,9 @@ up.dom = (($) ->
 
         $input = $('input.email');
         up.first('.field:has(&)', $input); // returns the .field containing $input
+  @param {string} [options.layer]
+    The name of the layer in which to find the element. Valid values are
+    `page`, `modal` and `popup`.
   @return {jQuery}
     A jQuery collection of matching elements.
   @experimental
@@ -847,7 +850,9 @@ up.dom = (($) ->
   all = (selectorOrElements, options) ->
     options = u.options(options)
     resolved = resolveSelector(selectorOrElements, options.origin)
-    $(resolved).filter (index, element) -> isRealElement(element)
+    $(resolved).filter (index, element) ->
+      $element = $(element)
+      isRealElement($element) && matchesLayer($element, options.layer)
 
   ###*
   Destroys the given element or selector.
@@ -987,6 +992,7 @@ up.dom = (($) ->
   resolveSelector: resolveSelector
   hello: hello
   config: config
+  layerOf: layerOf
 
 )(jQuery)
 

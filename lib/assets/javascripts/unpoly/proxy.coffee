@@ -596,15 +596,28 @@ up.proxy = (($) ->
     A promise that will be fulfilled when the request was loaded and cached
   @experimental
   ###
-  preload = (linkOrSelector) ->
+  preload = (linkOrSelector, options) ->
     $link = $(linkOrSelector)
+    options = u.options(options)
 
     if up.link.isSafe($link)
-      up.log.group "Preloading link %o", $link.get(0), ->
+      preloadEventAttrs = { message: ['Preloading link %o', $link.get(0)], $element: $link, options }
+      up.bus.whenEmitted('up:link:preload', preloadEventAttrs).then ->
         variant = up.link.followVariantForLink($link)
         variant.preloadLink($link)
     else
       Promise.reject(new Error("Won't preload unsafe link"))
+
+  ###*
+  This event is [emitted](/up.emit) before a link is [preloaded](/up.preload).
+
+  @event up:link:preload
+  @param {jQuery} event.$link
+    The link element that will be preloaded.
+  @param event.preventDefault()
+    Event listeners may call this method to prevent the link from being preloaded.
+  @stable
+  ###
 
   ###*
   @internal

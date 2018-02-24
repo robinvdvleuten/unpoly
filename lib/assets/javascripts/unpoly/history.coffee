@@ -43,7 +43,8 @@ up.history = (($) ->
   previousUrl = undefined
   nextPreviousUrl = undefined
 
-  waypoints = new up.Cache(size: config.maxWaypoints)
+  waypoints = new up.Cache
+    size: -> config.maxWaypoints
 
   reset = ->
     config.reset()
@@ -153,39 +154,12 @@ up.history = (($) ->
       state = buildState()
       window.history[method](state, '', url)
       observeNewUrl(currentUrl())
-      observeWaypoints()
       true
     else
       false
 
   buildState = ->
-    # waypointIndexes = upsertWaypointIndexes()
     fromUp: true
-    # waypointIndexes: waypointIndexes
-
-  observeWaypoints = ->
-    $waypoints = $('[up-waypoint]')
-    u.eachJQuery $waypoints, ($waypoint) ->
-      names = u.separatedValues($waypoint.attr('up-waypoint'), ' ')
-      waypoint = new up.Waypoint()
-      waypoint.updateFromElement($waypoint)
-      for name in names
-        waypoints.set(name, waypoint)
-
-  upsertWaypointIndexes = ->
-    $waypoints = $('[up-waypoint]')
-
-    u.flatMap $waypoints, (waypoint) ->
-      $waypoint = $(waypoint)
-      names = u.separatedValues($waypoint.attr('up-waypoint'), ' ')
-      previousIndexes = u.separatedValues($waypoint.attr('up-waypoint-index'), ' ')
-      newIndexes = u.map names, (name, i) ->
-        previousIndex = previousIndexes[i] # might be undefined if it's a new waypoint
-        waypoint = waypoints.upsert(name, previousIndex)
-        waypoint.index
-      unless u.isEqual(previousIndexes, newIndexes)
-        $waypoint.attr('up-waypoint-index', newIndexes.join(' '))
-      newIndexes
 
   restoreStateOnPop = (state) ->
     if state?.fromUp
@@ -283,6 +257,47 @@ up.history = (($) ->
         'up-restore-scroll': ''
       $link.removeAttr 'up-back'
       up.link.makeFollowable($link)
+
+  considerRestoreScreen = ($link, options, deleteStateKey) ->
+    if slotWithQuery = $link.attr('up-restore-screen')
+      slotUrl = new up.URLEditor(slotWithQuery)
+
+      name = slotUrl.pathname
+      if waypoint = waypoints.get(name)
+        waypoints.remove(name) if deleteStateKey
+
+        restoredUrl = new up.UrlEditor(waypoint.url)
+        restoredUrl.appendParams(waypoint.formParams)
+        restoredUrl.appendParams(waypoint.contextParams)
+        restoredUrl.appendParams(slotUrl.params)
+
+        options.url = restoredUrl.toURLString()
+        options.restoreScroll = waypoint.scrollTops
+
+  considerSaveScreen = ($link) ->
+    if slotWithQuery = $link.attr('up-save-screen')
+      slotUrl = new URLEditor(slotWithQuery)
+
+      layer = up.dom.layerOf($link)
+
+      $forms = up.all('form:not([up-save-form="false"])', { layer })
+      formParams = u.flatMap $forms, (form) ->
+        u.requestDataFromForm(form, representation: 'array')
+
+      name = slotUrl.pathname
+      waypoint =
+        url: currentUrl(),             # we start with params in the URL
+        formParams: formParams         # then add params from visible forms in this layer
+        contextParams: slotUrl.params  # then add params fron the waypoint definitions
+        scrollTops: scrollTops
+      waypoints.put(name, waypoint)
+
+  up.bus.on 'up:link:follow', (event) ->
+    considerSaveScreen(event.$link)
+    considerRestoreScreen(event.$link, event.options, true)
+
+  up.bus.on 'up:link:preload', (event) ->
+    considerRestoreScreen(event.$link, event.options, false)
 
   up.on 'up:framework:reset', reset
 

@@ -163,7 +163,7 @@ up.form = (($) ->
       options.failTransition = false
       options.headers[up.protocol.config.validateHeader] = options.validate
 
-    up.bus.whenEmitted('up:form:submit', $element: $form).then ->
+    up.bus.whenEmitted('up:form:submit', message: 'Submitting form', $form: $form, $element: $form).then ->
       up.feedback.start($form)
 
       # If we can't update the location URL, fall back to a vanilla form submission.
@@ -180,7 +180,7 @@ up.form = (($) ->
   This event is [emitted](/up.emit) when a form is [submitted](/up.submit) through Unpoly.
 
   @event up:form:submit
-  @param {jQuery} event.$element
+  @param {jQuery} event.$form
     The `<form>` element that will be submitted.
   @param event.preventDefault()
     Event listeners may call this method to prevent the form from being submitted.

@@ -146,7 +146,7 @@ up.link = (($) ->
   This event is [emitted](/up.emit) when a link is [followed](/up.follow) through Unpoly.
 
   @event up:link:follow
-  @param {jQuery} event.$element
+  @param {jQuery} event.$link
     The link element that will be followed.
   @param event.preventDefault()
     Event listeners may call this method to prevent the link from being followed.
@@ -162,7 +162,7 @@ up.link = (($) ->
 
     options = u.options(options)
 
-    url = u.option($link.attr('up-href'), $link.attr('href'))
+    url = u.option(options.url, $link.attr('up-href'), $link.attr('href'))
     target = u.option(options.target, $link.attr('up-target'))
     options.failTarget = u.option(options.failTarget, $link.attr('up-fail-target'))
     options.fallback = u.option(options.fallback, $link.attr('up-fallback'))

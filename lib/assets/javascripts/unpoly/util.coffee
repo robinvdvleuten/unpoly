@@ -1381,7 +1381,8 @@ up.util = (($) ->
   @return {Array|FormData}
   @internal
   ###
-  requestDataFromForm = (form) ->
+  requestDataFromForm = (form, options) ->
+    options = u.options(options)
     $form = $(form)
     hasFileInputs = $form.find('input[type=file]').length
 
@@ -1393,7 +1394,12 @@ up.util = (($) ->
     # We cannot inspect FormData on IE11 because it has no support for `FormData.entries`.
     # Inspection is needed to generate a cache key (see `up.proxy`) and to make
     # vanilla requests when `pushState` is unavailable (see `up.browser.navigate`).
-    data = if hasFileInputs then new FormData($form.get(0)) else $form.serializeArray()
+    data = undefined
+    if !hasFileInputs || options.representation == 'array'
+      data = $form.serializeArray()
+    else
+      data = new FormData($form.get(0))
+
     appendRequestData(data, buttonName, buttonValue) if isPresent(buttonName)
     data
 

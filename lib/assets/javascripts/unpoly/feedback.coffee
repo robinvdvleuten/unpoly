@@ -320,4 +320,4 @@ up.feedback = (($) ->
 
 )(jQuery)
 
-up.renamedModule 'navigation', 'feedback'
+up.deprecateRenamedModule 'navigation', 'feedback'

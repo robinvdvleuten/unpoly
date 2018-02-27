@@ -154,7 +154,7 @@ up.form = (($) ->
     options.origin = u.option(options.origin, $form)
     options.layer = u.option(options.layer, $form.attr('up-layer'), 'auto')
     options.failLayer = u.option(options.failLayer, $form.attr('up-fail-layer'), 'auto')
-    options.data = u.requestDataFromForm($form)
+    options.params = u.paramsFromForm($form)
     options = u.merge(options, up.motion.animateOptions(options, $form))
 
     if options.validate
@@ -468,7 +468,7 @@ up.form = (($) ->
 
   \#\#\# Failed submission
 
-  When the server was unable to save the form due to invalid data,
+  When the server was unable to save the form due to invalid params,
   it will usually re-render an updated copy of the form with
   validation messages.
 

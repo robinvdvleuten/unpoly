@@ -4,15 +4,15 @@ class up.URLEditor
 
   constructor: (url) ->
     [@pathname, @search] = url.split('?')
-    @params = u.requestDataAsArray(@search)
+    @params = u.paramsAsArray(@search)
 
   appendParams: (newParams) =>
-    newParams = u.requestDataAsArray(newParams)
+    newParams = u.paramsAsArray(newParams)
     @params = @params.concat(newParams)
 
   toURLString: =>
     string = @pathname
     if u.isPresent(@params)
       string += "?"
-      string += u.requestDataAsQuery(@params)
+      string += u.paramsAsQuery(@params)
     string

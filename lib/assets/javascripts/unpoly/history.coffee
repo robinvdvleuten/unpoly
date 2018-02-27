@@ -258,7 +258,7 @@ up.history = (($) ->
 
     $forms = up.all('form:not([up-save-form="false"])', { layer })
     formParams = u.flatMap $forms, (form) ->
-      u.requestDataFromForm(form, representation: 'array')
+      u.paramsFromForm(form, representation: 'array')
 
     name = screenUrl.pathname
     waypoint =

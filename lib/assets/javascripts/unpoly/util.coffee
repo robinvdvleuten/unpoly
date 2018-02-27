@@ -1311,20 +1311,20 @@ up.util = (($) ->
   Normalizes the given params object to the form returned by
   [`jQuery.serializeArray`](https://api.jquery.com/serializeArray/).
 
-  @function up.util.requestDataAsArray
-  @param {Object|Array|undefined|null} data
+  @function up.util.paramsAsArray
+  @param {Object|Array|undefined|null} params
   @internal
   ###
-  requestDataAsArray = (data) ->
-    if isArray(data)
-      data
-    if isFormData(data)
+  paramsAsArray = (params) ->
+    if isArray(params)
+      params
+    if isFormData(params)
       # Until FormData#entries is implemented in all major browsers we must give up here.
       # However, up.form will prefer to serialize forms as arrays, so we should be good
       # in most cases. We only use FormData for forms with file inputs.
       up.fail('Cannot convert FormData into an array')
     else
-      query = requestDataAsQuery(data)
+      query = paramsAsQuery(params)
       array = []
       for part in query.split('&')
         if isPresent(part)
@@ -1339,22 +1339,22 @@ up.util = (($) ->
 
   The returned string does **not** include a leading `?` character.
 
-  @function up.util.requestDataAsQuery
-  @param {Object|Array|undefined|null} data
+  @function up.util.paramsAsQuery
+  @param {Object|Array|undefined|null} params
   @internal
   ###
-  requestDataAsQuery = (data, opts) ->
+  paramsAsQuery = (params, opts) ->
     opts = newOptions(opts, purpose: 'url')
 
-    if isString(data)
-      data.replace(/^\?/, '')
-    else if isFormData(data)
+    if isString(params)
+      params.replace(/^\?/, '')
+    else if isFormData(params)
       # Until FormData#entries is implemented in all major browsers we must give up here.
       # However, up.form will prefer to serialize forms as arrays, so we should be good
       # in most cases. We only use FormData for forms with file inputs.
       up.fail('Cannot convert FormData into a query string')
-    else if isPresent(data)
-      query = $.param(data)
+    else if isPresent(params)
+      query = $.param(params)
       switch opts.purpose
         when 'url'
           query = query.replace(/\+/g, '%20')
@@ -1375,13 +1375,13 @@ up.util = (($) ->
       $form.find(submitButtonSelector).first()
 
   ###*
-  Serializes the given form into a request data representation.
+  Serializes the given form into a request params representation.
 
-  @function up.util.requestDataFromForm
+  @function up.util.paramsFromForm
   @return {Array|FormData}
   @internal
   ###
-  requestDataFromForm = (form, options) ->
+  paramsFromForm = (form, options) ->
     options = newOptions(options)
     $form = $(form)
     hasFileInputs = $form.find('input[type=file]').length
@@ -1394,53 +1394,53 @@ up.util = (($) ->
     # We cannot inspect FormData on IE11 because it has no support for `FormData.entries`.
     # Inspection is needed to generate a cache key (see `up.proxy`) and to make
     # vanilla requests when `pushState` is unavailable (see `up.browser.navigate`).
-    data = undefined
+    params = undefined
     if !hasFileInputs || options.representation == 'array'
-      data = $form.serializeArray()
+      params = $form.serializeArray()
     else
-      data = new FormData($form.get(0))
+      params = new FormData($form.get(0))
 
-    appendRequestData(data, buttonName, buttonValue) if isPresent(buttonName)
-    data
+    appendParams(params, buttonName, buttonValue) if isPresent(buttonName)
+    params
 
 
   ###*
-  Adds a key/value pair to the given request data representation.
+  Adds a key/value pair to the given request parameter representation.
 
-  This mutates the given `data` if `data` is a `FormData`, an object
-  or an array. When `data` is a string a new string with the appended key/value
+  This mutates the given `params` if `params` is a `FormData`, an object
+  or an array. When `params` is a string a new string with the appended key/value
   pair is returned.
 
-  @function up.util.appendRequestData
-  @param {FormData|Object|Array|undefined|null} data
+  @function up.util.appendParams
+  @param {FormData|Object|Array|undefined|null} params
   @param {string} key
   @param {string|Blob|File} value
   @internal
   ###
-  appendRequestData = (data, name, value, opts) ->
-    data ||= []
+  appendParams = (params, name, value, opts) ->
+    params ||= []
 
-    if isArray(data)
-      data.push(name: name, value: value)
-    else if isFormData(data)
-      data.append(name, value)
-    else if isObject(data)
-      data[name] = value
-    else if isString(data)
-      newPair = requestDataAsQuery([ name: name, value: value ], opts)
-      data = [data, newPair].join('&')
-    data
+    if isArray(params)
+      params.push(name: name, value: value)
+    else if isFormData(params)
+      params.append(name, value)
+    else if isObject(params)
+      params[name] = value
+    else if isString(params)
+      newPair = paramsAsQuery([ name: name, value: value ], opts)
+      params = [params, newPair].join('&')
+    params
 
   ###*
-  Merges the request data in `source` into `target`.
+  Merges the request params from `source` into `target`.
   Will modify the passed-in `target`.
 
   @return
-    The merged form data.
+    The merged form params.
   ###
-  mergeRequestData = (target, source) ->
-    each requestDataAsArray(source), (field) ->
-      target = appendRequestData(target, field.name, field.value)
+  mergeParams = (target, source) ->
+    each paramsAsArray(source), (field) ->
+      target = appendParams(target, field.name, field.value)
     target
 
   ###*
@@ -1505,6 +1505,11 @@ up.util = (($) ->
 
   renameKey = (object, oldKey, newKey) ->
     object[newKey] = pluckKey(object, oldKey)
+
+  deprecateRenamedKey = (object, oldKey, newKey) ->
+    if isDefined(object[oldKey])
+      up.log.warn('Deprecated: Object key { %s } has been renamed to { %s } (found in %o)', oldKey, newKey, object)
+      renameKey(object, oldKey, newKey)
 
   pluckData = (elementOrSelector, key) ->
     $element = $(elementOrSelector)
@@ -1801,11 +1806,11 @@ up.util = (($) ->
     else
       a == b
 
-  requestDataAsArray: requestDataAsArray
-  requestDataAsQuery: requestDataAsQuery
-  appendRequestData: appendRequestData
-  mergeRequestData:  mergeRequestData
-  requestDataFromForm: requestDataFromForm
+  paramsAsArray: paramsAsArray
+  paramsAsQuery: paramsAsQuery
+  appendParams: appendParams
+  mergeParams:  mergeParams
+  paramsFromForm: paramsFromForm
   offsetParent: offsetParent
   fixedToAbsolute: fixedToAbsolute
   isFixed: isFixed
@@ -1893,6 +1898,7 @@ up.util = (($) ->
   pluckData: pluckData
   pluckKey: pluckKey
   renameKey: renameKey
+  deprecateRenamedKey: deprecateRenamedKey
   extractOptions: extractOptions
   isDetached: isDetached
   noop: noop

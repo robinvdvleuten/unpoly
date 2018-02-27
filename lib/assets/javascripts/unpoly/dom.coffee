@@ -175,7 +175,7 @@ up.dom = (($) ->
     You can also pass `false` to explicitly prevent the title from being updated.
   @param {string} [options.method='get']
     The HTTP method to use for the request.
-  @param {Object|Array|FormData} [options.data]
+  @param {Object|Array|FormData} [options.params]
     Parameters that should be sent as the request's payload.
 
     Parameters can either be passed as an object (where the property names become
@@ -232,7 +232,7 @@ up.dom = (($) ->
   replace = (selectorOrElement, url, options) ->
     options = u.options(options)
 
-    options.inspectResponse = fullLoad = -> up.browser.navigate(url, u.only(options, 'method', 'data'))
+    options.inspectResponse = fullLoad = -> up.browser.navigate(url, u.only(options, 'method', 'params'))
 
     if !up.browser.canPushState() && options.history != false
       fullLoad() unless options.preload
@@ -262,7 +262,8 @@ up.dom = (($) ->
     request =
       url: url
       method: options.method
-      data: options.data
+      data: options.data # deprecated, use { params }
+      params: options.params
       target: improvedTarget
       failTarget: improvedFailTarget
       cache: options.cache
@@ -1004,4 +1005,4 @@ up.first = up.dom.first
 up.all = up.dom.all
 up.hello = up.dom.hello
 
-up.renamedModule 'flow', 'dom'
+up.deprecateRenamedModule 'flow', 'dom'

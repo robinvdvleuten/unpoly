@@ -157,7 +157,7 @@ up.proxy = (($) ->
 
   \#\#\# Example
 
-      up.request('/search', data: { query: 'sunshine' }).then(function(response) {
+      up.request('/search', params: { query: 'sunshine' }).then(function(response) {
         console.log('The response text is %o', response.text);
       }).catch(function() {
         console.error('The request failed');
@@ -192,7 +192,7 @@ up.proxy = (($) ->
     requests, if available. If set to `false` a network connection will always be attempted.
   @param {Object} [options.headers={}]
     An object of additional HTTP headers.
-  @param {Object|Array|FormData} [options.data={}]
+  @param {Object|Array|FormData} [options.params={}]
     Parameters that should be sent as the request's payload.
 
     Parameters may be passed as one of the following forms:
@@ -264,7 +264,7 @@ up.proxy = (($) ->
 
   \#\#\# Example
 
-      up.request('/search', data: { query: 'sunshine' }).then(function(text) {
+      up.request('/search', params: { query: 'sunshine' }).then(function(text) {
         console.log('The response text is %o', text);
       }).catch(function() {
         console.error('The request failed');
@@ -286,7 +286,7 @@ up.proxy = (($) ->
   @param {Object} [request.headers={}]
     An object of additional header key/value pairs to send along
     with the request.
-  @param {Object|Array|FormData} [options.data]
+  @param {Object|Array|FormData} [options.params]
     Parameters that should be sent as the request's payload.
 
     Parameters may be passed as one of the following forms:
@@ -563,7 +563,7 @@ up.proxy = (($) ->
   ###
   clear = cache.clear
 
-  up.bus.renamedEvent('up:proxy:received', 'up:proxy:loaded')
+  up.bus.deprecateRenamedEvent('up:proxy:received', 'up:proxy:loaded')
 
   preloadAfterDelay = ($link) ->
     delay = parseInt(u.presentAttr($link, 'up-delay')) || config.preloadDelay
@@ -628,11 +628,11 @@ up.proxy = (($) ->
   ###*
   @internal
   ###
-  wrapMethod = (method, data, appendOpts) ->
+  wrapMethod = (method, params, appendOpts) ->
     if u.contains(config.wrapMethods, method)
-      data = u.appendRequestData(data, up.protocol.config.methodParam, method, appendOpts)
+      params = u.appendParams(params, up.protocol.config.methodParam, method, appendOpts)
       method = 'POST'
-    [method, data]
+    [method, params]
 
   ###*
   Links with an `up-preload` attribute will silently fetch their target

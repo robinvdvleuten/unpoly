@@ -35,8 +35,8 @@ class up.Request extends up.Record
   2. An array of `{ name: 'param-name', value: 'param-value' }` objects
   3. A [`FormData`](https://developer.mozilla.org/en-US/docs/Web/API/FormData) object
 
-  @property up.Request#data
-  @param {String} data
+  @property up.Request#params
+  @param {String} params
   @stable
   ###
 
@@ -78,7 +78,8 @@ class up.Request extends up.Record
     [
       'method',
       'url',
-      'data',
+      'params',
+      'data', # deprecated. use #params.
       'target',
       'failTarget',
       'headers',
@@ -94,14 +95,15 @@ class up.Request extends up.Record
     @normalize()
 
   normalize: =>
+    u.deprecateRenamedKey(@, 'data', 'params')
     @method = u.normalizeMethod(@method)
     @headers ||= {}
     @extractHashFromUrl()
 
     if u.methodAllowsPayload(@method)
-      @transferSearchToData()
+      @transferSearchToParams()
     else
-      @transferDataToUrl()
+      @transferParamsToUrl()
 
   extractHashFromUrl: =>
     urlParts = u.parseUrl(@url)
@@ -110,20 +112,20 @@ class up.Request extends up.Record
     @hash = urlParts.hash
     @url = u.normalizeUrl(urlParts, hash: false)
 
-  transferDataToUrl: =>
-    if @data && !u.isFormData(@data)
-      # GET methods are not allowed to have a payload, so we transfer { data } params to the URL.
-      query = u.requestDataAsQuery(@data)
+  transferParamsToUrl: =>
+    if @params && !u.isFormData(@params)
+      # GET methods are not allowed to have a payload, so we transfer { params } params to the URL.
+      query = u.paramsAsQuery(@params)
       separator = if u.contains(@url, '?') then '&' else '?'
       @url += separator + query
-      # Now that we have transfered the params into the URL, we delete them from the { data } option.
-      @data = undefined
+      # Now that we have transfered the params into the URL, we delete them from the { params } option.
+      @params = undefined
 
-  transferSearchToData: =>
+  transferSearchToParams: =>
     urlParts = u.parseUrl(@url)
     query = urlParts.search
     if query
-      @data = u.mergeRequestData(@data, query)
+      @params = u.mergeParams(@params, query)
       @url = u.normalizeUrl(urlParts, search: false)
 
   isSafe: =>
@@ -136,20 +138,20 @@ class up.Request extends up.Record
       xhr = new XMLHttpRequest()
 
       xhrHeaders = u.copy(@headers)
-      xhrData = @data
+      xhrPayload = @params
       xhrMethod = @method
       xhrUrl = @url
 
-      [xhrMethod, xhrData] = up.proxy.wrapMethod(xhrMethod, xhrData)
+      [xhrMethod, xhrPayload] = up.proxy.wrapMethod(xhrMethod, xhrPayload)
 
-      if u.isFormData(xhrData)
+      if u.isFormData(xhrPayload)
         delete xhrHeaders['Content-Type'] # let the browser set the content type
-      else if u.isPresent(xhrData)
-        xhrData = u.requestDataAsQuery(xhrData, purpose: 'form')
+      else if u.isPresent(xhrPayload)
+        xhrPayload = u.paramsAsQuery(xhrPayload, purpose: 'form')
         xhrHeaders['Content-Type'] = 'application/x-www-form-urlencoded'
       else
         # XMLHttpRequest expects null for an empty body
-        xhrData = null
+        xhrPayload = null
 
       xhrHeaders[up.protocol.config.targetHeader] = @target if @target
       xhrHeaders[up.protocol.config.failTargetHeader] = @failTarget if @failTarget
@@ -177,7 +179,7 @@ class up.Request extends up.Record
 
       xhr.timeout = @timeout if @timeout
 
-      xhr.send(xhrData)
+      xhr.send(xhrPayload)
 
   navigate: =>
     # GET forms cannot have an URL with a query section in their [action] attribute.
@@ -202,9 +204,9 @@ class up.Request extends up.Record
     if (csrfParam = up.protocol.csrfParam()) && (csrfToken = @csrfToken())
       addField(name: csrfParam, value: csrfToken)
 
-    # @data will be undefined for GET requests, since we have already
+    # @params will be undefined for GET requests, since we have already
     # transfered all params to the URL during normalize().
-    u.each u.requestDataAsArray(@data), addField
+    u.each u.paramsAsArray(@params), addField
 
     $form.hide().appendTo('body')
     up.browser.submitForm($form)
@@ -236,10 +238,10 @@ class up.Request extends up.Record
     new up.Response(responseAttrs)
 
   isCachable: =>
-    @isSafe() && !u.isFormData(@data)
+    @isSafe() && !u.isFormData(@params)
 
   cacheKey: =>
-    [@url, @method, u.requestDataAsQuery(@data), @target].join('|')
+    [@url, @method, u.paramsAsQuery(@params), @target].join('|')
 
   @wrap: (object) ->
     if object instanceof @

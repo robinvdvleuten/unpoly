@@ -332,6 +332,7 @@ up.history = (($) ->
 
   up.bus.on 'up:link:follow', (event) ->
     saveScreenBeforeFollow(event)
+    console.info("Got event %o", event)
     manipulateFollowFromRestoredScreen(event, forget: true)
 
   up.bus.on 'up:link:preload', (event) ->

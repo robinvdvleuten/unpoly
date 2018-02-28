@@ -215,13 +215,18 @@ up.history = (($) ->
   DOCUMENT ME
 
   @function up.history.restoreScreen
+  @return Promise
   @experimental
   ###
   restoreScreen = (screenUrl, options) ->
     if props = restoreScreenProps(screenUrl, options)
+      up.bus.whenEmitted('up:screen:restore')
       visit(props.url, props)
     else
       Promise.reject(new Error("No saved screen named \"#{screenUrl}\""))
+
+  savedScreen = (screenUrl) ->
+
 
   restoreScreenProps = (screenUrl, options) ->
     options = u.options(options, forget: true)
@@ -261,18 +266,25 @@ up.history = (($) ->
       u.paramsFromForm(form, representation: 'array')
 
     name = screenUrl.pathname
-    waypoint =
-      url: currentUrl(),             # we start with params in the URL
-      formParams: formParams         # then add params from visible forms in this layer
-      contextParams: screenUrl.params  # then add params fron the waypoint definitions
+
+    screenState = new up.ScreenState
+      name: name
+      url: currentUrl(),
+      params: u.mergeParams(formParams, screenUrl.params)
+      data: options.data
       scrollTops: scrollTops
-    savedScreens.put(name, waypoint)
+
+    if up.bus.nobodyPrevents('up:screen:save', { screen: screen })
+      savedScreens.put(name, screenState)
 
   saveScreenBeforeFollow = (event) ->
     $link = event.$link
     if screenUrl = u.option(event.followOptions.saveScreen, $link.attr('up-save-screen'))
       layer = up.dom.layerOf($link)
-      saveScreen(screenUrl, { layer })
+      saveScreen(screenUrl, {
+        layer: layer,
+        data: up.syntax.data($link, attribute: 'up-screen-data')
+      })
 
   ###*
   DOCUMENT ME

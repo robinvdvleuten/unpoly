@@ -1821,6 +1821,16 @@ up.util = (($) ->
   isBodyDescendant = (element) ->
     $(element).parents('body').length > 0
 
+  isEqual = (a, b) ->
+    if typeof(a) != typeof(b)
+      false
+    else if isArray(a)
+      a.length == b.length && all(a, (elem, index) -> isEqual(elem, b[index]))
+    else if isObject(a)
+      fail('isEqual cannot compare objects yet')
+    else
+      a == b
+
   requestDataAsArray: requestDataAsArray
   requestDataAsQuery: requestDataAsQuery
   appendRequestData: appendRequestData
@@ -1936,7 +1946,7 @@ up.util = (($) ->
   isBodyDescendant: isBodyDescendant
   isCrossDomain: isCrossDomain
   microtask: microtask
-
+  isEqual: isEqual
 
 )(jQuery)
 

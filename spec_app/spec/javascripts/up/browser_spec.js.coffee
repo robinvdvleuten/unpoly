@@ -152,7 +152,8 @@ describe 'up.browser', ->
       describe '(element argument)', ->
   
         it 'serializes the tag name with id, name and class attributes, but ignores other attributes', ->
-          $element = $('<table id="id-value" name="name-value" class="class-value" title="title-value">')
+          $element = $('<
+table id="id-value" name="name-value" class="class-value" title="title-value">')
           element = $element.get(0)
           formatted = up.browser.sprintf('before %o after', element)
           expect(formatted).toEqual('before <table id="id-value" name="name-value" class="class-value"> after')

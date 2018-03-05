@@ -184,7 +184,7 @@ class up.Request extends up.Record
   navigate: =>
     # GET forms cannot have an URL with a query section in their [action] attribute.
     # The query section would be overridden by the serialized input values on submission.
-    @transferSearchToData()
+    @transferSearchToParams()
 
     $form = $('<form class="up-page-loader"></form>')
 

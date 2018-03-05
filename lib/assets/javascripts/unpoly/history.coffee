@@ -237,7 +237,7 @@ up.history = (($) ->
     if waypoint = savedScreens.get(screen)
       forgetScreen(screen) if options.forget
 
-      restoredUrl = new up.UrlEditor(waypoint.url)
+      restoredUrl = new up.URLEditor(waypoint.url)
       restoredUrl.appendParams(waypoint.formParams)
       restoredUrl.appendParams(waypoint.contextParams)
       restoredUrl.appendParams(screenUrl.params)
@@ -257,7 +257,7 @@ up.history = (($) ->
   @experimental
   ###
   saveScreen = (screenUrl, options) ->
-    screenUrl = new URLEditor(screenUrl)
+    screenUrl = new up.URLEditor(screenUrl)
 
     layer = options.layer || up.dom.topLayer()
 

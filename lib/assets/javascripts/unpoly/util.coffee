@@ -595,7 +595,7 @@ up.util = (($) ->
   @return {Object}
   @internal
   ###
-  options = (object, defaults) ->
+  newOptions = (object, defaults) ->
     merged = if object then copy(object) else {}
     if defaults
       for key, defaultValue of defaults
@@ -603,7 +603,7 @@ up.util = (($) ->
         if !isGiven(value)
           merged[key] = defaultValue
         else if isObject(defaultValue) && isObject(value)
-          merged[key] = options(value, defaultValue)
+          merged[key] = newOptions(value, defaultValue)
     merged
 
   ###*
@@ -942,7 +942,7 @@ up.util = (($) ->
   @internal
   ###
   measure = ($element, opts) ->
-    opts = options(opts, relative: false, inner: false, includeMargin: false)
+    opts = newOptions(opts, relative: false, inner: false, includeMargin: false)
 
     if opts.relative
       if opts.relative == true
@@ -1232,9 +1232,9 @@ up.util = (($) ->
   openConfig = (blueprint = {}) ->
     hash = {}
     hash.reset = ->
-      newOptions = blueprint
-      newOptions = newOptions() if isFunction(newOptions)
-      assign(hash, newOptions)
+      opts = blueprint
+      opts = opts() if isFunction(opts)
+      assign(hash, opts)
     hash.reset()
     hash
 
@@ -1344,7 +1344,7 @@ up.util = (($) ->
   @internal
   ###
   requestDataAsQuery = (data, opts) ->
-    opts = options(opts, purpose: 'url')
+    opts = newOptions(opts, purpose: 'url')
 
     if isString(data)
       data.replace(/^\?/, '')
@@ -1382,7 +1382,7 @@ up.util = (($) ->
   @internal
   ###
   requestDataFromForm = (form, options) ->
-    options = u.options(options)
+    options = newOptions(options)
     $form = $(form)
     hasFileInputs = $form.find('input[type=file]').length
 
@@ -1823,7 +1823,7 @@ up.util = (($) ->
   assignPolyfill: assignPolyfill
   copy: copy
   merge: merge
-  options: options
+  options: newOptions
   option: option
   fail: fail
   each: each

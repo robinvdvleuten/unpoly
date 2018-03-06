@@ -125,7 +125,7 @@ class up.Request extends up.Record
     urlParts = u.parseUrl(@url)
     query = urlParts.search
     if query
-      @params = u.mergeParams(@params, query)
+      u.absorbParams(@params, query) # destructive
       @url = u.normalizeUrl(urlParts, search: false)
 
   isSafe: =>

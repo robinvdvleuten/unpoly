@@ -1316,9 +1316,11 @@ up.util = (($) ->
   @internal
   ###
   paramsAsArray = (params) ->
-    if isArray(params)
+    if isMissing(params)
+      []
+    else if isArray(params)
       params
-    if isFormData(params)
+    else if isFormData(params)
       # Until FormData#entries is implemented in all major browsers we must give up here.
       # However, up.form will prefer to serialize forms as arrays, so we should be good
       # in most cases. We only use FormData for forms with file inputs.
@@ -1438,7 +1440,7 @@ up.util = (($) ->
   @return
     The merged form params.
   ###
-  mergeParams = (target, source) ->
+  absorbParams = (target, source) ->
     each paramsAsArray(source), (field) ->
       target = appendParams(target, field.name, field.value)
     target
@@ -1809,7 +1811,7 @@ up.util = (($) ->
   paramsAsArray: paramsAsArray
   paramsAsQuery: paramsAsQuery
   appendParams: appendParams
-  mergeParams:  mergeParams
+  absorbParams:  absorbParams
   paramsFromForm: paramsFromForm
   offsetParent: offsetParent
   fixedToAbsolute: fixedToAbsolute

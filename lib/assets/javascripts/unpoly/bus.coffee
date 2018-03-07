@@ -460,7 +460,7 @@ up.bus = (($) ->
   @internal
   ###
   boot = ->
-    if up.browser.isSupported()
+    up.browser.checkSupport ->
       emit('up:framework:boot', message: 'Booting framework')
       # Unpoly modules now snapshot themselves to suppot reset()
       emit('up:framework:booted', message: 'Framework booted')
@@ -470,8 +470,6 @@ up.bus = (($) ->
           # The following event will cause Unpoly to compile the <body>
           emit('up:app:boot', message: 'Booting user application')
           emit('up:app:booted', message: 'User application booted')
-    else
-      console.log?("Unpoly doesn't support this browser. Framework was not booted.")
 
   ###*
   This event is [emitted](/up.emit) when Unpoly [starts to boot](/up.boot).

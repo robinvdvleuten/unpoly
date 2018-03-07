@@ -265,7 +265,7 @@ up.browser = (($) ->
       Promise.reject(new Error('User canceled action'))
 
   ###*
-  Returns whether Unpoly supports the current browser.
+  Returns whether Unpoly [supports](/up.browser) the current browser.
 
   If this returns `false` Unpoly will prevent itself from [booting](/up.boot)
   and ignores all registered [event handlers](/up.on) and [compilers](/up.compiler).
@@ -287,6 +287,23 @@ up.browser = (($) ->
       canCssTransition() &&
       canInputEvent() &&
       canPromise()
+
+  ###*
+  @function up.browser.checkSupport
+  @internal
+  ###
+  checkSupport = (callback) ->
+    if isSupported()
+      callback()
+    else
+      $('body').addClass('up-unsupported')
+      console.log?("[UP] Unpoly doesn't support this browser. Framework was not booted.")
+
+  ###*
+  The CSS class `up-unsupported` is added to the `<body>` element if Unpoly does not [support this browser](/up.browser).
+
+  @selector .up-unsupported
+  ###
 
   ###*
   @internal
@@ -324,7 +341,6 @@ up.browser = (($) ->
     value = value.substr(1) if value[0] == '#'
     u.presence(value)
 
-
   knife: eval(Knife?.point)
   url: url
   navigate: navigate
@@ -332,6 +348,7 @@ up.browser = (($) ->
   canPushState: canPushState
   whenConfirmed: whenConfirmed
   isSupported: isSupported
+  checkSupport: checkSupport
   puts: puts
   sprintf: sprintf
   sprintfWithFormattedArgs: sprintfWithFormattedArgs

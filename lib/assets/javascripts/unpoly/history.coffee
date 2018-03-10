@@ -211,90 +211,6 @@ up.history = (($) ->
   @experimental
   ###
 
-  ###*
-  DOCUMENT ME
-
-  @function up.history.restoreScreen
-  @return Promise
-  @experimental
-  ###
-  restoreScreen = (screenUrl, options) ->
-    if props = restoreScreenProps(screenUrl, options)
-      up.bus.whenEmitted('up:screen:restore')
-      visit(props.url, props)
-    else
-      Promise.reject(new Error("No saved screen named \"#{screenUrl}\""))
-
-  savedScreen = (screenUrl) ->
-
-
-  restoreScreenProps = (screenUrl, options) ->
-    options = u.options(options, forget: true)
-
-    screenUrl = new up.URLEditor(screenUrl)
-    screen = screenUrl.pathname
-
-    if waypoint = savedScreens.get(screen)
-      forgetScreen(screen) if options.forget
-
-      restoredUrl = new up.URLEditor(waypoint.url)
-      restoredUrl.appendParams(waypoint.formParams)
-      restoredUrl.appendParams(waypoint.contextParams)
-      restoredUrl.appendParams(screenUrl.params)
-
-      url: restoredUrl.toURLString()
-      restoreScroll: waypoint.scrollTops
-
-  manipulateFollowFromRestoredScreen = (event, restoreOptions) ->
-    if screenUrl = u.option(event.followOptions.restoreScreen, event.$link.attr('up-restore-screen'))
-      if props = restoreScreenProps(screenUrl, restoreOptions)
-        u.assign(event.followOptions, props)
-
-  ###*
-  DOCUMENT ME
-
-  @function up.history.saveScreen
-  @experimental
-  ###
-  saveScreen = (screenUrl, options) ->
-    screenUrl = new up.URLEditor(screenUrl)
-
-    layer = options.layer || up.dom.topLayer()
-
-    $forms = up.all('form:not([up-save-form="false"])', { layer })
-    formParams = u.flatMap $forms, (form) ->
-      u.paramsFromForm(form, representation: 'array')
-
-    name = screenUrl.pathname
-
-    screenState = new up.ScreenState
-      name: name
-      url: currentUrl(),
-      params: u.absorbParams(formParams, screenUrl.params)
-      data: options.data
-      scrollTops: scrollTops
-
-    if up.bus.nobodyPrevents('up:screen:save', { screen: screen })
-      savedScreens.put(name, screenState)
-
-  saveScreenBeforeFollow = (event) ->
-    $link = event.$link
-    if screenUrl = u.option(event.followOptions.saveScreen, $link.attr('up-save-screen'))
-      layer = up.dom.layerOf($link)
-      saveScreen(screenUrl, {
-        layer: layer,
-        data: up.syntax.data($link, attribute: 'up-screen-data')
-      })
-
-  ###*
-  DOCUMENT ME
-
-  @function up.history.forgetScreen
-  @experimental
-  ###
-  forgetScreen = (screen) ->
-    savedScreens.remove(screen)
-
   if up.browser.canPushState()
     register = ->
       $(window).on "popstate", pop
@@ -343,8 +259,8 @@ up.history = (($) ->
       up.link.makeFollowable($link)
 
   up.bus.on 'up:link:follow', (event) ->
+    considerSaveWaypoint(event)
     saveScreenBeforeFollow(event)
-    console.info("Got event %o", event)
     manipulateFollowFromRestoredScreen(event, forget: true)
 
   up.bus.on 'up:link:preload', (event) ->

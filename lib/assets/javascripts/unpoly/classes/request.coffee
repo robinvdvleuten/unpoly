@@ -36,7 +36,7 @@ class up.Request extends up.Record
   3. A [`FormData`](https://developer.mozilla.org/en-US/docs/Web/API/FormData) object
 
   @property up.Request#params
-  @param {String} params
+  @param {object|Array|FormData} params
   @stable
   ###
 
@@ -115,9 +115,7 @@ class up.Request extends up.Record
   transferParamsToUrl: =>
     if @params && !u.isFormData(@params)
       # GET methods are not allowed to have a payload, so we transfer { params } params to the URL.
-      query = u.paramsAsQuery(@params)
-      separator = if u.contains(@url, '?') then '&' else '?'
-      @url += separator + query
+      @url = up.Params.wrap(@params).asURL(@url)
       # Now that we have transfered the params into the URL, we delete them from the { params } option.
       @params = undefined
 
@@ -125,7 +123,7 @@ class up.Request extends up.Record
     urlParts = u.parseUrl(@url)
     query = urlParts.search
     if query
-      u.absorbParams(@params, query) # destructive
+      @params = up.Params.wrap(@params).absorb(query).value()
       @url = u.normalizeUrl(urlParts, search: false)
 
   isSafe: =>
@@ -147,7 +145,7 @@ class up.Request extends up.Record
       if u.isFormData(xhrPayload)
         delete xhrHeaders['Content-Type'] # let the browser set the content type
       else if u.isPresent(xhrPayload)
-        xhrPayload = u.paramsAsQuery(xhrPayload, purpose: 'form')
+        xhrPayload = up.Params.wrap(xhrPayload).asQuery(purpose: 'form')
         xhrHeaders['Content-Type'] = 'application/x-www-form-urlencoded'
       else
         # XMLHttpRequest expects null for an empty body
@@ -206,7 +204,7 @@ class up.Request extends up.Record
 
     # @params will be undefined for GET requests, since we have already
     # transfered all params to the URL during normalize().
-    u.each u.paramsAsArray(@params), addField
+    u.each(up.Params.wrap(@params).asArray(), addField)
 
     $form.hide().appendTo('body')
     up.browser.submitForm($form)
@@ -241,7 +239,8 @@ class up.Request extends up.Record
     @isSafe() && !u.isFormData(@params)
 
   cacheKey: =>
-    [@url, @method, u.paramsAsQuery(@params), @target].join('|')
+    query = up.Params.wrap(@params).asQuery()
+    [@url, @method, query, @target].join('|')
 
   @wrap: (object) ->
     if object instanceof @

@@ -66,6 +66,7 @@ up.dom = (($) ->
   @param {string|Element|jQuery} origin
     The element that this selector resolution is relative to.
     That element's selector will be substituted for `&`.
+  @return {string}
   @internal
   ###
   resolveSelector = (selectorOrElement, origin) ->
@@ -851,7 +852,8 @@ up.dom = (($) ->
   all = (selectorOrElements, options) ->
     options = u.options(options)
     resolved = resolveSelector(selectorOrElements, options.origin)
-    $(resolved).filter (index, element) ->
+    $root = $(u.option(options.root, document))
+    $root.find(resolved).filter (index, element) ->
       $element = $(element)
       isRealElement($element) && matchesLayer($element, options.layer)
 

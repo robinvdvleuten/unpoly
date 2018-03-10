@@ -628,9 +628,9 @@ up.proxy = (($) ->
   ###*
   @internal
   ###
-  wrapMethod = (method, params, appendOpts) ->
+  wrapMethod = (method, params) ->
     if u.contains(config.wrapMethods, method)
-      params = u.appendParams(params, up.protocol.config.methodParam, method, appendOpts)
+      params = up.Params.wrap(params).append(up.protocol.config.methodParam, method).value()
       method = 'POST'
     [method, params]
 

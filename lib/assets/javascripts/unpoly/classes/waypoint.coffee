@@ -24,10 +24,9 @@ class up.Waypoint extends up.Record
   inContext: (options = {}) =>
     copy = undefined
 
-    if u.isPresent(options.params) ||
+    if u.isPresent(options.params)
       copy ||= @copy(@)
-      copy.params = u.copy(copy.params)
-      u.absorbParams(copy.params, options.params)
+      copy.params = up.Params.wrap(copy.params).absorb(options.params).asObject()
 
     if u.isPresent(options.data)
       copy ||= @copy(@)

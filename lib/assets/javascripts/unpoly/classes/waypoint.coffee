@@ -26,7 +26,7 @@ class up.Waypoint extends up.Record
 
     if u.isPresent(options.params)
       copy ||= @copy(@)
-      copy.params = up.Params.wrap(copy.params).absorb(options.params).asObject()
+      copy.params = up.params.absorb(copy.params, options.params)
 
     if u.isPresent(options.data)
       copy ||= @copy(@)

@@ -3,11 +3,10 @@ u = up.util
 class up.URLEditor
 
   constructor: (url) ->
-    [@pathname, @search] = url.split('?')
-    @params = new up.Params(@search)
+    [@pathname, @params] = url.split('?')
 
   appendParams: (newParams) =>
-    @params.absorb(newParams)
+    up.params.absorb(@params, newParams)
 
   toURLString: =>
-    @params.asURL(@pathname)
+    @params.buildURL(@pathname, @params)

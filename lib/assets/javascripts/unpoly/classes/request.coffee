@@ -115,7 +115,7 @@ class up.Request extends up.Record
   transferParamsToUrl: =>
     if @params && !u.isFormData(@params)
       # GET methods are not allowed to have a payload, so we transfer { params } params to the URL.
-      @url = up.Params.wrap(@params).asURL(@url)
+      @url = up.params.buildURL(@url, @params)
       # Now that we have transfered the params into the URL, we delete them from the { params } option.
       @params = undefined
 
@@ -123,7 +123,7 @@ class up.Request extends up.Record
     urlParts = u.parseUrl(@url)
     query = urlParts.search
     if query
-      @params = up.Params.wrap(@params).absorb(query).value()
+      @params = up.params.absorb(@params, query)
       @url = u.normalizeUrl(urlParts, search: false)
 
   isSafe: =>
@@ -145,7 +145,7 @@ class up.Request extends up.Record
       if u.isFormData(xhrPayload)
         delete xhrHeaders['Content-Type'] # let the browser set the content type
       else if u.isPresent(xhrPayload)
-        xhrPayload = up.Params.wrap(xhrPayload).asQuery(purpose: 'form')
+        xhrPayload = up.params.toQuery(xhrPayload, purpose: 'form')
         xhrHeaders['Content-Type'] = 'application/x-www-form-urlencoded'
       else
         # XMLHttpRequest expects null for an empty body
@@ -204,7 +204,7 @@ class up.Request extends up.Record
 
     # @params will be undefined for GET requests, since we have already
     # transfered all params to the URL during normalize().
-    u.each(up.Params.wrap(@params).asArray(), addField)
+    u.each(up.params.toArray(@params), addField)
 
     $form.hide().appendTo('body')
     up.browser.submitForm($form)
@@ -239,7 +239,7 @@ class up.Request extends up.Record
     @isSafe() && !u.isFormData(@params)
 
   cacheKey: =>
-    query = up.Params.wrap(@params).asQuery()
+    query = up.params.toQuery(@params)
     [@url, @method, query, @target].join('|')
 
   @wrap: (object) ->

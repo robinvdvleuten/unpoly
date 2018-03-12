@@ -44,11 +44,13 @@ up.params = (($) ->
       when 'query'
         array = []
         for part in params.split('&')
-          if isPresent(part)
+          if u.isPresent(part)
             pair = part.split('=')
-            array.push
+            entry =
               name: decodeURIComponent(pair[0])
-              value: decodeURIComponent(pair[1])
+              value: (if u.isGiven(pair[1]) then decodeURIComponent(pair[1]) else null)
+            console.info("### got pair %o, entry is %o", pair, entry)
+            array.push(entry)
         array
       when 'formData'
         # Until FormData#entries is implemented in all major browsers we must give up here.
@@ -56,17 +58,17 @@ up.params = (($) ->
         # in most cases. We only use FormData for forms with file inputs.
         up.fail('Cannot convert FormData into an array')
       when 'object'
-        for name, value of flattenObject(params)
+        for name, value of params
           { name, value }
 
-  flattenObject = (obj) ->
-    obj = {}
-
-    for name, value of params
-      if u.isArray(value)
-        obj[name + "[]"] = value
-
-    throw "needs to destructure object"
+#  flattenObject = (obj) ->
+#    obj = {}
+#
+#    for name, value of params
+#      if u.isArray(value)
+#        obj[name + "[]"] = value
+#
+#    throw "needs to destructure object"
 
 
   ###*
@@ -77,66 +79,14 @@ up.params = (($) ->
   @function up.params.toArray
   ###
   toObject = (params) ->
-T   switch detectNature(params)
+    switch detectNature(params)
       when 'missing'
         {}
       when 'array'
         obj = {}
-
         for entry in params
-          # Parse a name like `'foo[bar][baz]'` into an array `['foo', 'bar', 'baz']`
-          keySegments = entry.name.match(/[^\[\]]+/g)
-          # the last segment needs to set differently depending if the leaf node
-          # is an array element (like `foo[]`) or a hash property (like `foo[bar]`)
-          lastKeySegment = keySegments.pop()
-
-          # Make sure all parent keys resolve to objects
-          node = obj
-          for keySegment in keySegments
-            node = (node[keySegment] ||= {})
-
-          if isArray = entry.name.test(/\[\]$/)
-            # we matched an array like ... fuck
-            node[lastKeySegment] ||= []
-            node.push(entry.value)
-          else
-            # we matched a key like [foo]
-            node[lastKeySegment] = entry.value
-
-          # NEW
-
-          # Parse a name like `'foo[bar][baz]'` into an array `['foo', 'bar', 'baz']`
-          keySegments = []
-          keySegments
-          while match = /([^\[\]])/g.exec(entry.name)
-            keySegments.push(match[1])
-
-          # Make sure all parent keys resolve to objects
-          node = obj
-          for keySegment in keySegments
-            if keySegment.length
-              # hash
-            else
-              # array
-              node = (node[keySegment] ||= {})
-
-          # the last segment needs to set differently depending if the leaf node
-          # is an array element (like `foo[]`) or a hash property (like `foo[bar]`)
-          lastKeySegment = keySegments.pop()
-
-          # Make sure all parent keys resolve to objects
-          node = obj
-          for keySegment in keySegments
-            node = (node[keySegment] ||= {})
-
-          if isArray = entry.name.test(/\[\]$/)
-            # we matched an array like ... fuck
-            node[lastKeySegment] ||= []
-            node.push(entry.value)
-          else
-            # we matched a key like [foo]
-            node[lastKeySegment] = entry.value
-
+          normalizeNestedParamsObject(obj, entry.name, entry.value)
+        console.info("==== resulting obj is %o", obj)
         obj
       when 'query'
         # We don't want to duplicate the logic to parse a query string.
@@ -149,13 +99,76 @@ T   switch detectNature(params)
       when 'object'
         params
 
-  toQuery = (params, options) ->
+  # normalize_params recursively expands parameters into structural types. If
+  # the structural types represented by two different parameter names are in
+  # conflict, a ParameterTypeError is raised.
+  normalizeNestedParamsObject = (params, name, v) ->
+    # Parse the name:
+    # $1: the next names key without square brackets
+    # $2: the rest of the key until the end
+    match = /^[\[\]]*([^\[\]]+)\]*(.*?)$/.exec(name)
+
+    k = match?[1]
+    after = match?[2]
+
+    console.log("!!! k is %o, v is %o, name is %o", k, v, name)
+
+    if u.isBlank(k)
+      if u.isGiven(v) && name == "[]"
+        return [v]
+      else
+        return null
+
+    if after == ''
+      params[k] = v
+    else if after == "["
+      params[name] = v
+    else if after == "[]"
+      params[k] ||= []
+      throw new Error("expected Array (got #{params[k].class.name}) for param `#{k}'") unless u.isArray(params[k])
+      params[k].push(v)
+#     else if match = /^\[\]\[?([^\[\]]+)\]?$/.exec(after)
+    else if match = (/^\[\]\[([^\[\]]+)\]$/.exec(after) || /^\[\](.+)$/.exec(after))
+      childKey = match[1]
+      params[k] ||= []
+      lastObject = u.last(params[k])
+      throw new Error("expected Array (got #{params[k].class.name}) for param `#{k}'") unless u.isArray(params[k])
+      if u.isObject(lastObject) && !nestedParamsObjectHasKey(lastObject, childKey)
+        normalizeNestedParamsObject(lastObject, childKey, v)
+      else
+        params[k].push normalizeNestedParamsObject({}, childKey, v)
+    else
+      params[k] ||= {}
+      throw new Error("expected Object (got #{params[k]}) for param `#{k}'") unless u.isObject(params[k])
+      params[k] = normalizeNestedParamsObject(params[k], after, v)
+
+    params
+
+  nestedParamsObjectHasKey = (hash, key) ->
+    console.info("nestedParamsObjectHasKey (%o, %o)", hash, key)
+    return false if /\[\]/.test(key)
+
+    keyParts = key.split(/[\[\]]+/)
+
+    console.info("has keyParts %o", keyParts)
+
+    for keyPart in keyParts
+      console.info("nestedParamsObjectHasKey with keyPart %o and hash %o", keyPart, hash)
+      continue if keyPart == ''
+      return false unless u.isObject(hash) && hash.hasOwnProperty(keyPart)
+      hash = hash[keyPart]
+
+    console.info("nestedParamsObjectHasKey returns TRUE")
+
+    true
+
+  toQuery = (params, options = {}) ->
     purpose = options.purpose || 'url'
     query = switch detectNature(params)
       when 'missing'
         ''
       when 'query'
-        params
+        params.replace(/^\?/, '')
       when 'formData'
         # Until FormData#entries is implemented in all major browsers we must give up here.
         # However, up.form will prefer to serialize forms as arrays, so we should be good
@@ -166,7 +179,7 @@ T   switch detectNature(params)
           encodeURIComponent(entry.name) + '=' + encodeURIComponent(entry.value)
         parts.join('&')
       when 'object'
-        convertToQuery(convertToArray(params))
+        buildNestedQuery(params)
 
     switch purpose
       when 'url'
@@ -176,6 +189,26 @@ T   switch detectNature(params)
       else
         up.fail('Unknown purpose %o', purpose)
     query
+
+  buildNestedQuery = (value, prefix) ->
+    if u.isArray(value)
+      parts = u.map value, (v) -> buildNestedQuery(v, "#{prefix}[]")
+      parts.join('&')
+    else if u.isObject(value)
+      parts = []
+      for k, v of value
+        p = encodeURIComponent(k)
+        p = "#{prefix}[#{p}]" if prefix
+        part = buildNestedQuery(v, p)
+        parts.push(part)
+      parts = u.select(parts, u.isPresent)
+      parts.join('&')
+    else if u.isMissing(value)
+      prefix
+    else
+      if u.isMissing(prefix)
+        throw new Error("value must be a Hash")
+      "#{prefix}=#{encodeURIComponent(value)}"
 
   buildURL = (base, params) ->
     parts = [base, toQuery(params)]
@@ -248,13 +281,13 @@ T   switch detectNature(params)
     else
       params = new FormData($form.get(0))
 
-    add(params, buttonName, buttonValue) if isPresent(buttonName)
+    add(params, buttonName, buttonValue) if u.isPresent(buttonName)
     params
 
   toArray: toArray
   toObject: toObject
   toQuery: toQuery
-  toURL: toURL
+  buildURL: buildURL
   add: add
   absorb: absorb
   fromForm: fromForm

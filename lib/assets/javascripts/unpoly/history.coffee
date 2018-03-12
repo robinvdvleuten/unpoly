@@ -275,8 +275,5 @@ up.history = (($) ->
   isUrl: isCurrentUrl
   previousUrl: -> previousUrl
   normalizeUrl: normalizeUrl
-  saveScreen: saveScreen
-  restoreScreen: restoreScreen
-  forgetScreen: forgetScreen
 
 )(jQuery)

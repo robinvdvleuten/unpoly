@@ -154,7 +154,7 @@ up.form = (($) ->
     options.origin = u.option(options.origin, $form)
     options.layer = u.option(options.layer, $form.attr('up-layer'), 'auto')
     options.failLayer = u.option(options.failLayer, $form.attr('up-fail-layer'), 'auto')
-    options.params = up.Params.fromForm($form)
+    options.params = up.params.fromForm($form)
     options = u.merge(options, up.motion.animateOptions(options, $form))
 
     if options.validate

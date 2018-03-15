@@ -129,7 +129,7 @@ up.waypoint = (($) ->
 
     formParams = new up.Params([])
     u.each $forms, (form) ->
-      formParams.absorb up.Params.fromForm(form, nature: 'array')
+      formParams.absorb up.params.fromForm(form, nature: 'array')
 
     extraParams = u.option(options.params, up.syntax.data(origin, 'up-params'))
     params = formParams.absorb(extraParams)
@@ -167,13 +167,13 @@ up.waypoint = (($) ->
       if up.bus.nobodyPrevents('up:waypoint:discard', { waypoint: waypoint})
         waypoints.remove(name)
 
-  up.bus.on 'up:link:follow', (event) ->
-    considerDiscardWaypointBeforeFollow(event)
-    considerSaveWaypointBeforeFollow(event)
-    considerRestoreWaypointBeforeFollow(event, discard: true)
-
-  up.bus.on 'up:link:preload', (event) ->
-    considerRestoreWaypointBeforeFollow(event, discard: false)
+#  up.bus.on 'up:link:follow', (event) ->
+#    considerDiscardWaypointBeforeFollow(event)
+#    considerSaveWaypointBeforeFollow(event)
+#    considerRestoreWaypointBeforeFollow(event, discard: true)
+#
+#  up.bus.on 'up:link:preload', (event) ->
+#    considerRestoreWaypointBeforeFollow(event, discard: false)
 
   up.on 'up:framework:reset', reset
 

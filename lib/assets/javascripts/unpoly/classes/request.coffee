@@ -130,10 +130,14 @@ class up.Request extends up.Record
     up.proxy.isSafeMethod(@method)
 
   send: =>
+    console.debug("!!! params before send is %o, toQuery is %o", @params, up.params.toQuery(@params))
+
     # We will modify this request below.
     # This would confuse API clients and cache key logic in up.proxy.
     new Promise (resolve, reject) =>
       xhr = new XMLHttpRequest()
+
+      console.debug("!!! params in executor is %o, toQuery is %o", @params, up.params.toQuery(@params))
 
       xhrHeaders = u.copy(@headers)
       xhrPayload = @params
@@ -141,6 +145,8 @@ class up.Request extends up.Record
       xhrUrl = @url
 
       [xhrMethod, xhrPayload] = up.proxy.wrapMethod(xhrMethod, xhrPayload)
+
+      console.debug("!!! payload after wrapMethod is %o", xhrPayload)
 
       if u.isFormData(xhrPayload)
         delete xhrHeaders['Content-Type'] # let the browser set the content type
@@ -177,6 +183,7 @@ class up.Request extends up.Record
 
       xhr.timeout = @timeout if @timeout
 
+      console.debug("!!! sending payload %o", xhrPayload)
       xhr.send(xhrPayload)
 
   navigate: =>

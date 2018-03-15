@@ -258,14 +258,6 @@ up.history = (($) ->
       $link.removeAttr 'up-back'
       up.link.makeFollowable($link)
 
-  up.bus.on 'up:link:follow', (event) ->
-    considerSaveWaypoint(event)
-    saveScreenBeforeFollow(event)
-    manipulateFollowFromRestoredScreen(event, forget: true)
-
-  up.bus.on 'up:link:preload', (event) ->
-    manipulateFollowFromRestoredScreen(event, forget: false)
-
   up.on 'up:framework:reset', reset
 
   config: config

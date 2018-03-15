@@ -418,8 +418,8 @@ up.proxy = (($) ->
   @event up:proxy:recover
   @stable
   ###
-
   loadOrQueue = (request) ->
+    console.debug("!!! loadOrQueue with request %o", request)
     if pendingCount < config.maxRequests
       load(request)
     else

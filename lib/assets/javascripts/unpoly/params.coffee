@@ -5,8 +5,12 @@ Params
 class up.params
 ###
 up.params = (($) ->
-
   u = up.util
+
+  config = u.config
+    nest: true
+
+  reset = config.reset
 
   detectNature = (params) ->
     if u.isMissing(params)
@@ -58,18 +62,7 @@ up.params = (($) ->
         # in most cases. We only use FormData for forms with file inputs.
         up.fail('Cannot convert FormData into an array')
       when 'object'
-        for name, value of params
-          { name, value }
-
-#  flattenObject = (obj) ->
-#    obj = {}
-#
-#    for name, value of params
-#      if u.isArray(value)
-#        obj[name + "[]"] = value
-#
-#    throw "needs to destructure object"
-
+        buildArrayFromNestedObject(params)
 
   ###*
   Returns an object representation of the given `params`.
@@ -190,25 +183,35 @@ up.params = (($) ->
         up.fail('Unknown purpose %o', purpose)
     query
 
-  buildNestedQuery = (value, prefix) ->
+  arrayEntryToQuery = (entry) ->
+    query = encodeURIComponent(entry.name)
+    if u.isGiven(entry.value)
+      query += "="
+      query += encodeURIComponent(entry.value)
+    query
+
+  buildNestedQuery = (value) ->
+    array = buildArrayFromNestedObject(value)
+    console.info("!!! array is %o", array)
+    parts = u.map(array, arrayEntryToQuery)
+    parts = u.select(parts, u.isPresent)
+    parts.join('&')
+
+  buildArrayFromNestedObject = (value, prefix) ->
     if u.isArray(value)
-      parts = u.map value, (v) -> buildNestedQuery(v, "#{prefix}[]")
-      parts.join('&')
+      u.flatMap value, (v) -> buildArrayFromNestedObject(v, "#{prefix}[]")
     else if u.isObject(value)
-      parts = []
+      entries = []
       for k, v of value
-        p = encodeURIComponent(k)
-        p = "#{prefix}[#{p}]" if prefix
-        part = buildNestedQuery(v, p)
-        parts.push(part)
-      parts = u.select(parts, u.isPresent)
-      parts.join('&')
+        p = if prefix then "#{prefix}[#{k}]" else k
+        entries = entries.concat(buildArrayFromNestedObject(v, p))
+      entries
     else if u.isMissing(value)
-      prefix
+      [{ name: prefix, value: null }]
     else
       if u.isMissing(prefix)
         throw new Error("value must be a Hash")
-      "#{prefix}=#{encodeURIComponent(value)}"
+      [ { name: prefix, value: value } ]
 
   buildURL = (base, params) ->
     parts = [base, toQuery(params)]
@@ -223,9 +226,7 @@ up.params = (($) ->
   @function up.params.add
   ###
   add = (params, name, value) ->
-    field = {}
-    field[name] = value
-    absorb(field)
+    absorb(params, { name: field, value: value })
 
   ###*
   Merges the request params from `otherParams` into `params`.
@@ -239,14 +240,14 @@ up.params = (($) ->
         params = {}
         absorb(otherParams)
       when 'array'
-        otherArray = convertToArray(otherParams)
+        otherArray = toArray(otherParams)
         params = params.concat(otherArray)
       when 'query'
-        otherQuery = convertToQuery(otherParams)
+        otherQuery = toQuery(otherParams)
         parts = u.select([params, otherQuery], u.isPresent)
         params = parts.join('&')
       when 'formData'
-        otherObject = convertToObject(otherParams)
+        otherObject = toObject(otherParams)
         for name, value of otherObject
           params.append(name, value)
       when 'params'
@@ -283,6 +284,8 @@ up.params = (($) ->
 
     add(params, buttonName, buttonValue) if u.isPresent(buttonName)
     params
+
+  up.on 'up:framework:reset', reset
 
   toArray: toArray
   toObject: toObject

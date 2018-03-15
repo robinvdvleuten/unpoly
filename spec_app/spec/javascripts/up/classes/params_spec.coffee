@@ -201,9 +201,6 @@ describe 'up.params', ->
   describe 'up.params.toObject', ->
 
     it "parses flat key/value pairs", ->
-
-      console.log("!!!! %", up.params.toObject("xfoo"))
-
       expect(up.params.toObject("xfoo")).toEqual("xfoo": null)
       expect(up.params.toObject("foo=")).toEqual("foo": "")
       expect(up.params.toObject("foo=bar")).toEqual("foo": "bar")

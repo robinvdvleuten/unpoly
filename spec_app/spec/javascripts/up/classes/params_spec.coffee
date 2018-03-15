@@ -53,36 +53,45 @@ describe 'up.params', ->
 
     describe 'nested params', ->
 
+      beforeEach ->
+        jasmine.addMatchers
+          toEqualAfterEscapingSquareBrackets: (util, customEqualityTesters) ->
+            compare: (actual, expected, tolerance) ->
+              expected = expected.replace(/\[/g, '%5B')
+              expected = expected.replace(/\]/g, '%5D')
+              pass: actual == expected
+
+
       it "build nested query strings correctly" , ->
-        expect(up.params.toQuery("foo": null)).toEqual "foo"
-        expect(up.params.toQuery("foo": "")).toEqual "foo="
-        expect(up.params.toQuery("foo": "bar")).toEqual "foo=bar"
+        expect(up.params.toQuery("foo": null)).toEqualAfterEscapingSquareBrackets "foo"
+        expect(up.params.toQuery("foo": "")).toEqualAfterEscapingSquareBrackets "foo="
+        expect(up.params.toQuery("foo": "bar")).toEqualAfterEscapingSquareBrackets "foo=bar"
 
-        expect(up.params.toQuery("foo": [null])).toEqual "foo[]"
-        expect(up.params.toQuery("foo": [""])).toEqual "foo[]="
-        expect(up.params.toQuery("foo": ["bar"])).toEqual "foo[]=bar"
-        expect(up.params.toQuery('foo': [])).toEqual ''
-        expect(up.params.toQuery('foo': {})).toEqual ''
-        expect(up.params.toQuery('foo': 'bar', 'baz': [])).toEqual 'foo=bar'
-        expect(up.params.toQuery('foo': 'bar', 'baz': {})).toEqual 'foo=bar'
+        expect(up.params.toQuery("foo": [null])).toEqualAfterEscapingSquareBrackets "foo[]"
+        expect(up.params.toQuery("foo": [""])).toEqualAfterEscapingSquareBrackets "foo[]="
+        expect(up.params.toQuery("foo": ["bar"])).toEqualAfterEscapingSquareBrackets "foo[]=bar"
+        expect(up.params.toQuery('foo': [])).toEqualAfterEscapingSquareBrackets ''
+        expect(up.params.toQuery('foo': {})).toEqualAfterEscapingSquareBrackets ''
+        expect(up.params.toQuery('foo': 'bar', 'baz': [])).toEqualAfterEscapingSquareBrackets 'foo=bar'
+        expect(up.params.toQuery('foo': 'bar', 'baz': {})).toEqualAfterEscapingSquareBrackets 'foo=bar'
 
-        expect(up.params.toQuery('foo': null, 'bar': '')).toEqual 'foo&bar='
-        expect(up.params.toQuery('foo': 'bar', 'baz': '')).toEqual 'foo=bar&baz='
-        expect(up.params.toQuery('foo': ['1', '2'])).toEqual 'foo[]=1&foo[]=2'
-        expect(up.params.toQuery('foo': 'bar', 'baz': ['1', '2', '3'])).toEqual 'foo=bar&baz[]=1&baz[]=2&baz[]=3'
-        expect(up.params.toQuery('foo': ['bar'], 'baz': ['1', '2', '3'])).toEqual 'foo[]=bar&baz[]=1&baz[]=2&baz[]=3'
-        expect(up.params.toQuery('foo': ['bar'], 'baz': ['1', '2', '3'])).toEqual 'foo[]=bar&baz[]=1&baz[]=2&baz[]=3'
-        expect(up.params.toQuery('x': { 'y': { 'z': '1' } })).toEqual 'x[y][z]=1'
-        expect(up.params.toQuery('x': { 'y': { 'z': ['1'] } })).toEqual 'x[y][z][]=1'
-        expect(up.params.toQuery('x': { 'y': { 'z': ['1', '2'] } })).toEqual 'x[y][z][]=1&x[y][z][]=2'
-        expect(up.params.toQuery('x': { 'y': [{ 'z': '1' }] })).toEqual 'x[y][][z]=1'
-        expect(up.params.toQuery('x': { 'y': [{ 'z': ['1'] }] })).toEqual 'x[y][][z][]=1'
-        expect(up.params.toQuery('x': { 'y': [{ 'z': '1', 'w': '2' }] })).toEqual 'x[y][][z]=1&x[y][][w]=2'
-        expect(up.params.toQuery('x': { 'y': [{ 'v': { 'w': '1' } }] })).toEqual 'x[y][][v][w]=1'
-        expect(up.params.toQuery('x': { 'y': [{ 'z': '1', 'v': { 'w': '2' } }] })).toEqual 'x[y][][z]=1&x[y][][v][w]=2'
-        expect(up.params.toQuery('x': { 'y': [{ 'z': '1' }, { 'z': '2' }] })).toEqual 'x[y][][z]=1&x[y][][z]=2'
-        expect(up.params.toQuery('x': { 'y': [{ 'z': '1', 'w': 'a' }, { 'z': '2', 'w': '3' }] })).toEqual 'x[y][][z]=1&x[y][][w]=a&x[y][][z]=2&x[y][][w]=3'
-        expect(up.params.toQuery({"foo": ["1", ["2"]]})).toEqual 'foo[]=1&foo[][]=2'
+        expect(up.params.toQuery('foo': null, 'bar': '')).toEqualAfterEscapingSquareBrackets 'foo&bar='
+        expect(up.params.toQuery('foo': 'bar', 'baz': '')).toEqualAfterEscapingSquareBrackets 'foo=bar&baz='
+        expect(up.params.toQuery('foo': ['1', '2'])).toEqualAfterEscapingSquareBrackets 'foo[]=1&foo[]=2'
+        expect(up.params.toQuery('foo': 'bar', 'baz': ['1', '2', '3'])).toEqualAfterEscapingSquareBrackets 'foo=bar&baz[]=1&baz[]=2&baz[]=3'
+        expect(up.params.toQuery('foo': ['bar'], 'baz': ['1', '2', '3'])).toEqualAfterEscapingSquareBrackets 'foo[]=bar&baz[]=1&baz[]=2&baz[]=3'
+        expect(up.params.toQuery('foo': ['bar'], 'baz': ['1', '2', '3'])).toEqualAfterEscapingSquareBrackets 'foo[]=bar&baz[]=1&baz[]=2&baz[]=3'
+        expect(up.params.toQuery('x': { 'y': { 'z': '1' } })).toEqualAfterEscapingSquareBrackets 'x[y][z]=1'
+        expect(up.params.toQuery('x': { 'y': { 'z': ['1'] } })).toEqualAfterEscapingSquareBrackets 'x[y][z][]=1'
+        expect(up.params.toQuery('x': { 'y': { 'z': ['1', '2'] } })).toEqualAfterEscapingSquareBrackets 'x[y][z][]=1&x[y][z][]=2'
+        expect(up.params.toQuery('x': { 'y': [{ 'z': '1' }] })).toEqualAfterEscapingSquareBrackets 'x[y][][z]=1'
+        expect(up.params.toQuery('x': { 'y': [{ 'z': ['1'] }] })).toEqualAfterEscapingSquareBrackets 'x[y][][z][]=1'
+        expect(up.params.toQuery('x': { 'y': [{ 'z': '1', 'w': '2' }] })).toEqualAfterEscapingSquareBrackets 'x[y][][z]=1&x[y][][w]=2'
+        expect(up.params.toQuery('x': { 'y': [{ 'v': { 'w': '1' } }] })).toEqualAfterEscapingSquareBrackets 'x[y][][v][w]=1'
+        expect(up.params.toQuery('x': { 'y': [{ 'z': '1', 'v': { 'w': '2' } }] })).toEqualAfterEscapingSquareBrackets 'x[y][][z]=1&x[y][][v][w]=2'
+        expect(up.params.toQuery('x': { 'y': [{ 'z': '1' }, { 'z': '2' }] })).toEqualAfterEscapingSquareBrackets 'x[y][][z]=1&x[y][][z]=2'
+        expect(up.params.toQuery('x': { 'y': [{ 'z': '1', 'w': 'a' }, { 'z': '2', 'w': '3' }] })).toEqualAfterEscapingSquareBrackets 'x[y][][z]=1&x[y][][w]=a&x[y][][z]=2&x[y][][w]=3'
+        expect(up.params.toQuery({"foo": ["1", ["2"]]})).toEqualAfterEscapingSquareBrackets 'foo[]=1&foo[][]=2'
 
       it 'performs the inverse function of up.params.toObject', ->
         objects = [

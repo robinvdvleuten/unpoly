@@ -71,10 +71,10 @@ up.params = (($) ->
       when 'missing'
         {}
       when 'array'
-        buildNestObjectFromArray(params)
+        buildNestedObjectFromArray(params)
       when 'query'
         # We don't want to duplicate the logic to parse a query string.
-        buildNestObjectFromArray(toArray(params))
+        buildNestedObjectFromArray(toArray(params))
       when 'formData'
         # Until FormData#entries is implemented in all major browsers we must give up here.
         # However, up.form will prefer to serialize forms as arrays, so we should be good
@@ -160,9 +160,7 @@ up.params = (($) ->
         # in most cases. We only use FormData for forms with file inputs.
         up.fail('Cannot convert FormData into a query string')
       when 'array'
-        parts = for entry in params
-          encodeURIComponent(entry.name) + '=' + encodeURIComponent(entry.value)
-        parts.join('&')
+        u.map(params, arrayEntryToQuery).join('&')
       when 'object'
         buildQueryFromNestedObject(params)
 
@@ -185,7 +183,6 @@ up.params = (($) ->
 
   buildQueryFromNestedObject = (value) ->
     array = buildArrayFromNestedObject(value)
-    console.info("!!! array is %o", array)
     parts = u.map(array, arrayEntryToQuery)
     parts = u.select(parts, u.isPresent)
     parts.join('&')
@@ -223,7 +220,7 @@ up.params = (($) ->
         throw new Error("value must be a Hash")
       [ { name: prefix, value: value } ]
 
-  buildNestObjectFromArray = (array) ->
+  buildNestedObjectFromArray = (array) ->
       obj = {}
       for entry in array
         normalizeNestedParamsObject(obj, entry.name, entry.value)

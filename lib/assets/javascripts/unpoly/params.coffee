@@ -152,18 +152,15 @@ up.params = (($) ->
         return null
 
     if after == ''
-      obj[k] = value
+      safeSet(obj, k, value)
     else if after == "["
-      obj[name] = value
+      safeSet(obj, name, value)
     else if after == "[]"
-      obj[k] ||= []
-      assertTypeForNestedKey(obj, k, 'Array')
+      assertTypeForNestedKey(obj, k, 'Array', [])
       obj[k].push(value)
-#     else if match = /^\[\]\[?([^\[\]]+)\]?$/.exec(after)
     else if match = (/^\[\]\[([^\[\]]+)\]$/.exec(after) || /^\[\](.+)$/.exec(after))
       childKey = match[1]
-      obj[k] ||= []
-      assertTypeForNestedKey(obj, k, 'Array')
+      assertTypeForNestedKey(obj, k, 'Array', [])
       lastObject = u.last(obj[k])
       # If the last element in the array is an object, we add more properties to that object,
       # but only if that same property hasn't been set on the object before.
@@ -174,16 +171,21 @@ up.params = (($) ->
       else
         obj[k].push addToNestedObject({}, childKey, value)
     else
-      obj[k] ||= {}
-      assertTypeForNestedKey(obj, k, 'Object')
-      obj[k] = addToNestedObject(obj[k], after, value)
+      assertTypeForNestedKey(obj, k, 'Object', {})
+      safeSet(obj, k, addToNestedObject(obj[k], after, value))
 
     obj
 
-  assertTypeForNestedKey = (obj, k, type) ->
-    value = obj[k]
-    unless u["is#{type}"](value)
-      up.fail("expected #{type} for params key %o, but got %o", k, value)
+  safeSet = (obj, k, value) ->
+    unless Object.prototype.hasOwnProperty(k)
+      obj[k] = value
+
+  assertTypeForNestedKey = (obj, k, type, defaultValue) ->
+    if value = obj[k]
+      unless u["is#{type}"](value)
+        up.fail("expected #{type} for params key %o, but got %o", k, value)
+    else
+      obj[k] = defaultValue
 
   nestedObjectHasDeepKey = (hash, key) ->
     console.info("nestedParamsObjectHasKey (%o, %o)", hash, key)

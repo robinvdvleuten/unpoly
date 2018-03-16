@@ -223,6 +223,10 @@ describe 'up.params', ->
       expect(obj['foo']).toEqual('bar')
       expect(u.isFunction obj['hasOwnProperty']).toBe(true)
 
+    it 'ignores nested keys that would overwrite an Object prototype property', ->
+      obj = up.params.toObject("foo[hasOwnProperty]=bar")
+      expect(u.isFunction obj['foo']['hasOwnProperty']).toBe(true)
+
     describe 'nested params', ->
 
       it 'parses nested key/value pairs', ->

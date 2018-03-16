@@ -278,3 +278,39 @@ describe 'up.params', ->
             {"id": "2", "y": {"a": "6", "b": "8"}, "z": {"id": "4", "w": "0"}},
           ]
         )
+
+  describe 'up.params.add', ->
+
+    it 'adds a single key and value'
+
+  describe 'up.params.absorb', ->
+
+    describe '(with object)', ->
+
+      it 'absorbs a flat object'
+
+      it 'absorbs a nested object by deep-merging'
+
+      it 'absorbs an array'
+
+      it 'absorbs a query string'
+
+    describe '(with array)', ->
+
+      it 'absorbs a flat object'
+
+      it 'absorbs a nested object by deep-merging'
+
+      it 'absorbs an array, removing duplicate keys'
+
+      it 'absorbs a query string'
+
+    describe '(with query)', ->
+
+      it 'absorbs a flat object'
+
+      it 'absorbs a nested object by deep-merging'
+
+      it 'absorbs an array, removing duplicate keys'
+
+      it 'absorbs a query string, removing duplicate keys'

@@ -10,6 +10,10 @@ up.params = (($) ->
   config = u.config
     nest: true
 
+#  throw "make sure everything nests / unnest properly"
+#  throw "honor config.nest"
+#  throw "fix red tests"
+
   reset = config.reset
 
   detectNature = (params) ->
@@ -46,16 +50,7 @@ up.params = (($) ->
       when 'array'
         params
       when 'query'
-        array = []
-        for part in params.split('&')
-          if u.isPresent(part)
-            pair = part.split('=')
-            entry =
-              name: decodeURIComponent(pair[0])
-              value: (if u.isGiven(pair[1]) then decodeURIComponent(pair[1]) else null)
-            console.info("### got pair %o, entry is %o", pair, entry)
-            array.push(entry)
-        array
+        buildArrayFromQuery(params)
       when 'formData'
         # Until FormData#entries is implemented in all major browsers we must give up here.
         # However, up.form will prefer to serialize forms as arrays, so we should be good
@@ -76,14 +71,10 @@ up.params = (($) ->
       when 'missing'
         {}
       when 'array'
-        obj = {}
-        for entry in params
-          normalizeNestedParamsObject(obj, entry.name, entry.value)
-        console.info("==== resulting obj is %o", obj)
-        obj
+        buildNestObjectFromArray(params)
       when 'query'
         # We don't want to duplicate the logic to parse a query string.
-        toObject(toArray(params))
+        buildNestObjectFromArray(toArray(params))
       when 'formData'
         # Until FormData#entries is implemented in all major browsers we must give up here.
         # However, up.form will prefer to serialize forms as arrays, so we should be good
@@ -161,6 +152,7 @@ up.params = (($) ->
       when 'missing'
         ''
       when 'query'
+        # Remove leading question mark
         params.replace(/^\?/, '')
       when 'formData'
         # Until FormData#entries is implemented in all major browsers we must give up here.
@@ -172,7 +164,7 @@ up.params = (($) ->
           encodeURIComponent(entry.name) + '=' + encodeURIComponent(entry.value)
         parts.join('&')
       when 'object'
-        buildNestedQuery(params)
+        buildQueryFromNestedObject(params)
 
     switch purpose
       when 'url'
@@ -181,6 +173,7 @@ up.params = (($) ->
         query = query.replace(/\%20/g, '+')
       else
         up.fail('Unknown purpose %o', purpose)
+
     query
 
   arrayEntryToQuery = (entry) ->
@@ -190,12 +183,29 @@ up.params = (($) ->
       query += encodeURIComponent(entry.value)
     query
 
-  buildNestedQuery = (value) ->
+  buildQueryFromNestedObject = (value) ->
     array = buildArrayFromNestedObject(value)
     console.info("!!! array is %o", array)
     parts = u.map(array, arrayEntryToQuery)
     parts = u.select(parts, u.isPresent)
     parts.join('&')
+
+  buildArrayFromQuery = (query) ->
+    array = []
+    for part in query.split('&')
+      if u.isPresent(part)
+        [name, value] = part.split('=')
+        name = decodeURIComponent(name)
+        # There are three forms we need to handle:
+        # (1) foo=bar should become { name: 'foo', bar: 'bar' }
+        # (2) foo=    should become { name: 'foo', bar: '' }
+        # (3) foo     should become { name: 'foo', bar: null }
+        if u.isGiven(value)
+          value = decodeURIComponent(value)
+        else
+          value = null
+        array.push({ name, value })
+    array
 
   buildArrayFromNestedObject = (value, prefix) ->
     if u.isArray(value)
@@ -212,6 +222,13 @@ up.params = (($) ->
       if u.isMissing(prefix)
         throw new Error("value must be a Hash")
       [ { name: prefix, value: value } ]
+
+  buildNestObjectFromArray = (array) ->
+      obj = {}
+      for entry in array
+        normalizeNestedParamsObject(obj, entry.name, entry.value)
+      console.info("==== resulting obj is %o", obj)
+      obj
 
   buildURL = (base, params) ->
     parts = [base, toQuery(params)]
@@ -250,8 +267,6 @@ up.params = (($) ->
         otherObject = toObject(otherParams)
         for name, value of otherObject
           params.append(name, value)
-      when 'params'
-        absorb(otherParams.params)
       when 'object'
         u.assign(params, otherParams)
 

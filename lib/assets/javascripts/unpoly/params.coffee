@@ -46,10 +46,13 @@ up.params = (($) ->
   toArray = (params) ->
     switch detectNature(params)
       when 'missing'
+        # No nesting conversion since we're just returning an empty list
         []
       when 'array'
+       # No nesting conversion since we're not changing param type
         params
       when 'query'
+        # No nesting conversion since we're converting from one unnested type to another
         buildArrayFromQuery(params)
       when 'formData'
         # Until FormData#entries is implemented in all major browsers we must give up here.
@@ -57,6 +60,7 @@ up.params = (($) ->
         # in most cases. We only use FormData for forms with file inputs.
         up.fail('Cannot convert FormData into an array')
       when 'object'
+        # We need to flatten the nesting from the given object
         buildArrayFromNestedObject(params)
 
   ###*
@@ -69,11 +73,15 @@ up.params = (($) ->
   toObject = (params) ->
     switch detectNature(params)
       when 'missing'
+        # No nesting conversion since we're just returning an object
         {}
       when 'array'
+        # We must create a nested object from the given, flat array keys.
         buildNestedObjectFromArray(params)
       when 'query'
-        # We don't want to duplicate the logic to parse a query string.
+        # We must create a nested object from the given, flat array keys.
+        # We don't want to duplicate the logic to parse a query string, so
+        # we're converting to array first.
         buildNestedObjectFromArray(toArray(params))
       when 'formData'
         # Until FormData#entries is implemented in all major browsers we must give up here.
@@ -81,70 +89,8 @@ up.params = (($) ->
         # in most cases. We only use FormData for forms with file inputs.
         up.fail('Cannot convert FormData into an object')
       when 'object'
+        # No nesting conversion since we're not changing param types.
         params
-
-  # normalize_params recursively expands parameters into structural types. If
-  # the structural types represented by two different parameter names are in
-  # conflict, a ParameterTypeError is raised.
-  normalizeNestedParamsObject = (params, name, v) ->
-    # Parse the name:
-    # $1: the next names key without square brackets
-    # $2: the rest of the key until the end
-    match = /^[\[\]]*([^\[\]]+)\]*(.*?)$/.exec(name)
-
-    k = match?[1]
-    after = match?[2]
-
-    console.log("!!! k is %o, v is %o, name is %o", k, v, name)
-
-    if u.isBlank(k)
-      if u.isGiven(v) && name == "[]"
-        return [v]
-      else
-        return null
-
-    if after == ''
-      params[k] = v
-    else if after == "["
-      params[name] = v
-    else if after == "[]"
-      params[k] ||= []
-      throw new Error("expected Array (got #{params[k].class.name}) for param `#{k}'") unless u.isArray(params[k])
-      params[k].push(v)
-#     else if match = /^\[\]\[?([^\[\]]+)\]?$/.exec(after)
-    else if match = (/^\[\]\[([^\[\]]+)\]$/.exec(after) || /^\[\](.+)$/.exec(after))
-      childKey = match[1]
-      params[k] ||= []
-      lastObject = u.last(params[k])
-      throw new Error("expected Array (got #{params[k].class.name}) for param `#{k}'") unless u.isArray(params[k])
-      if u.isObject(lastObject) && !nestedParamsObjectHasKey(lastObject, childKey)
-        normalizeNestedParamsObject(lastObject, childKey, v)
-      else
-        params[k].push normalizeNestedParamsObject({}, childKey, v)
-    else
-      params[k] ||= {}
-      throw new Error("expected Object (got #{params[k]}) for param `#{k}'") unless u.isObject(params[k])
-      params[k] = normalizeNestedParamsObject(params[k], after, v)
-
-    params
-
-  nestedParamsObjectHasKey = (hash, key) ->
-    console.info("nestedParamsObjectHasKey (%o, %o)", hash, key)
-    return false if /\[\]/.test(key)
-
-    keyParts = key.split(/[\[\]]+/)
-
-    console.info("has keyParts %o", keyParts)
-
-    for keyPart in keyParts
-      console.info("nestedParamsObjectHasKey with keyPart %o and hash %o", keyPart, hash)
-      continue if keyPart == ''
-      return false unless u.isObject(hash) && hash.hasOwnProperty(keyPart)
-      hash = hash[keyPart]
-
-    console.info("nestedParamsObjectHasKey returns TRUE")
-
-    true
 
   toQuery = (params, options = {}) ->
     purpose = options.purpose || 'url'
@@ -173,6 +119,89 @@ up.params = (($) ->
         up.fail('Unknown purpose %o', purpose)
 
     query
+
+  ###*
+  # Adds the given name (which might have nesting marks like `foo[bar][][baz]`) and
+  # string value to the given object. The name is recursively expanded to create
+  # an object of nested sub-objects and arrays.
+  #
+  # Throws an error if the given name indicates a structure that is incompatible
+  # with the existing structure in the given object.
+  #
+  # @function addToNestedObject
+  # @internal
+  # @param {Object} obj
+  # @param {string} name
+  # @param {string} value
+  ###
+  addToNestedObject = (obj, name, value) ->
+    # Parse the name:
+    # $1: the next names key without square brackets
+    # $2: the rest of the key until the end
+    match = /^[\[\]]*([^\[\]]+)\]*(.*?)$/.exec(name)
+
+    k = match?[1]
+    after = match?[2]
+
+    console.log("!!! k is %o, v is %o, name is %o", k, value, name)
+
+    if u.isBlank(k)
+      if u.isGiven(value) && name == "[]"
+        return [value]
+      else
+        return null
+
+    if after == ''
+      obj[k] = value
+    else if after == "["
+      obj[name] = value
+    else if after == "[]"
+      obj[k] ||= []
+      assertTypeForNestedKey(obj, k, 'Array')
+      obj[k].push(value)
+#     else if match = /^\[\]\[?([^\[\]]+)\]?$/.exec(after)
+    else if match = (/^\[\]\[([^\[\]]+)\]$/.exec(after) || /^\[\](.+)$/.exec(after))
+      childKey = match[1]
+      obj[k] ||= []
+      assertTypeForNestedKey(obj, k, 'Array')
+      lastObject = u.last(obj[k])
+      # If the last element in the array is an object, we add more properties to that object,
+      # but only if that same property hasn't been set on the object before.
+      # If we have seen it before (or if the last elementis not an object) we assume the user
+      # wants to push a new value into the array.
+      if u.isObject(lastObject) && !nestedObjectHasDeepKey(lastObject, childKey)
+        addToNestedObject(lastObject, childKey, value)
+      else
+        obj[k].push addToNestedObject({}, childKey, value)
+    else
+      obj[k] ||= {}
+      assertTypeForNestedKey(obj, k, 'Object')
+      obj[k] = addToNestedObject(obj[k], after, value)
+
+    obj
+
+  assertTypeForNestedKey = (obj, k, type) ->
+    value = obj[k]
+    unless u["is#{type}"](value)
+      up.fail("expected #{type} for params key %o, but got %o", k, value)
+
+  nestedObjectHasDeepKey = (hash, key) ->
+    console.info("nestedParamsObjectHasKey (%o, %o)", hash, key)
+    return false if /\[\]/.test(key)
+
+    keyParts = key.split(/[\[\]]+/)
+
+    console.info("has keyParts %o", keyParts)
+
+    for keyPart in keyParts
+      console.info("nestedParamsObjectHasKey with keyPart %o and hash %o", keyPart, hash)
+      continue if keyPart == ''
+      return false unless u.isObject(hash) && hash.hasOwnProperty(keyPart)
+      hash = hash[keyPart]
+
+    console.info("nestedParamsObjectHasKey returns TRUE")
+
+    true
 
   arrayEntryToQuery = (entry) ->
     query = encodeURIComponent(entry.name)
@@ -223,7 +252,7 @@ up.params = (($) ->
   buildNestedObjectFromArray = (array) ->
       obj = {}
       for entry in array
-        normalizeNestedParamsObject(obj, entry.name, entry.value)
+        addToNestedObject(obj, entry.name, entry.value)
       console.info("==== resulting obj is %o", obj)
       obj
 

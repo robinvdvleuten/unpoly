@@ -27,10 +27,6 @@ describe 'up.params', ->
       string = up.params.toQuery('foo=bar')
       expect(string).toEqual('foo=bar')
 
-    it 'strips a leading question mark from the given query string', ->
-      string = up.params.toQuery('?foo=bar')
-      expect(string).toEqual('foo=bar')
-
     it 'returns an empty string for an empty object', ->
       string = up.params.toQuery({})
       expect(string).toEqual('')
@@ -316,6 +312,13 @@ describe 'up.params', ->
         query = up.params.add(query, 'bär', 'twö')
         expect(query).toEqual('foo=one&b%C3%A4r=tw%C3%B6')
 
+    describe '(with missing params)', ->
+
+      it 'returns an object with only the new key and value', ->
+        obj = undefined
+        obj = up.params.add(obj, 'bar', 'two')
+        expect(obj).toEqual { bar: 'two' }
+
   describe 'up.params.absorb', ->
 
     describe '(with object)', ->
@@ -332,20 +335,20 @@ describe 'up.params', ->
 
     describe '(with array)', ->
 
-      it 'absorbs a flat object, removing duplicate keys'
+      it 'absorbs a flat object'
 
-      it 'absorbs a nested object, removing duplicate keys'
+      it 'absorbs a nested object'
 
-      it 'absorbs an array, removing duplicate keys'
+      it 'absorbs an array'
 
-      it 'absorbs a query string, removing duplicate keys'
+      it 'absorbs a query string'
 
     describe '(with query)', ->
 
-      it 'absorbs a flat object, removing duplicate keys'
+      it 'absorbs a flat object'
 
-      it 'absorbs a nested object, removing duplicate keys'
+      it 'absorbs a nested object'
 
-      it 'absorbs an array, removing duplicate keys'
+      it 'absorbs an array'
 
-      it 'absorbs a query string, removing duplicate keys'
+      it 'absorbs a query string'

@@ -98,8 +98,7 @@ up.params = (($) ->
       when 'missing'
         ''
       when 'query'
-        # Remove leading question mark
-        params.replace(/^\?/, '')
+        params
       when 'formData'
         # Until FormData#entries is implemented in all major browsers we must give up here.
         # However, up.form will prefer to serialize forms as arrays, so we should be good
@@ -288,8 +287,7 @@ up.params = (($) ->
   absorb = (params, otherParams) ->
     switch detectNature(params)
       when 'missing'
-        params = {}
-        absorb(otherParams)
+        params = absorb({}, otherParams)
       when 'array'
         otherArray = toArray(otherParams)
         params.push(otherArray...)
@@ -337,6 +335,12 @@ up.params = (($) ->
     add(params, buttonName, buttonValue) if u.isPresent(buttonName)
     params
 
+  fromURL = (url) ->
+    urlParts = u.parseUrl(url)
+    if query = urlParts.search
+      query = query.replace(/^\?/, '')
+      query
+
   up.on 'up:framework:reset', reset
 
   toArray: toArray
@@ -346,5 +350,6 @@ up.params = (($) ->
   add: add
   absorb: absorb
   fromForm: fromForm
+  fromURL: fromURL
 
 )(jQuery)

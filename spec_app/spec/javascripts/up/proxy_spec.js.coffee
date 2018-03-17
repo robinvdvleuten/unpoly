@@ -460,6 +460,7 @@ describe 'up.proxy', ->
               request = @lastRequest()
               expect(request.method).toEqual('POST')
               expect(request.data()['_method']).toEqual([method])
+#              expect(request.data()['foo']).toEqual('bar')
 
       describe 'with config.maxRequests set', ->
 

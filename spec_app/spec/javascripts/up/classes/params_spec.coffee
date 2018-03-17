@@ -43,6 +43,14 @@ describe 'up.params', ->
       string = up.params.toQuery({ 'äpfel': 'bäume' })
       expect(string).toEqual('%C3%A4pfel=b%C3%A4ume')
 
+    it "sets a blank value after the equal sign if a key's value is a blank string", ->
+      string = up.params.toQuery({'foo': ''})
+      expect(string).toEqual('foo=')
+
+    it "omits an equal sign if a key's value is null", ->
+      string = up.params.toQuery({'foo': null})
+      expect(string).toEqual('foo')
+
     it 'URL-encodes plus characters', ->
       string = up.params.toQuery({ 'my+key': 'my+value' })
       expect(string).toEqual('my%2Bkey=my%2Bvalue')

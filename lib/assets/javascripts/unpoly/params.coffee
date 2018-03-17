@@ -271,7 +271,7 @@ up.params = (($) ->
   @function up.params.add
   ###
   add = (params, name, value) ->
-    absorb(params, { name: field, value: value })
+    absorb(params, { name, value })
 
   ###*
   Merges the request params from `otherParams` into `params`.

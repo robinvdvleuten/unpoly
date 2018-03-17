@@ -293,7 +293,9 @@ describe 'up.params', ->
 
       it 'absorbs a flat object'
 
-      it 'absorbs a nested object by deep-merging'
+      it 'absorbs a nested object, deep-merging the other object'
+
+      it 'absorbs a nested object, overwriting (and not merging) nested arrays'
 
       it 'absorbs an array'
 
@@ -301,19 +303,19 @@ describe 'up.params', ->
 
     describe '(with array)', ->
 
-      it 'absorbs a flat object'
+      it 'absorbs a flat object, removing duplicate keys'
 
-      it 'absorbs a nested object by deep-merging'
+      it 'absorbs a nested object, removing duplicate keys'
 
       it 'absorbs an array, removing duplicate keys'
 
-      it 'absorbs a query string'
+      it 'absorbs a query string, removing duplicate keys'
 
     describe '(with query)', ->
 
-      it 'absorbs a flat object'
+      it 'absorbs a flat object, removing duplicate keys'
 
-      it 'absorbs a nested object by deep-merging'
+      it 'absorbs a nested object, removing duplicate keys'
 
       it 'absorbs an array, removing duplicate keys'
 

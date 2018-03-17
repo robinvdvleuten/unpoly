@@ -311,7 +311,7 @@ up.params = (($) ->
     else
       $form.find(submitButtonSelector).first()
 
-  fromForm = (form) ->
+  fromForm = (form, options) ->
     options = u.options(options)
     $form = $(form)
     hasFileInputs = $form.find('input[type=file]').length

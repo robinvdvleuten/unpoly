@@ -2,6 +2,17 @@ describe 'up.params', ->
 
   u = up.util
 
+  encodeBrackets = (str) ->
+    str = str.replace(/\[/g, '%5B')
+    str = str.replace(/\]/g, '%5D')
+    str
+
+  beforeEach ->
+    jasmine.addMatchers
+      toEqualAfterEncodingBrackets: (util, customEqualityTesters) ->
+        compare: (actual, expected) ->
+          pass: actual == encodeBrackets(expected)
+
   describe 'up.params.toQuery', ->
 
     encodedOpeningBracket = '%5B'
@@ -57,45 +68,36 @@ describe 'up.params', ->
 
     describe 'nested params', ->
 
-      beforeEach ->
-        jasmine.addMatchers
-          toEqualAfterEscapingSquareBrackets: (util, customEqualityTesters) ->
-            compare: (actual, expected, tolerance) ->
-              expected = expected.replace(/\[/g, '%5B')
-              expected = expected.replace(/\]/g, '%5D')
-              pass: actual == expected
-
-
       it "build nested query strings correctly" , ->
-        expect(up.params.toQuery("foo": null)).toEqualAfterEscapingSquareBrackets "foo"
-        expect(up.params.toQuery("foo": "")).toEqualAfterEscapingSquareBrackets "foo="
-        expect(up.params.toQuery("foo": "bar")).toEqualAfterEscapingSquareBrackets "foo=bar"
+        expect(up.params.toQuery("foo": null)).toEqualAfterEncodingBrackets "foo"
+        expect(up.params.toQuery("foo": "")).toEqualAfterEncodingBrackets "foo="
+        expect(up.params.toQuery("foo": "bar")).toEqualAfterEncodingBrackets "foo=bar"
 
-        expect(up.params.toQuery("foo": [null])).toEqualAfterEscapingSquareBrackets "foo[]"
-        expect(up.params.toQuery("foo": [""])).toEqualAfterEscapingSquareBrackets "foo[]="
-        expect(up.params.toQuery("foo": ["bar"])).toEqualAfterEscapingSquareBrackets "foo[]=bar"
-        expect(up.params.toQuery('foo': [])).toEqualAfterEscapingSquareBrackets ''
-        expect(up.params.toQuery('foo': {})).toEqualAfterEscapingSquareBrackets ''
-        expect(up.params.toQuery('foo': 'bar', 'baz': [])).toEqualAfterEscapingSquareBrackets 'foo=bar'
-        expect(up.params.toQuery('foo': 'bar', 'baz': {})).toEqualAfterEscapingSquareBrackets 'foo=bar'
+        expect(up.params.toQuery("foo": [null])).toEqualAfterEncodingBrackets "foo[]"
+        expect(up.params.toQuery("foo": [""])).toEqualAfterEncodingBrackets "foo[]="
+        expect(up.params.toQuery("foo": ["bar"])).toEqualAfterEncodingBrackets "foo[]=bar"
+        expect(up.params.toQuery('foo': [])).toEqualAfterEncodingBrackets ''
+        expect(up.params.toQuery('foo': {})).toEqualAfterEncodingBrackets ''
+        expect(up.params.toQuery('foo': 'bar', 'baz': [])).toEqualAfterEncodingBrackets 'foo=bar'
+        expect(up.params.toQuery('foo': 'bar', 'baz': {})).toEqualAfterEncodingBrackets 'foo=bar'
 
-        expect(up.params.toQuery('foo': null, 'bar': '')).toEqualAfterEscapingSquareBrackets 'foo&bar='
-        expect(up.params.toQuery('foo': 'bar', 'baz': '')).toEqualAfterEscapingSquareBrackets 'foo=bar&baz='
-        expect(up.params.toQuery('foo': ['1', '2'])).toEqualAfterEscapingSquareBrackets 'foo[]=1&foo[]=2'
-        expect(up.params.toQuery('foo': 'bar', 'baz': ['1', '2', '3'])).toEqualAfterEscapingSquareBrackets 'foo=bar&baz[]=1&baz[]=2&baz[]=3'
-        expect(up.params.toQuery('foo': ['bar'], 'baz': ['1', '2', '3'])).toEqualAfterEscapingSquareBrackets 'foo[]=bar&baz[]=1&baz[]=2&baz[]=3'
-        expect(up.params.toQuery('foo': ['bar'], 'baz': ['1', '2', '3'])).toEqualAfterEscapingSquareBrackets 'foo[]=bar&baz[]=1&baz[]=2&baz[]=3'
-        expect(up.params.toQuery('x': { 'y': { 'z': '1' } })).toEqualAfterEscapingSquareBrackets 'x[y][z]=1'
-        expect(up.params.toQuery('x': { 'y': { 'z': ['1'] } })).toEqualAfterEscapingSquareBrackets 'x[y][z][]=1'
-        expect(up.params.toQuery('x': { 'y': { 'z': ['1', '2'] } })).toEqualAfterEscapingSquareBrackets 'x[y][z][]=1&x[y][z][]=2'
-        expect(up.params.toQuery('x': { 'y': [{ 'z': '1' }] })).toEqualAfterEscapingSquareBrackets 'x[y][][z]=1'
-        expect(up.params.toQuery('x': { 'y': [{ 'z': ['1'] }] })).toEqualAfterEscapingSquareBrackets 'x[y][][z][]=1'
-        expect(up.params.toQuery('x': { 'y': [{ 'z': '1', 'w': '2' }] })).toEqualAfterEscapingSquareBrackets 'x[y][][z]=1&x[y][][w]=2'
-        expect(up.params.toQuery('x': { 'y': [{ 'v': { 'w': '1' } }] })).toEqualAfterEscapingSquareBrackets 'x[y][][v][w]=1'
-        expect(up.params.toQuery('x': { 'y': [{ 'z': '1', 'v': { 'w': '2' } }] })).toEqualAfterEscapingSquareBrackets 'x[y][][z]=1&x[y][][v][w]=2'
-        expect(up.params.toQuery('x': { 'y': [{ 'z': '1' }, { 'z': '2' }] })).toEqualAfterEscapingSquareBrackets 'x[y][][z]=1&x[y][][z]=2'
-        expect(up.params.toQuery('x': { 'y': [{ 'z': '1', 'w': 'a' }, { 'z': '2', 'w': '3' }] })).toEqualAfterEscapingSquareBrackets 'x[y][][z]=1&x[y][][w]=a&x[y][][z]=2&x[y][][w]=3'
-        expect(up.params.toQuery({"foo": ["1", ["2"]]})).toEqualAfterEscapingSquareBrackets 'foo[]=1&foo[][]=2'
+        expect(up.params.toQuery('foo': null, 'bar': '')).toEqualAfterEncodingBrackets 'foo&bar='
+        expect(up.params.toQuery('foo': 'bar', 'baz': '')).toEqualAfterEncodingBrackets 'foo=bar&baz='
+        expect(up.params.toQuery('foo': ['1', '2'])).toEqualAfterEncodingBrackets 'foo[]=1&foo[]=2'
+        expect(up.params.toQuery('foo': 'bar', 'baz': ['1', '2', '3'])).toEqualAfterEncodingBrackets 'foo=bar&baz[]=1&baz[]=2&baz[]=3'
+        expect(up.params.toQuery('foo': ['bar'], 'baz': ['1', '2', '3'])).toEqualAfterEncodingBrackets 'foo[]=bar&baz[]=1&baz[]=2&baz[]=3'
+        expect(up.params.toQuery('foo': ['bar'], 'baz': ['1', '2', '3'])).toEqualAfterEncodingBrackets 'foo[]=bar&baz[]=1&baz[]=2&baz[]=3'
+        expect(up.params.toQuery('x': { 'y': { 'z': '1' } })).toEqualAfterEncodingBrackets 'x[y][z]=1'
+        expect(up.params.toQuery('x': { 'y': { 'z': ['1'] } })).toEqualAfterEncodingBrackets 'x[y][z][]=1'
+        expect(up.params.toQuery('x': { 'y': { 'z': ['1', '2'] } })).toEqualAfterEncodingBrackets 'x[y][z][]=1&x[y][z][]=2'
+        expect(up.params.toQuery('x': { 'y': [{ 'z': '1' }] })).toEqualAfterEncodingBrackets 'x[y][][z]=1'
+        expect(up.params.toQuery('x': { 'y': [{ 'z': ['1'] }] })).toEqualAfterEncodingBrackets 'x[y][][z][]=1'
+        expect(up.params.toQuery('x': { 'y': [{ 'z': '1', 'w': '2' }] })).toEqualAfterEncodingBrackets 'x[y][][z]=1&x[y][][w]=2'
+        expect(up.params.toQuery('x': { 'y': [{ 'v': { 'w': '1' } }] })).toEqualAfterEncodingBrackets 'x[y][][v][w]=1'
+        expect(up.params.toQuery('x': { 'y': [{ 'z': '1', 'v': { 'w': '2' } }] })).toEqualAfterEncodingBrackets 'x[y][][z]=1&x[y][][v][w]=2'
+        expect(up.params.toQuery('x': { 'y': [{ 'z': '1' }, { 'z': '2' }] })).toEqualAfterEncodingBrackets 'x[y][][z]=1&x[y][][z]=2'
+        expect(up.params.toQuery('x': { 'y': [{ 'z': '1', 'w': 'a' }, { 'z': '2', 'w': '3' }] })).toEqualAfterEncodingBrackets 'x[y][][z]=1&x[y][][w]=a&x[y][][z]=2&x[y][][w]=3'
+        expect(up.params.toQuery({"foo": ["1", ["2"]]})).toEqualAfterEncodingBrackets 'foo[]=1&foo[][]=2'
 
       it 'performs the inverse function of up.params.toObject', ->
         objects = [
@@ -343,28 +345,138 @@ describe 'up.params', ->
         obj = up.params.merge(obj, other)
         expect(obj).toEqual { a: '1', e: '4', b: { c: '2', d: '3', f: '5', g: '6' } }
 
-      it 'merges a nested object, overwriting (and not merging) nested arrays'
+      it 'merges a nested object, overwriting (and not merging) nested arrays', ->
+        obj = { a: ['1', '2'] }
+        other = { a: ['3', '4'] }
+        obj = up.params.merge(obj, other)
+        expect(obj).toEqual { a: ['3', '4'] }
 
-      it 'merges an array'
+      it 'merges an array', ->
+        obj = { a: '1', b: '2' }
+        other = [
+          { name: 'c', value: '3' },
+          { name: 'd', value: '4' }
+        ]
+        obj = up.params.merge(obj, other)
+        expect(obj).toEqual({ a: '1', b: '2', c: '3', d: '4' })
 
-      it 'merges a query string'
+      it 'merges an array with nested keys', ->
+        obj = { a: '1', b: { c: '2', d: '3' } }
+        other = [
+          { name: 'e', value: '4' },
+          { name: 'b[f]', value: '5' },
+          { name: 'b[g]', value: '6' }
+        ]
+        obj = up.params.merge(obj, other)
+        expect(obj).toEqual { a: '1', e: '4', b: { c: '2', d: '3', f: '5', g: '6' } }
+
+      it 'merges a query string', ->
+        obj = { a: '1', b: '2' }
+        other = 'c=3&d=4'
+        obj = up.params.merge(obj, other)
+        expect(obj).toEqual({ a: '1', b: '2', c: '3', d: '4' })
+
+      it 'merges a query string with nested keys', ->
+        obj = { a: '1', b: { c: '2', d: '3' } }
+        other = 'e=4&b[f]=5&b[g]=6'
+        obj = up.params.merge(obj, other)
+        expect(obj).toEqual { a: '1', e: '4', b: { c: '2', d: '3', f: '5', g: '6' } }
 
     describe '(with array)', ->
 
-      it 'merges a flat object'
+      it 'merges a flat object', ->
+        obj = [
+          { name: 'a', value: '1' },
+          { name: 'b', value: '2' }
+        ]
+        other = { c: '3', d: '4'}
+        obj = up.params.merge(obj, other)
+        expect(obj).toEqual [
+          { name: 'a', value: '1' },
+          { name: 'b', value: '2' },
+          { name: 'c', value: '3' },
+          { name: 'd', value: '4' }
+        ]
 
-      it 'merges a nested object'
+      it 'merges a nested object', ->
+        obj = [
+          { name: 'a', value: '1' },
+          { name: 'b[c]', value: '2' },
+          { name: 'b[d]', value: '3' }
+        ]
+        other = [
+          { name: 'e', value: '4' },
+          { name: 'b[f]', value: '5' },
+          { name: 'b[g]', value: '6' }
+        ]
+        obj = up.params.merge(obj, other)
 
-      it 'merges an array'
+        expect(obj).toEqual [
+          { name: 'a', value: '1' },
+          { name: 'b[c]', value: '2' },
+          { name: 'b[d]', value: '3' },
+          { name: 'e', value: '4' },
+          { name: 'b[f]', value: '5' },
+          { name: 'b[g]', value: '6' }
+        ]
 
-      it 'merges a query string'
+      it 'merges another array', ->
+        obj = [
+          { name: 'a', value: '1' },
+          { name: 'b', value: '2' }
+        ]
+        other = [
+          { name: 'c', value: '3' },
+          { name: 'd', value: '4' }
+        ]
+        obj = up.params.merge(obj, other)
+        expect(obj).toEqual [
+          { name: 'a', value: '1' },
+          { name: 'b', value: '2' },
+          { name: 'c', value: '3' },
+          { name: 'd', value: '4' }
+        ]
+
+      it 'merges a query string', ->
+        obj = [
+          { name: 'a', value: '1' },
+          { name: 'b', value: '2' }
+        ]
+        other = 'c=3&d=4'
+        obj = up.params.merge(obj, other)
+        expect(obj).toEqual [
+          { name: 'a', value: '1' },
+          { name: 'b', value: '2' },
+          { name: 'c', value: '3' },
+          { name: 'd', value: '4' }
+        ]
 
     describe '(with query)', ->
 
-      it 'merges a flat object'
+      it 'merges a flat object', ->
+        obj = 'a=1&b=2'
+        other = { c: '3', d: '4'}
+        obj = up.params.merge(obj, other)
+        expect(obj).toEqual('a=1&b=2&c=3&d=4')
 
-      it 'merges a nested object'
+      it 'merges a nested object', ->
+        obj = encodeBrackets('a=1&b[c]=2&b[d]=3')
+        other = { e: '4', b: { f: '5', g: '6' }}
+        obj = up.params.merge(obj, other)
+        expect(obj).toEqualAfterEncodingBrackets 'a=1&b[c]=2&b[d]=3&e=4&b[f]=5&b[g]=6'
 
-      it 'merges an array'
+      it 'merges an array', ->
+        obj = 'a=1&b=2'
+        other = [
+          { name: 'c', value: '3' },
+          { name: 'd', value: '4' }
+        ]
+        obj = up.params.merge(obj, other)
+        expect(obj).toEqual('a=1&b=2&c=3&d=4')
 
-      it 'merges a query string'
+      it 'merges another query string', ->
+        obj = 'a=1&b=2'
+        other = 'c=3&d=4'
+        obj = up.params.merge(obj, other)
+        expect(obj).toEqual('a=1&b=2&c=3&d=4')
+

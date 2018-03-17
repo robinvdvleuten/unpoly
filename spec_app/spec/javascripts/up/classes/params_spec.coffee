@@ -285,7 +285,36 @@ describe 'up.params', ->
 
   describe 'up.params.add', ->
 
-    it 'adds a single key and value'
+    describe '(with object)', ->
+
+      it 'adds a single key and value', ->
+        obj = { foo: 'one' }
+        obj = up.params.add(obj, 'bar', 'two')
+        expect(obj).toEqual { foo: 'one', bar: 'two' }
+
+    describe '(with array)', ->
+
+      it 'adds a single key and value', ->
+        obj = [{ name: 'foo', value: 'one' }]
+        obj = up.params.add(obj, 'bar', 'two')
+        expect(obj).toEqual [{ name: 'foo', value: 'one' }, { name: 'bar', value: 'two' }]
+
+    describe '(with query string)', ->
+
+      it 'adds a new key/value pair to the end of a query', ->
+        query = 'foo=one'
+        query = up.params.add(query, 'bar', 'two')
+        expect(query).toEqual('foo=one&bar=two')
+
+      it 'does not add superfluous ampersands if the previous query was a blank string', ->
+        query = ''
+        query = up.params.add(query, 'bar', 'two')
+        expect(query).toEqual('bar=two')
+
+      it 'escapes special characters in the new key and value', ->
+        query = 'foo=one'
+        query = up.params.add(query, 'bär', 'twö')
+        expect(query).toEqual('foo=one&b%C3%A4r=tw%C3%B6')
 
   describe 'up.params.absorb', ->
 

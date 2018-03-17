@@ -266,16 +266,22 @@ up.params = (($) ->
 
   ###*
   Adds a new entry with the given `name` and `value` to the given `params`.
-  Modifies `params`.
+
+  Prefers to modify the given params in-place.
+  We cannot modify a query string in-place (since JavaScript strings are immutable),
+  so this function also returns the modified params.
 
   @function up.params.add
   ###
   add = (params, name, value) ->
-    absorb(params, { name, value })
+    absorb(params, [{ name, value }])
 
   ###*
   Merges the request params from `otherParams` into `params`.
-  Modifies `params`.
+
+  Prefers to modify the given params in-place.
+  We cannot modify a query string in-place (since JavaScript strings are immutable),
+  so this function also returns the modified params.
 
   @function up.params.absorb
   ###
@@ -286,7 +292,7 @@ up.params = (($) ->
         absorb(otherParams)
       when 'array'
         otherArray = toArray(otherParams)
-        params = params.concat(otherArray)
+        params.push(otherArray...)
       when 'query'
         otherQuery = toQuery(otherParams)
         parts = u.select([params, otherQuery], u.isPresent)
@@ -296,7 +302,10 @@ up.params = (($) ->
         for name, value of otherObject
           params.append(name, value)
       when 'object'
-        u.assign(params, otherParams)
+        u.assign(params, toObject(otherParams))
+    # Return the new params for the query case, where we cannot
+    # manipulate an immutable string in-place.
+    params
 
   $submittingButton = ($form) ->
     submitButtonSelector = 'input[type=submit], button[type=submit], button:not([type])'

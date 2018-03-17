@@ -610,6 +610,9 @@ describe 'up.util', ->
       it 'returns true for an object literal', ->
         expect(up.util.isOptions({ foo: 'bar'})).toBe(true)
 
+      it 'returns true for a prototype-less object', ->
+        expect(up.util.isOptions(Object.create(null))).toBe(true)
+
       it 'returns false for undefined', ->
         expect(up.util.isOptions(undefined)).toBe(false)
 
@@ -621,17 +624,23 @@ describe 'up.util', ->
         fn.key = 'value'
         expect(up.util.isOptions(fn)).toBe(false)
 
-      it 'returns false for an array', ->
+      it 'returns false for an Array', ->
         expect(up.util.isOptions(['foo'])).toBe(false)
 
       it 'returns false for a jQuery collection', ->
         expect(up.util.isOptions($('body'))).toBe(false)
 
-      it 'returns false for a promise', ->
+      it 'returns false for a Promise', ->
         expect(up.util.isOptions(Promise.resolve())).toBe(false)
 
       it 'returns false for a FormData object', ->
         expect(up.util.isOptions(new FormData())).toBe(false)
+
+      it 'returns false for a Date', ->
+        expect(up.util.isOptions(new Date())).toBe(false)
+
+      it 'returns false for a RegExp', ->
+        expect(up.util.isOptions(new RegExp('foo'))).toBe(false)
 
     describe 'up.util.isObject', ->
 
@@ -663,6 +672,20 @@ describe 'up.util', ->
 
       it 'returns true for a FormData object', ->
         expect(up.util.isObject(new FormData())).toBe(true)
+
+    describe 'up.util.deepMerge', ->
+
+      it 'recursively merges the given objects', ->
+        obj = { a: '1', b: { c: '2', d: '3' } }
+        other = { e: '4', b: { f: '5', g: '6' }}
+        obj = up.util.deepMerge(obj, other)
+        expect(obj).toEqual { a: '1', e: '4', b: { c: '2', d: '3', f: '5', g: '6' } }
+
+      it 'overwrites (and does not concatenate) array values', ->
+        obj = { a: ['1', '2'] }
+        other = { a: ['3', '4'] }
+        obj = up.util.deepMerge(obj, other)
+        expect(obj).toEqual { a: ['3', '4'] }
 
     describe 'up.util.memoize', ->
 

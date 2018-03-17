@@ -537,6 +537,7 @@ up.modal = (($) ->
     chain.asap -> closeNow(options)
 
   closeNow = (options) ->
+    console.debug("!!! closeNow is called with options %o", options)
     options = u.options(options)
 
     unless isOpen()
@@ -823,7 +824,7 @@ up.modal = (($) ->
 
   # When the user uses the back button we will usually restore <body> or a base container.
   # We close any open modal because it probably won't match the restored state.
-  up.on 'up:history:restore', closeAsap
+  up.on 'up:history:restore', -> closeAsap()
 
   # The framework is reset between tests
   up.on 'up:framework:reset', reset

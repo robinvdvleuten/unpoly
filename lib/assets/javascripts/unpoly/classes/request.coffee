@@ -121,7 +121,7 @@ class up.Request extends up.Record
 
   transferSearchToParams: =>
     if query = up.params.fromURL(@url)
-      @params = up.params.absorb(@params, query)
+      @params = up.params.merge(@params, query)
       @url = u.normalizeUrl(@url, search: false)
 
   isSafe: =>

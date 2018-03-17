@@ -6,7 +6,7 @@ class up.URLEditor
     [@pathname, @params] = url.split('?')
 
   appendParams: (newParams) =>
-    up.params.absorb(@params, newParams)
+    @params = up.params.merge(@params, newParams)
 
   toURLString: =>
     @params.buildURL(@pathname, @params)

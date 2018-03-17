@@ -84,7 +84,7 @@ up.waypoint = (($) ->
 #    waypointState = new up.WaypointState
 #      name: name
 #      url: currentUrl(),
-#      params: u.absorbParams(formParams, waypointUrl.params)
+#      params: u.mergeParams(formParams, waypointUrl.params)
 #      data: options.data
 #      scrollTops: scrollTops
 #
@@ -129,10 +129,10 @@ up.waypoint = (($) ->
 
     formParams = new up.Params([])
     u.each $forms, (form) ->
-      formParams.absorb up.params.fromForm(form, nature: 'array')
+      formParams.merge up.params.fromForm(form, nature: 'array')
 
     extraParams = u.option(options.params, up.syntax.data(origin, 'up-params'))
-    params = formParams.absorb(extraParams)
+    params = formParams.merge(extraParams)
 
     data = up.syntax.data(origin)
 

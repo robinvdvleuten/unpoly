@@ -327,36 +327,44 @@ describe 'up.params', ->
         obj = up.params.add(obj, 'bar', 'two')
         expect(obj).toEqual { bar: 'two' }
 
-  describe 'up.params.absorb', ->
+  describe 'up.params.merge', ->
 
     describe '(with object)', ->
 
-      it 'absorbs a flat object'
+      it 'merges a flat object', ->
+        obj = { a: '1', b: '2' }
+        other = { c: '3', d: '4'}
+        obj = up.params.merge(obj, other)
+        expect(obj).toEqual({ a: '1', b: '2', c: '3', d: '4' })
 
-      it 'absorbs a nested object, deep-merging the other object'
+      it 'merges a nested object, deep-merging the other object', ->
+        obj = { a: '1', b: { c: '2', d: '3' } }
+        other = { e: '4', b: { f: '5', g: '6' }}
+        obj = up.params.merge(obj, other)
+        expect(obj).toEqual { a: '1', e: '4', b: { c: '2', d: '3', f: '5', g: '6' } }
 
-      it 'absorbs a nested object, overwriting (and not merging) nested arrays'
+      it 'merges a nested object, overwriting (and not merging) nested arrays'
 
-      it 'absorbs an array'
+      it 'merges an array'
 
-      it 'absorbs a query string'
+      it 'merges a query string'
 
     describe '(with array)', ->
 
-      it 'absorbs a flat object'
+      it 'merges a flat object'
 
-      it 'absorbs a nested object'
+      it 'merges a nested object'
 
-      it 'absorbs an array'
+      it 'merges an array'
 
-      it 'absorbs a query string'
+      it 'merges a query string'
 
     describe '(with query)', ->
 
-      it 'absorbs a flat object'
+      it 'merges a flat object'
 
-      it 'absorbs a nested object'
+      it 'merges a nested object'
 
-      it 'absorbs an array'
+      it 'merges an array'
 
-      it 'absorbs a query string'
+      it 'merges a query string'

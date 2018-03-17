@@ -266,44 +266,42 @@ up.params = (($) ->
   ###*
   Adds a new entry with the given `name` and `value` to the given `params`.
 
-  Prefers to modify the given params in-place.
-  We cannot modify a query string in-place (since JavaScript strings are immutable),
-  so this function also returns the modified params.
+  Returns a new params value that includes the added entry.
+  When adding to a `FormData`, the value will be modified in place (since we
+  cannot copy `FormData` objects).
 
   @function up.params.add
   ###
   add = (params, name, value) ->
-    absorb(params, [{ name, value }])
+    merge(params, [{ name, value }])
 
   ###*
   Merges the request params from `otherParams` into `params`.
 
-  Prefers to modify the given params in-place.
-  We cannot modify a query string in-place (since JavaScript strings are immutable),
-  so this function also returns the modified params.
+  Returns a new params value that includes the new entries.
+  When adding to a `FormData`, the value will be modified in place (since we
+  cannot copy `FormData` objects).
 
-  @function up.params.absorb
+  @function up.params.merge
   ###
-  absorb = (params, otherParams) ->
+  merge = (params, otherParams) ->
     switch detectNature(params)
       when 'missing'
-        params = absorb({}, otherParams)
+        merge({}, otherParams)
       when 'array'
         otherArray = toArray(otherParams)
-        params.push(otherArray...)
+        params.concat(otherArray)
       when 'query'
         otherQuery = toQuery(otherParams)
         parts = u.select([params, otherQuery], u.isPresent)
-        params = parts.join('&')
+        parts.join('&')
       when 'formData'
         otherObject = toObject(otherParams)
         for name, value of otherObject
           params.append(name, value)
+        params
       when 'object'
-        u.assign(params, toObject(otherParams))
-    # Return the new params for the query case, where we cannot
-    # manipulate an immutable string in-place.
-    params
+        u.deepMerge(params, toObject(otherParams))
 
   $submittingButton = ($form) ->
     submitButtonSelector = 'input[type=submit], button[type=submit], button:not([type])'
@@ -318,10 +316,6 @@ up.params = (($) ->
     $form = $(form)
     hasFileInputs = $form.find('input[type=file]').length
 
-    $button = $submittingButton($form)
-    buttonName = $button.attr('name')
-    buttonValue = $button.val()
-
     # We try to stick with an array representation, whose contents we can inspect.
     # We cannot inspect FormData on IE11 because it has no support for `FormData.entries`.
     # Inspection is needed to generate a cache key (see `up.proxy`) and to make
@@ -332,7 +326,12 @@ up.params = (($) ->
     else
       params = new FormData($form.get(0))
 
-    add(params, buttonName, buttonValue) if u.isPresent(buttonName)
+    $button = $submittingButton($form)
+    buttonName = $button.attr('name')
+    buttonValue = $button.val()
+    if u.isPresent(buttonName)
+      params = add(params, buttonName, buttonValue)
+
     params
 
   fromURL = (url) ->
@@ -348,7 +347,7 @@ up.params = (($) ->
   toQuery: toQuery
   buildURL: buildURL
   add: add
-  absorb: absorb
+  merge: merge
   fromForm: fromForm
   fromURL: fromURL
 

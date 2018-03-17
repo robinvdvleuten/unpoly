@@ -451,7 +451,7 @@ up.util = (($) ->
   @internal
   ###
   isOptions = (object) ->
-    typeof(object) == 'object' && !isNull(object) && !isJQuery(object) && !isPromise(object) && !isFormData(object) && !isArray(object)
+    typeof(object) == 'object' && !isNull(object) && (isUndefined(object.constructor) || object.constructor == Object)
 
   ###*
   Returns whether the given argument is an object.
@@ -548,7 +548,7 @@ up.util = (($) ->
   copy = (object)  ->
     if isArray(object)
       object = object.slice()
-    else if isObject(object) && !isFunction(object)
+    else if isOptions(object)
       object = assign({}, object)
     else
       up.fail('Cannot copy %o', object)
@@ -584,6 +584,26 @@ up.util = (($) ->
     assign({}, sources...)
 
   ###*
+  Creates a new object by recursively merging together the properties from the given objects.
+
+  @function up.util.deepMerge
+  @param {Array<Object>} sources...
+  @return Object
+
+  @internal
+  ###
+  deepMerge = (sources...) ->
+    target = {}
+    for source in sources
+      for key, newValue of source
+        if isOptions(newValue)
+          oldValue = target[key]
+          if isOptions(oldValue)
+            newValue = deepMerge(oldValue, newValue)
+        target[key] = newValue
+    target
+
+  ###*
   Creates an options hash from the given argument and some defaults.
 
   The semantics of this function are confusing.
@@ -596,15 +616,12 @@ up.util = (($) ->
   @internal
   ###
   newOptions = (object, defaults) ->
-    merged = if object then copy(object) else {}
     if defaults
-      for key, defaultValue of defaults
-        value = merged[key]
-        if !isGiven(value)
-          merged[key] = defaultValue
-        else if isObject(defaultValue) && isObject(value)
-          merged[key] = newOptions(value, defaultValue)
-    merged
+      deepMerge(defaults, object)
+    else if object
+      copy(object)
+    else
+      {}
 
   ###*
   Returns the first argument that is considered [given](/up.util.isGiven).
@@ -1687,6 +1704,7 @@ up.util = (($) ->
   assignPolyfill: assignPolyfill
   copy: copy
   merge: merge
+  deepMerge: deepMerge
   options: newOptions
   option: option
   fail: fail

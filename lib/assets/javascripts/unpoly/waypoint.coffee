@@ -35,124 +35,79 @@ up.waypoint = (($) ->
   @return Promise
   @experimental
   ###
-  restore = (waypointUrl, options) ->
+  restore = (name, options) ->
     options = u.options(options, discard: true)
 
-    if waypoint = lookupUrl(waypointUrl)
-      event =
-        message: ["Restoring waypoint %s", waypoint.name]
-        waypoint:waypoint
+    if waypoint = waypoints.get(name)
+      $origin = $(options.origin)
 
-      up.bus.whenEmitted('up:waypoint:restore', event).then ->
+      # We let the user pass additional { params } and { data } options
+      # for this particular waypoint restoration. Values will be merged
+      # with the originally saved { params } and { data }.
+      context =
+        params: options.params || up.syntax.data($origin, 'up-params')
+        data: options.data || up.syntax.data($origin)
+
+      waypoint = waypoint.inContext(context)
+
+      restoreEvent =
+        message: ["Restoring waypoint %s", waypoint.name]
+        waypoint: waypoint
+        # Give custom restoration handlers a chance to do something
+        # else when we're only preloading.
+        preload: options.preload
+
+      up.bus.whenEmitted('up:waypoint:restore', restoreEvent).then ->
         discard(waypoint) if options.discard
-        visit(waypoints.restoreURL(), restoreScroll: waypoint.scrollTops)
+        visit(waypoints.restoreURL(), restoreScroll: waypoint.scrollTops).then ->
+          up.bus.emit 'up:waypoint:restored',
+            message: ["Restored waypoint %s", waypoint.name]
+            waypoint: waypoint
+
     else
       Promise.reject(new Error("No saved waypoint named \"#{waypointUrl}\""))
-
-  lookupUrl = (waypointUrl) ->
-    waypointUrl = new up.URLEditor(waypointUrl)
-    waypointName = waypointUrl.pathname
-
-    if waypoint = waypoints.get(waypointName)
-      waypoint.inContext(params: waypointUrl.params)
-
-  manipulateFollowFromRestoredWaypoint = (event, restoreOptions) ->
-    if waypointUrl = u.option(event.followOptions.restoreWaypoint, event.$link.attr('up-restore-waypoint'))
-      if props = restoreWaypointProps(waypointUrl, restoreOptions)
-        u.assign(event.followOptions, props)
-
-#  ###*
-#  DOCUMENT ME
-#
-#  @function up.history.saveWaypoint
-#  @experimental
-#  ###
-#  saveWaypoint = (waypointUrl, options) ->
-#    waypointUrl = new up.URLEditor(waypointUrl)
-#
-#
-#
-#
-#    layer = options.layer || up.dom.topLayer()
-#
-#    $forms = up.all('form:not([up-save-form="false"])', { layer })
-#    formParams = u.flatMap $forms, (form) ->
-#      u.paramsFromForm(form, representation: 'array')
-#
-#    name = waypointUrl.pathname
-#
-#    waypointState = new up.WaypointState
-#      name: name
-#      url: currentUrl(),
-#      params: u.mergeParams(formParams, waypointUrl.params)
-#      data: options.data
-#      scrollTops: scrollTops
-#
-#    if up.bus.nobodyPrevents('up:waypoint:save', { waypoint: waypoint })
-#      savedWaypoints.put(name, waypointState)
-#
-#  saveWaypointBeforeFollow = (event) ->
-#    $link = event.$link
-#    if waypointUrl = u.option(event.followOptions.saveWaypoint, $link.attr('up-save-waypoint'))
-#      layer = up.dom.layerOf($link)
-#      saveWaypoint(waypointUrl, {
-#        layer: layer,
-#        data: up.syntax.data($link, attribute: 'up-waypoint-data')
-#      })
-
-  findName = (obj) ->
-    if u.isString(obj)
-      obj
-    else if obj instanceof up.Waypoint
-      obj.name
-    else if u.isElement(obj) || u.isJQuery(obj)
-      $(obj).attr('up-waypoint')
-    else
-      up.fail('No name given for waypoint %o', obj)
 
   save = (name, options) ->
     options = u.options(options)
 
-    origin = options.origin
-    $origin = $(origin)
+    $origin = $(options.origin)
 
     # The user can pass a { root } if she only wants to serialize forms
     # within a root element.
     root = options.root || $origin.attr('up-root')
-    if u.isString(root) && origin
-      root = up.dom.resolveSelector(root, { origin })
+    if u.isString(root)
+      root = up.dom.resolveSelector(root, { origin: $origin })
 
     # If an origin link is given but no root, we only save forms from the link's layer.
-    layer = u.option(options.layer, !root && origin && up.dom.layerOf($origin))
+    defaultLayer = up.dom.layerOf($origin) if !root && up.isPresent(origin)
+    formLayer = u.option(options.layer, defaultLayer)
+    # Gather params from all forms
+    $forms = up.all('form:not([up-save-form="false"])', { root, formLayer })
+    formParams = u.flatMap $forms, (form) -> up.params.fromForm(form, nature: 'array')
+    # We want to represent params as a (nested) object for convenient programmatic access
+    formParams = up.params.toObject(formParams)
+    # Users can pass additional params
+    extraParams = u.option(options.params, up.syntax.data($origin, 'up-params'))
+    params = up.params.merge(formParams, extraParams)
 
-    $forms = up.all('form:not([up-save-form="false"])', { root, layer })
-
-    formParams = new up.Params([])
-    u.each $forms, (form) ->
-      formParams.merge up.params.fromForm(form, nature: 'array')
-
-    extraParams = u.option(options.params, up.syntax.data(origin, 'up-params'))
-    params = formParams.merge(extraParams)
-
-    data = up.syntax.data(origin)
+    # User can also set a { data } hash for custom restore logic in JavaScript.
+    # The { data } hash will not be sent to the server, but will be made available
+    # to listeners of up:waypoint events.
+    data = options.data || up.syntax.data(origin)
 
     waypoint = new up.Waypoint
       name: name
       url: up.history.url()
       scrollTops: up.layout.scrollTops()
       data: data
-      params: params.asObject()
+      params: params
 
-    if up.bus.nobodyPrevents('up:waypoint:save', { waypoint: waypoint })
+    event =
+      message: ['Saving waypoint %s', name]
+      waypoint: waypoint
+
+    if up.bus.nobodyPrevents('up:waypoint:save', event)
       waypoints.set(name, waypoint)
-
-#  up.compiler '[up-waypoint]', ($waypoint) ->
-#    # Save the waypoint as soon as it appears in the DOM.
-#    # This will discard any existing waypoint with the same name.
-#    discard($waypoint)
-#
-#    # Also save the waypoint when we lose it from the DOM
-#    -> save($waypoint)
 
   ###*
   DOCUMENT ME
@@ -161,19 +116,35 @@ up.waypoint = (($) ->
   @param waypoint {string|Element|jQuery|up.Waypoint} waypoint
   @experimental
   ###
-  discard = (waypoint) ->
-    name = findName(waypoint)
+  discard = (name) ->
     if waypoint = waypoints.get(name)
-      if up.bus.nobodyPrevents('up:waypoint:discard', { waypoint: waypoint})
+      event =
+        message: ['Discarding waypoint %s', name]
+        waypoint: waypoint
+
+      if up.bus.nobodyPrevents('up:waypoint:discard', event)
         waypoints.remove(name)
 
-#  up.bus.on 'up:link:follow', (event) ->
-#    considerDiscardWaypointBeforeFollow(event)
-#    considerSaveWaypointBeforeFollow(event)
-#    considerRestoreWaypointBeforeFollow(event, discard: true)
-#
-#  up.bus.on 'up:link:preload', (event) ->
-#    considerRestoreWaypointBeforeFollow(event, discard: false)
+  considerSaveBeforeFollow = ($link) ->
+    if name = $link.attr('up-save-waypoint')
+      save(name, origin: $link)
+
+  considerRestoreBeforeFollow = ($link, options) ->
+    if name = $link.attr('up-restore-waypoint')
+      restore(name, u.merge(options, origin: $link))
+
+  considerDiscardBeforeFollow = ($link) ->
+    if name = $link.attr('up-discard-waypoint')
+      discard(name)
+
+  up.on 'up:link:follow', (event) ->
+    $link = event.$link
+    considerDiscardBeforeFollow($link)
+    considerSaveBeforeFollow($link)
+    considerRestoreBeforeFollow($link, discard: true)
+
+  up.on 'up:link:preload', (event) ->
+    considerRestoreBeforeFollow(event.$link, discard: false, preload: true)
 
   up.on 'up:framework:reset', reset
 

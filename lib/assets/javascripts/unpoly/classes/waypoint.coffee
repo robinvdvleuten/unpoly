@@ -37,6 +37,4 @@ class up.Waypoint extends up.Record
     copy || this
 
   restoreURL: =>
-    editor = new URLEditor(@url)
-    editor.appendParams(@params)
-    editor.toURLString()
+    up.params.buildURL(@url, @params)

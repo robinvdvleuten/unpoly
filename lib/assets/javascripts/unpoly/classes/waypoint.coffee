@@ -9,17 +9,7 @@ class up.Waypoint extends up.Record
       'params',
       'data',
       'scrollTops'
-      'options'
     ]
-
-  isDisplayed: =>
-    $element.length > 0
-
-  elementSelector: =>
-    u.attributeSelector('up-waypoint', @name)
-
-  $element: =>
-    $(@elementSelector())
 
   inContext: (options = {}) =>
     copy = undefined

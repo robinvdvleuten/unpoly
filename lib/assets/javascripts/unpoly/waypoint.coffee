@@ -35,11 +35,13 @@ up.waypoint = (($) ->
   @return Promise
   @experimental
   ###
-  restore = (name, options) ->
+  waypointForRestore = (nameOrNames, options) ->
     options = u.options(options, discard: true)
 
-    if waypoint = waypoints.get(name)
+    if waypoint = first(nameOrNames)
       $origin = $(options.origin)
+
+      discard(waypoint) if options.discard
 
       # We let the user pass additional { params } and { data } options
       # for this particular waypoint restoration. Values will be merged
@@ -48,7 +50,10 @@ up.waypoint = (($) ->
         params: options.params || up.syntax.data($origin, 'up-params')
         data: options.data || up.syntax.data($origin)
 
-      waypoint = waypoint.inContext(context)
+      # Make a copy of the waypoint so (1) event handlers that modify the
+      # event don't change the original and (2) so we can merge in additional
+      # { params } and { data } options without changing the original.
+      waypoint = waypoint.copyInContext(context)
 
       restoreEvent =
         message: ["Restoring waypoint %s", waypoint.name]
@@ -57,15 +62,25 @@ up.waypoint = (($) ->
         # else when we're only preloading.
         preload: options.preload
 
-      up.bus.whenEmitted('up:waypoint:restore', restoreEvent).then ->
-        discard(waypoint) if options.discard
-        visit(waypoints.restoreURL(), restoreScroll: waypoint.scrollTops).then ->
-          up.bus.emit 'up:waypoint:restored',
-            message: ["Restored waypoint %s", waypoint.name]
-            waypoint: waypoint
+      if up.bus.nobodyPrevents('up:waypoint:restore', restoreEvent)
+        waypoint
 
+  followOptionsForRestore = (nameOrNames, options) ->
+    if waypoint = waypointForRestore(nameOrNames, options)
+      url: waypoint.restoreURL()
+      restoreScroll: waypoint.scrollTops
+      after: -> emitRestored(waypoint)
+
+  restore = (nameOrNames, options) ->
+    if followOptions = followOptionsForRestore(nameOrNames, options)
+      visit(followOptions.url, followOptions)
     else
       Promise.reject(new Error("No saved waypoint named \"#{waypointUrl}\""))
+
+  emitRestored = (waypoint) ->
+    up.bus.emit 'up:waypoint:restored',
+      message: ["Restored waypoint %s", waypoint.name]
+      waypoint: waypoint
 
   save = (name, options) ->
     options = u.options(options)
@@ -109,6 +124,17 @@ up.waypoint = (($) ->
     if up.bus.nobodyPrevents('up:waypoint:save', event)
       waypoints.set(name, waypoint)
 
+  first: (names) ->
+    all(names)[0]
+
+  all: (names) ->
+    if u.isString(names)
+      names = u.separatedValues(names)
+    waypoints.all(names)
+
+  allNames: (names) ->
+    u.map all, (waypoint) -> waypoint.name
+
   ###*
   DOCUMENT ME
 
@@ -116,35 +142,44 @@ up.waypoint = (($) ->
   @param waypoint {string|Element|jQuery|up.Waypoint} waypoint
   @experimental
   ###
-  discard = (name) ->
-    if waypoint = waypoints.get(name)
+  discard = (nameOrNames) ->
+    each all(nameOrNames), (waypoint) ->
       event =
-        message: ['Discarding waypoint %s', name]
+        message: ['Discarding waypoint %s', waypoint.name]
         waypoint: waypoint
 
       if up.bus.nobodyPrevents('up:waypoint:discard', event)
-        waypoints.remove(name)
+        waypoints.remove(waypoint.name)
 
-  considerSaveBeforeFollow = ($link) ->
+  considerSaveBeforeFollow = (event) ->
+    $link = event.$link
     if name = $link.attr('up-save-waypoint')
       save(name, origin: $link)
 
-  considerRestoreBeforeFollow = ($link, options) ->
-    if name = $link.attr('up-restore-waypoint')
-      restore(name, u.merge(options, origin: $link))
+  considerRestoreBeforeFollow = (event, options) ->
+    $link = event.$link
+    if nameOrNames = $link.attr('up-restore-waypoint')
+      if followOptions = followOptionsForRestore(nameOrNames, options)
+        u.assign options, followOptions
 
-  considerDiscardBeforeFollow = ($link) ->
-    if name = $link.attr('up-discard-waypoint')
-      discard(name)
+  considerDiscardBeforeFollow = (event) ->
+    $link = event.$link
+    if nameOrNames = $link.attr('up-discard-waypoint')
+      discard(nameOrNames)
+
+  considerSaveBeforeSubmit = (event) ->
+
+  considerRestoreBeforeSubmit = (event) ->
 
   up.on 'up:link:follow', (event) ->
-    $link = event.$link
-    considerDiscardBeforeFollow($link)
-    considerSaveBeforeFollow($link)
-    considerRestoreBeforeFollow($link, discard: true)
+    considerDiscardBeforeFollow(event)
+    considerSaveBeforeFollow(event)
+    throw "should manipulate follow args instead of visiting"
+    considerRestoreBeforeFollow(event, discard: true)
 
   up.on 'up:link:preload', (event) ->
-    considerRestoreBeforeFollow(event.$link, discard: false, preload: true)
+    throw "should manipulate follow args instead of visiting"
+    considerRestoreBeforeFollow(event, discard: false, preload: true)
 
   up.on 'up:framework:reset', reset
 

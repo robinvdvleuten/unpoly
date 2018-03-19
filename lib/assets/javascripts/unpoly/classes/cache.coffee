@@ -115,3 +115,10 @@ class up.Cache
     else
       @log("Cache miss for '%s'", key) unless options.silent
       undefined
+
+  all: (keys) ->
+    if u.isArray(keys)
+      matches = u.map keys, (key) -> @get(key)
+      u.select(matches, u.isPresent)
+    else
+      u.values(@store)

@@ -240,6 +240,19 @@ up.util = (($) ->
   ###
   assign = Object.assign || assignPolyfill
 
+  valuesPolyfill = (object) ->
+    value for key, value of object
+
+  ###*
+  Returns an array of values of the given object.
+
+  @function up.util.values
+  @param {Object} object
+  @return {Array<string>}
+  @internal
+  ###
+  values = Object.values || valuesPolyfill
+
   ###*
   Returns a new string with whitespace removed from the beginning
   and end of the given string.
@@ -567,10 +580,6 @@ up.util = (($) ->
       object.get(0)
     else
       object
-
-  eachJQuery = (collection, block) ->
-    each collection, (element, index) ->
-      block($(element), index)
 
   ###*
   Creates a new object by merging together the properties from the given objects.
@@ -1671,7 +1680,7 @@ up.util = (($) ->
   isBodyDescendant = (element) ->
     $(element).parents('body').length > 0
 
-  separatedValues = (string, separator) ->
+  separatedValues = (string, separator = ' ') ->
     values = string.split(separator)
     values = map(values, trim)
     values = select(values, isPresent)
@@ -1802,7 +1811,7 @@ up.util = (($) ->
   microtask: microtask
   separatedValues : separatedValues
   isEqual: isEqual
-  eachJQuery: eachJQuery
+  values: values
 
 )(jQuery)
 

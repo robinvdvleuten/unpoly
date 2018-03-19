@@ -11,20 +11,14 @@ class up.Waypoint extends up.Record
       'scrollTops'
     ]
 
-  inContext: (options = {}) =>
-    copy = undefined
+  defaults: ->
+    params: {}
+    data: {}
 
-    if u.isPresent(options.params)
-      copy ||= @copy(@)
-      copy.params = up.params.merge(copy.params, options.params)
-
-    if u.isPresent(options.data)
-      copy ||= @copy(@)
-      copy.data = u.merge(copy.data, options.data)
-
-    # We try to avoid making a copy of ourselves, so
-    # return `copy` only if it is defined.
-    copy || this
+  copyInContext: (options = {}) =>
+    @copy
+      params: up.params.merge(copy.params, options.params)
+      data: u.merge(copy.data, options.data || {})
 
   restoreURL: =>
     up.params.buildURL(@url, @params)

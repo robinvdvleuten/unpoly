@@ -149,12 +149,13 @@ class up.Request extends up.Record
         # XMLHttpRequest expects null for an empty body
         xhrPayload = null
 
-      xhrHeaders[up.protocol.config.targetHeader] = @target if @target
-      xhrHeaders[up.protocol.config.failTargetHeader] = @failTarget if @failTarget
+      pc = up.protocol.config
+      xhrHeaders[pc.targetHeader] = @target if @target
+      xhrHeaders[pc.failTargetHeader] = @failTarget if @failTarget
+      xhrHeaders[pc.waypointsHeader] = up.waypoint.allNames().join(' ')
       xhrHeaders['X-Requested-With'] ||= 'XMLHttpRequest' unless @isCrossDomain()
-
       if csrfToken = @csrfToken()
-        xhrHeaders[up.protocol.config.csrfHeader] = csrfToken
+        xhrHeaders[pc.csrfHeader] = csrfToken
 
       xhr.open(xhrMethod, xhrUrl)
 

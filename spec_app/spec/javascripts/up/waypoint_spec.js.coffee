@@ -103,7 +103,25 @@ describe 'up.waypoint', ->
               password: 'secret'
               hobbies: ['Swimming', 'Riding']
 
-      it "merges the params from multiple forms"
+      it "merges the params from multiple forms", asyncSpec (next) ->
+        $form1 = affix('form')
+        $form1.affix('input[type="text"][name="field1"][val="value1"]')
+        $form1.affix('input[type="text"][name="field2"][val="value2"]')
+        $form2 = affix('form')
+        $form2.affix('input[type="text"][name="field3"][val="value3"]')
+        $form2.affix('input[type="text"][name="field4"][val="value4"]')
+        $link = affix('a[up-follow][up-save-waypoint="wp"][href="/path"]').text('label')
+
+        Trigger.clickSequence($link)
+
+        next =>
+          wp = up.waypoint.first('wp')
+          expect(wp).toBeDefined()
+          expect(wp.params).toEqual
+            field1: 'value1'
+            field2: 'value2'
+            field3: 'value3'
+            field4: 'value4'
 
       it "only saves forms on the same layer as this link"
 

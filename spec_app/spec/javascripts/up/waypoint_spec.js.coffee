@@ -1,4 +1,4 @@
-describe 'up.syntax', ->
+describe 'up.waypoint', ->
 
   u = up.util
 
@@ -21,12 +21,13 @@ describe 'up.syntax', ->
 
       it "saves a new waypoint with the given name, serializing the current screen state"
 
+      it "throws an error if the given name contains a space"
+
       it "merges { params} into the current screen state"
 
       it "updates an existing waypoint"
 
       it 'honors the cache size limit'
-
 
     describe 'up.waypoint.discard', ->
 
@@ -35,9 +36,11 @@ describe 'up.syntax', ->
       it 'throws an error if the given waypoint name is unknown'
 
 
-    describe 'up.waypoint.get', ->
+    describe 'up.waypoint.first', ->
 
       it 'returns a waypoint with the given name'
+
+      it 'returns a waypoint with one of the given name'
 
       it 'returns undefined if the given waypoint name is unknown'
 
@@ -51,9 +54,39 @@ describe 'up.syntax', ->
 
     describe 'a[up-save-waypoint]', ->
 
+      it 'saves a waypoint with the current URL, then follows the link', asyncSpec (next) ->
+        url = up.history.url()
+        $link = affix('a[up-follow][up-save-waypoint="wp"][href="/path"]').text('label')
+
+        Trigger.clickSequence($link)
+
+        next =>
+          wp = up.waypoint.first('wp')
+          expect(wp).toBeDefined()
+          expect(wp.url).toMatchUrl(url)
+
+          # Show that we did make a request to the link's [href]
+          expect(@lastRequest().url).toMatchUrl('/path')
+
       it "saves the current scroll positions when clicked"
 
-      it "saves the params of a form"
+      it "saves a waypoint with params from a form on the screen", asyncSpec (next) ->
+        $form = affix('form')
+        $form.affix('input[type="text"][name="field1"]').val('value1')
+        $form.affix('input[type="text"][name="field2"]').val('value2')
+        $link = affix('a[up-follow][up-save-waypoint="wp"][href="/path"]').text('label')
+
+        Trigger.clickSequence($link)
+
+        next =>
+          wp = up.waypoint.first('wp')
+          expect(wp).toBeDefined()
+          expect(wp.params).toEqual(field1: 'value1', field2: 'value2')
+
+          # Show that we did make a request to the link's [href]
+          expect(@lastRequest().url).toMatchUrl('/path')
+
+      it "saves a waypoint with nested params from a form on the screen"
 
       it "merges the params from multiple forms"
 

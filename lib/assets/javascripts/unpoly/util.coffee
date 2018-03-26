@@ -1686,6 +1686,14 @@ up.util = (($) ->
     values = select(values, isPresent)
     values
 
+  wrapArray = (objOrArray) ->
+    if isUndefined(objOrArray)
+      []
+    else if isArray(objOrArray)
+      objOrArray
+    else
+      [objOrArray]
+
   isEqual = (a, b) ->
     if typeof(a) != typeof(b)
       false
@@ -1811,6 +1819,7 @@ up.util = (($) ->
   microtask: microtask
   separatedValues : separatedValues
   isEqual: isEqual
+  wrapArray: wrapArray
   values: values
 
 )(jQuery)

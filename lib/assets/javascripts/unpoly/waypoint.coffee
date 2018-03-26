@@ -94,7 +94,7 @@ up.waypoint = (($) ->
       root = up.dom.resolveSelector(root, { origin: $origin })
 
     # If an origin link is given but no root, we only save forms from the link's layer.
-    defaultLayer = up.dom.layerOf($origin) if !root && up.isPresent(origin)
+    defaultLayer = up.dom.layerOf($origin) if !root && u.isPresent($origin)
     formLayer = u.option(options.layer, defaultLayer)
     # Gather params from all forms
     $forms = up.all('form:not([up-save-form="false"])', { root, formLayer })
@@ -102,13 +102,13 @@ up.waypoint = (($) ->
     # We want to represent params as a (nested) object for convenient programmatic access
     formParams = up.params.toObject(formParams)
     # Users can pass additional params
-    extraParams = u.option(options.params, up.syntax.data($origin, 'up-params'))
+    extraParams = u.option(options.params, up.syntax.data($origin, attribute: 'up-params'))
     params = up.params.merge(formParams, extraParams)
 
     # User can also set a { data } hash for custom restore logic in JavaScript.
     # The { data } hash will not be sent to the server, but will be made available
     # to listeners of up:waypoint events.
-    data = options.data || up.syntax.data(origin)
+    data = options.data || up.syntax.data($origin)
 
     waypoint = new up.Waypoint
       name: name
@@ -124,15 +124,15 @@ up.waypoint = (($) ->
     if up.bus.nobodyPrevents('up:waypoint:save', event)
       waypoints.set(name, waypoint)
 
-  first: (names) ->
+  first = (names) ->
     all(names)[0]
 
-  all: (names) ->
+  all = (names) ->
     if u.isString(names)
       names = u.separatedValues(names)
     waypoints.all(names)
 
-  allNames: (names) ->
+  allNames = (names) ->
     u.map all(names), (waypoint) -> waypoint.name
 
   ###*
@@ -164,10 +164,10 @@ up.waypoint = (($) ->
 
   considerRestoreBeforeSubmit = (event) ->
 
-#  up.on 'up:link:follow', (event) ->
-#    considerDiscardBeforeFollow(event)
-#    considerSaveBeforeFollow(event)
-#    considerRestoreBeforeFollow(event, discard: true)
+  up.on 'up:link:follow', (event) ->
+    # considerDiscardBeforeFollow(event)
+    considerSaveBeforeFollow(event)
+    # considerRestoreBeforeFollow(event, discard: true)
 #
 #  up.on 'up:link:preload', (event) ->
 #    considerRestoreBeforeFollow(event, discard: false, preload: true)
@@ -181,7 +181,7 @@ up.waypoint = (($) ->
   save: save
   restore: restore
   discard: discard
-  get: get
+  first: first
   all: all
 
 )(jQuery)

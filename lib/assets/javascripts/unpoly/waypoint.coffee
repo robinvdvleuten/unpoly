@@ -133,7 +133,7 @@ up.waypoint = (($) ->
     waypoints.all(names)
 
   allNames: (names) ->
-    u.map all, (waypoint) -> waypoint.name
+    u.map all(names), (waypoint) -> waypoint.name
 
   ###*
   DOCUMENT ME
@@ -144,12 +144,7 @@ up.waypoint = (($) ->
   ###
   discard = (nameOrNames) ->
     each all(nameOrNames), (waypoint) ->
-      event =
-        message: ['Discarding waypoint %s', waypoint.name]
-        waypoint: waypoint
-
-      if up.bus.nobodyPrevents('up:waypoint:discard', event)
-        waypoints.remove(waypoint.name)
+      waypoints.remove(waypoint.name)
 
   considerSaveBeforeFollow = (event) ->
     $link = event.$link
@@ -167,19 +162,18 @@ up.waypoint = (($) ->
     if nameOrNames = $link.attr('up-discard-waypoint')
       discard(nameOrNames)
 
-  considerSaveBeforeSubmit = (event) ->
-
   considerRestoreBeforeSubmit = (event) ->
 
-  up.on 'up:link:follow', (event) ->
-    considerDiscardBeforeFollow(event)
-    considerSaveBeforeFollow(event)
-    throw "should manipulate follow args instead of visiting"
-    considerRestoreBeforeFollow(event, discard: true)
-
-  up.on 'up:link:preload', (event) ->
-    throw "should manipulate follow args instead of visiting"
-    considerRestoreBeforeFollow(event, discard: false, preload: true)
+#  up.on 'up:link:follow', (event) ->
+#    considerDiscardBeforeFollow(event)
+#    considerSaveBeforeFollow(event)
+#    considerRestoreBeforeFollow(event, discard: true)
+#
+#  up.on 'up:link:preload', (event) ->
+#    considerRestoreBeforeFollow(event, discard: false, preload: true)
+#
+#  up.on 'up:link:follow', (event) ->
+#    considerRestoreBeforeSubmit(event, discard: true)
 
   up.on 'up:framework:reset', reset
 
@@ -187,5 +181,7 @@ up.waypoint = (($) ->
   save: save
   restore: restore
   discard: discard
+  get: get
+  all: all
 
 )(jQuery)

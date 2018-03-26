@@ -72,8 +72,8 @@ describe 'up.waypoint', ->
 
       it "saves a waypoint with params from a form on the screen", asyncSpec (next) ->
         $form = affix('form')
-        $form.affix('input[type="text"][name="field1"]').val('value1')
-        $form.affix('input[type="text"][name="field2"]').val('value2')
+        $form.affix('input[type="text"][name="field1"][val="value1"]')
+        $form.affix('input[type="text"][name="field2"][val="value2"]')
         $link = affix('a[up-follow][up-save-waypoint="wp"][href="/path"]').text('label')
 
         Trigger.clickSequence($link)
@@ -83,10 +83,25 @@ describe 'up.waypoint', ->
           expect(wp).toBeDefined()
           expect(wp.params).toEqual(field1: 'value1', field2: 'value2')
 
-          # Show that we did make a request to the link's [href]
-          expect(@lastRequest().url).toMatchUrl('/path')
+      it "saves a waypoint with params from a form on the screen", asyncSpec (next) ->
+        $form = affix('form')
+        $form.affix('input').attr(type: "text", name: "user[email]", value: 'foo@bar.de')
+        $form.affix('input').attr(type: "text", name: "user[password]", value: 'secret')
+        $form.affix('input').attr(type: "text", name: "user[hobbies][]", value: 'Swimming')
+        $form.affix('input').attr(type: "text", name: "user[hobbies][]", value: 'Riding')
 
-      it "saves a waypoint with nested params from a form on the screen"
+        $link = affix('a[up-follow][up-save-waypoint="wp"][href="/path"]').text('label')
+
+        Trigger.clickSequence($link)
+
+        next =>
+          wp = up.waypoint.first('wp')
+          expect(wp).toBeDefined()
+          expect(wp.params).toEqual
+            user:
+              email: 'foo@bar.de'
+              password: 'secret'
+              hobbies: ['Swimming', 'Riding']
 
       it "merges the params from multiple forms"
 

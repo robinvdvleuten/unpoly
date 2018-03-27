@@ -37,14 +37,13 @@ class up.ExtractPlan
   compressedSteps: =>
     if @steps.length > 1
 
-
 #      candidates = u.copy(@steps)
 #      compressed = []
 #
 #      while candidates.length
-#        candidate = candidates.unshift()
+#        candidate = candidates.shift()
 #        safe = u.all candidates, (other) ->
-#          candidate.$old.closest(other.$old).length == 0
+#          !candidate.pseudoClass || candidate.$old.closest(other.$old).length == 0
 #        if safe
 #          compressed.push(candidate)
 
@@ -54,8 +53,11 @@ class up.ExtractPlan
       containers = u.compact(containers)
       $containers = $(containers)
       $containers.addClass('up-step')
-      compressed = u.reject @steps, (step) -> step.$old.parents('.up-step').length
+      compressed = u.select @steps, (step) ->
+        $element = step.$old
+        $parent = $element.parents('.up-step')
       $containers.removeClass('up-step')
+
       if @steps[0].reveal
         compressed[0].reveal = @steps[0].selector
       console.info("Compressed steps are %o", compressed)

@@ -683,7 +683,50 @@ describe 'up.dom', ->
                 promise = promiseState(replacePromise)
                 promise.then (result) => expect(result.state).toEqual('fulfilled')
 
-            it 'does not crash if the same element is targeted twice in a single replacement'
+            it 'does not crash if the same element is targeted twice in a single replacement', asyncSpec (next) ->
+              $one = affix('.one.alias').text('old one text')
+
+              replacePromise = up.replace('.one, .alias', '/path')
+
+              next =>
+                expect(@lastRequest().requestHeaders['X-Up-Target']).toEqual('.one')
+
+                @respondWith """
+                  <div class="one">
+                    new one text
+                  </div>
+                  """
+
+              next =>
+                expect($('.one')).toExist()
+                expect($('.one').text()).toContain('new one text')
+
+              next.await =>
+                promise = promiseState(replacePromise)
+                promise.then (result) => expect(result.state).toEqual('fulfilled')
+
+            it 'does not crash if the same element is prepended or appended twice in a single replacement', asyncSpec (next) ->
+              $one = affix('.one').text('old one text')
+
+              replacePromise = up.replace('.one:before, .one:after', '/path')
+
+              next =>
+                expect(@lastRequest().requestHeaders['X-Up-Target']).toEqual('.one')
+
+                @respondWith """
+                  <div class="one">
+                    new one text
+                  </div>
+                  """
+
+              next =>
+                expect($('.one')).toExist()
+                expect($('.one').text()).toHaveText('new one text old one text')
+
+              next.await =>
+                promise = promiseState(replacePromise)
+                promise.then (result) => expect(result.state).toEqual('fulfilled')
+
 
           it 'replaces the body if asked to replace the "html" selector'
 

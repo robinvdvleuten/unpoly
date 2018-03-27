@@ -270,13 +270,20 @@ up.util = (($) ->
 
   @function up.util.map
   @param {Array<T>} array
-  @param {Function(T, number): any} block
+  @param {Function(T, number): any|String} block
     A function that will be called with each element and (optional) iteration index.
+
+    You can also pass a property name as a String,
+    which will be collected from each item in the array.
   @return {Array}
     A new array containing the result of each function call.
   @stable
   ###
-  map = each
+  map = (array, block) ->
+    if isString(block)
+      prop = block
+      block = (item) -> item[prop]
+    each(array, block)
 
   ###**
   Calls the given function for the given number of times.
@@ -666,8 +673,8 @@ up.util = (($) ->
   ###
   all = (array, tester) ->
     match = true
-    for element in array
-      unless tester(element)
+    for element, index in array
+      unless tester(element, index)
         match = false
         break
     match
@@ -693,12 +700,40 @@ up.util = (($) ->
   @stable
   ###
   uniq = (array) ->
-    seen = {}
-    select array, (element) ->
-      if seen.hasOwnProperty(element)
+    return array if array.length < 2
+    set = new Set(array)
+    setToArray(set)
+
+  ###*
+  This function is like [`uniq`](/up.util.uniq), accept that
+  the given function is invoked for each element to generate the value
+  for which uniquness is computed.
+
+  @function up.util.uniqBy
+  @param {Array<T>} array
+  @param {Function<T>: any} array
+  @return {Array<T>}
+  @experimental
+  ###
+  uniqBy = (array, mapper) ->
+    return array if array.length < 2
+    set = new Set()
+    select array, (elem) ->
+      mapped = mapper(elem)
+      if set.has(mapped)
         false
       else
-        seen[element] = true
+        set.add(mapped)
+        true
+
+  ###*
+  @function up.util.setToArray
+  @internal
+  ###
+  setToArray = (set) ->
+    array = []
+    set.forEach (elem) -> array.push(elem)
+    array
 
   ###**
   Returns all elements from the given array that return
@@ -706,13 +741,14 @@ up.util = (($) ->
 
   @function up.util.select
   @param {Array<T>} array
+  @param {Function(T, number): boolean} tester
   @return {Array<T>}
   @stable
   ###
   select = (array, tester) ->
     matches = []
-    each array, (element) ->
-      if tester(element)
+    each array, (element, index) ->
+      if tester(element, index)
         matches.push(element)
     matches
 
@@ -722,11 +758,12 @@ up.util = (($) ->
 
   @function up.util.reject
   @param {Array<T>} array
+  @param {Function(T, number): boolean} tester
   @return {Array<T>}
   @stable
   ###
   reject = (array, tester) ->
-    select(array, (element) -> !tester(element))
+    select(array, (element, index) -> !tester(element, index))
 
   ###**
   Returns the intersection of the given two arrays.
@@ -1532,9 +1569,18 @@ up.util = (($) ->
   @internal
   ###
   isDetached = (element) ->
+    not isAttached(element)
+
+  ###*
+  Returns whether the given element is attached to the DOM.
+
+  @function up.util.isAttached
+  @internal
+  ###
+  isAttached = (element) ->
     element = unJQuery(element)
     # This is by far the fastest way to do this
-    not jQuery.contains(document.documentElement, element)
+    $.contains(document.documentElement, element)
 
   ###**
   Given a function that will return a promise, returns a proxy function
@@ -1806,6 +1852,7 @@ up.util = (($) ->
   intersect: intersect
   compact: compact
   uniq: uniq
+  uniqBy: uniqBy
   last: last
   isNull: isNull
   isDefined: isDefined
@@ -1863,6 +1910,7 @@ up.util = (($) ->
   renameKey: renameKey
   extractOptions: extractOptions
   isDetached: isDetached
+  isAttached: isAttached
   noop: noop
   opacity: opacity
   whenReady: whenReady

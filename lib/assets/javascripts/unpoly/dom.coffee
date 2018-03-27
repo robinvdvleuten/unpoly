@@ -472,6 +472,9 @@ up.dom = (($) ->
     document.title = options.title if u.isString(options.title)
 
   swapElements = ($old, $new, pseudoClass, transition, options) ->
+#    unless u.isAttached($old) && u.isDetached($new)
+#      return Promise.resolve()
+
     transition ||= 'none'
 
     if options.source == 'keep'

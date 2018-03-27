@@ -5,7 +5,7 @@ class up.ExtractPlan
   constructor: (selector, options) ->
     @reveal = options.reveal
     @origin = options.origin
-    @selector = up.dom.resolveSelector(selector, @origin)
+    @originalSelector = up.dom.resolveSelector(selector, @origin)
     @transition = options.transition
     @response = options.response
     @oldLayer = options.layer
@@ -31,6 +31,39 @@ class up.ExtractPlan
   matchExists: =>
     @oldExists() && @newExists()
 
+  addSteps: (steps) =>
+    @steps = @steps.concat(steps)
+    
+  compressedSteps: =>
+    if @steps.length > 1
+
+
+#      candidates = u.copy(@steps)
+#      compressed = []
+#
+#      while candidates.length
+#        candidate = candidates.unshift()
+#        safe = u.all candidates, (other) ->
+#          candidate.$old.closest(other.$old).length == 0
+#        if safe
+#          compressed.push(candidate)
+
+
+      $olds = $(u.map(@steps, (step) -> step.$old.get(0)))
+      $olds.addClass('up-step')
+      compressed = u.reject @steps, (step) -> step.$old.parents('.up-step').length
+      $olds.removeClass('up-step')
+      if @steps[0].reveal
+        compressed[0].reveal = @steps[0].selector
+      console.info("Compressed steps are %o", compressed)
+      compressed
+    else
+      @steps
+
+  compressedSelector: =>
+    # u.map(@compressedSteps(), (s) -> s.selector).join(', ')
+    @originalSelector
+
   ###*
   Example:
 
@@ -46,7 +79,7 @@ class up.ExtractPlan
 
     @steps = []
 
-    disjunction = @selector.split(comma)
+    disjunction = @originalSelector.split(comma)
 
     u.each disjunction, (literal, i) =>
       literalParts = literal.match(/^(.+?)(?:\:(before|after))?$/)

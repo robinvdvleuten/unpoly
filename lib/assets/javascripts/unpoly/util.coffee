@@ -1532,9 +1532,18 @@ up.util = (($) ->
   @internal
   ###
   isDetached = (element) ->
+    not isAttached(element)
+
+  ###*
+  Returns whether the given element is attached to the DOM.
+
+  @function up.util.isAttached
+  @internal
+  ###
+  isAttached = (element) ->
     element = unJQuery(element)
     # This is by far the fastest way to do this
-    not jQuery.contains(document.documentElement, element)
+    jQuery.contains(document.documentElement, element)
 
   ###*
   Given a function that will return a promise, returns a proxy function
@@ -1863,6 +1872,7 @@ up.util = (($) ->
   renameKey: renameKey
   extractOptions: extractOptions
   isDetached: isDetached
+  isAttached: isAttached
   noop: noop
   opacity: opacity
   whenReady: whenReady

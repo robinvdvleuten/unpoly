@@ -45,9 +45,12 @@ class up.ExtractCascade
     if @options.provideTarget
       # We know that the target will be created right before swapping,
       # so just assume the first plan will work.
-      @plans[0].selector
-    else if plan = @oldPlan()
-      plan.selector
+      plan = @plans[0]
+    else
+      plan = @oldPlan()
+
+    if plan
+      plan.compressedSelector()
     else
       @oldPlanNotFound()
 
@@ -55,7 +58,8 @@ class up.ExtractCascade
     if plan = @matchingPlan()
       # Only when we have a match in the required selectors, we
       # append the optional steps for [up-hungry] elements.
-      plan.steps.concat(@hungrySteps())
+      plan.addSteps(@hungrySteps())
+      plan.compressedSteps()
     else
       @matchingPlanNotFound()
 

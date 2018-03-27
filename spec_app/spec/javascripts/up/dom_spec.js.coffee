@@ -479,6 +479,149 @@ describe 'up.dom', ->
               expect($('.after')).toHaveText('new-after')
               done()
 
+          describe 'nested selector merging', ->
+
+            it 'replaces a single fragment if a selector contains a subsequent selector in the current page', asyncSpec (next) ->
+              $outer = affix('.outer').text('old outer text')
+              $inner = $outer.affix('.inner').text('old inner text')
+
+              replacePromise = up.replace('.outer, .inner', '/path')
+
+              next =>
+                expect(@lastRequest().requestHeaders['X-Up-Target']).toEqual('.outer')
+
+                @respondWith """
+                  <div class="outer">
+                    new outer text
+                    <div class="inner">
+                      new inner text
+                    </div>
+                  </div>
+                  """
+
+              next =>
+                expect($('.outer')).toExist()
+                expect($('.outer').text()).toContain('new outer text')
+                expect($('.inner')).toExist()
+                expect($('.inner').text()).toContain('new inner text')
+
+              next.await =>
+                promise = promiseState(replacePromise)
+                promise.then (result) => expect(result.state).toEqual('fulfilled')
+
+            it 'does not merge selectors if a selector contains a subsequent selector, but prepends instead of replacing'
+
+            it 'does not merge selectors if a selector contains a subsequent selector, but appends instead of replacing'
+
+            it 'replaces a single fragment if a selector contains a previous selector in the current page', asyncSpec (next) ->
+              $outer = affix('.outer').text('old outer text')
+              $inner = $outer.affix('.inner').text('old inner text')
+
+              replacePromise = up.replace('.outer, .inner', '/path')
+
+              next =>
+                expect(@lastRequest().requestHeaders['X-Up-Target']).toEqual('.outer')
+
+                @respondWith """
+                  <div class="outer">
+                    new outer text
+                    <div class="inner">
+                      new inner text
+                    </div>
+                  </div>
+                  """
+
+              next =>
+                expect($('.outer')).toExist()
+                expect($('.outer').text()).toContain('new outer text')
+                expect($('.inner')).toExist()
+                expect($('.inner').text()).toContain('new inner text')
+
+              next.await =>
+                promise = promiseState(replacePromise)
+                promise.then (result) => expect(result.state).toEqual('fulfilled')
+
+            it 'still reveals the first element if the first selector was merged into a subsequent selector'
+
+            it 'replaces a single fragment if the nesting differs in current page and response', asyncSpec (next) ->
+              $outer = affix('.outer').text('old outer text')
+              $inner = $outer.affix('.inner').text('old inner text')
+
+              replacePromise = up.replace('.outer, .inner', '/path')
+
+              next =>
+                @respondWith """
+                  <div class="inner">
+                    new inner text
+                    <div class="outer">
+                      new outer text
+                    </div>
+                  </div>
+                  """
+
+              next =>
+                expect($('.outer')).toExist()
+                expect($('.outer').text()).toContain('new outer text')
+                expect($('.inner')).not.toExist()
+
+              next.await =>
+                promise = promiseState(replacePromise)
+                promise.then (result) => expect(result.state).toEqual('fulfilled')
+
+            it 'does not crash if two selectors that are siblings in the current page are nested in the response', asyncSpec (next) ->
+              $outer = affix('.one').text('old one text')
+              $inner = affix('.two').text('old two text')
+
+              replacePromise = up.replace('.one, .two', '/path')
+
+              next =>
+                @respondWith """
+                  <div class="one">
+                    new one text
+                    <div class="two">
+                      new two text
+                    </div>
+                  </div>
+                  """
+
+              next =>
+                expect($('.one')).toExist()
+                expect($('.one').text()).toContain('new one text')
+                expect($('.two')).toExist()
+                expect($('.two').text()).toContain('new two text')
+
+              next.await =>
+                promise = promiseState(replacePromise)
+                promise.then (result) => expect(result.state).toEqual('fulfilled')
+
+            it 'does not crash if selectors that siblings in the current page are inversely nested in the response', asyncSpec (next) ->
+              $outer = affix('.one').text('old one text')
+              $inner = affix('.two').text('old two text')
+
+              replacePromise = up.replace('.one, .two', '/path')
+
+              next =>
+                @respondWith """
+                  <div class="two">
+                    new two text
+                    <div class="one">
+                      new one text
+                    </div>
+                  </div>
+                  """
+
+              next =>
+                expect($('.one')).toExist()
+                expect($('.one').text()).toContain('new one text')
+                expect($('.two')).toExist()
+                expect($('.two').text()).toContain('new two text')
+
+              next.await =>
+                promise = promiseState(replacePromise)
+                promise.then (result) => expect(result.state).toEqual('fulfilled')
+
+            it 'does not crash if the same element is targeted twice in a single replacement'
+
           it 'replaces the body if asked to replace the "html" selector'
 
           it 'prepends instead of replacing when the target has a :before pseudo-selector', (done) ->

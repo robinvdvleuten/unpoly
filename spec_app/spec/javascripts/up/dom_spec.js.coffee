@@ -509,11 +509,72 @@ describe 'up.dom', ->
                 promise = promiseState(replacePromise)
                 promise.then (result) => expect(result.state).toEqual('fulfilled')
 
-            it 'does not merge selectors if a selector contains a subsequent selector, but prepends instead of replacing'
+            it 'does not merge selectors if a selector contains a subsequent selector, but prepends instead of replacing', asyncSpec (next) ->
+              $outer = affix('.outer').text('old outer text')
+              $inner = $outer.affix('.inner').text('old inner text')
 
-            it 'does not merge selectors if a selector contains a subsequent selector, but appends instead of replacing'
+              replacePromise = up.replace('.outer:before, .inner', '/path')
 
-            it 'does not lose selector pseudo-classes when merging selectors (bugfix)'
+              next =>
+                expect(@lastRequest().requestHeaders['X-Up-Target']).toEqual('.outer:before, .inner')
+
+                @respondWith """
+                  <div class="outer">
+                    new outer text
+                    <div class="inner">
+                      new inner text
+                    </div>
+                  </div>
+                  """
+
+              next =>
+                expect($('.outer')).toExist()
+                expect($('.outer').text()).toContain('new outer text')
+                expect($('.outer').text()).toContain('old outer text')
+                expect($('.inner')).toExist()
+                expect($('.inner').text()).toContain('new inner text')
+
+              next.await =>
+                promise = promiseState(replacePromise)
+                promise.then (result) => expect(result.state).toEqual('fulfilled')
+
+            it 'does not merge selectors if a selector contains a subsequent selector, but appends instead of replacing', asyncSpec (next) ->
+              $outer = affix('.outer').text('old outer text')
+              $inner = $outer.affix('.inner').text('old inner text')
+
+              replacePromise = up.replace('.outer:after, .inner', '/path')
+
+              next =>
+                expect(@lastRequest().requestHeaders['X-Up-Target']).toEqual('.outer:after, .inner')
+
+                @respondWith """
+                  <div class="outer">
+                    new outer text
+                    <div class="inner">
+                      new inner text
+                    </div>
+                  </div>
+                  """
+
+              next =>
+                expect($('.outer')).toExist()
+                expect($('.outer').text()).toContain('old outer text')
+                expect($('.outer').text()).toContain('new outer text')
+                expect($('.inner')).toExist()
+                expect($('.inner').text()).toContain('new inner text')
+
+              next.await =>
+                promise = promiseState(replacePromise)
+                promise.then (result) => expect(result.state).toEqual('fulfilled')
+
+            it 'does not lose selector pseudo-classes when merging selectors (bugfix)', asyncSpec (next) ->
+              $outer = affix('.outer').text('old outer text')
+              $inner = $outer.affix('.inner').text('old inner text')
+
+              replacePromise = up.replace('.outer:after, .inner', '/path')
+
+              next =>
+                expect(@lastRequest().requestHeaders['X-Up-Target']).toEqual('.outer:after, .inner')
 
             it 'replaces a single fragment if a selector contains a previous selector in the current page', asyncSpec (next) ->
               $outer = affix('.outer').text('old outer text')

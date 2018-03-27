@@ -48,11 +48,14 @@ class up.ExtractPlan
 #        if safe
 #          compressed.push(candidate)
 
-
-      $olds = $(u.map(@steps, (step) -> step.$old.get(0)))
-      $olds.addClass('up-step')
+      containers = u.map @steps, (step) ->
+        unless step.pseudoClass
+          step.$old.get(0)
+      containers = u.compact(containers)
+      $containers = $(containers)
+      $containers.addClass('up-step')
       compressed = u.reject @steps, (step) -> step.$old.parents('.up-step').length
-      $olds.removeClass('up-step')
+      $containers.removeClass('up-step')
       if @steps[0].reveal
         compressed[0].reveal = @steps[0].selector
       console.info("Compressed steps are %o", compressed)

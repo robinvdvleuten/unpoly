@@ -513,6 +513,8 @@ describe 'up.dom', ->
 
             it 'does not merge selectors if a selector contains a subsequent selector, but appends instead of replacing'
 
+            it 'does not lose selector pseudo-classes when merging selectors (bugfix)'
+
             it 'replaces a single fragment if a selector contains a previous selector in the current page', asyncSpec (next) ->
               $outer = affix('.outer').text('old outer text')
               $inner = $outer.affix('.inner').text('old inner text')

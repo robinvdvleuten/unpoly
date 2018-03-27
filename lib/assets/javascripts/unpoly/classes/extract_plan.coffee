@@ -61,8 +61,7 @@ class up.ExtractPlan
       @steps
 
   compressedSelector: =>
-    # u.map(@compressedSteps(), (s) -> s.selector).join(', ')
-    @originalSelector
+    u.map(@compressedSteps(), 'expression').join(', ')
 
   ###*
   Example:
@@ -81,22 +80,23 @@ class up.ExtractPlan
 
     disjunction = @originalSelector.split(comma)
 
-    u.each disjunction, (literal, i) =>
-      literalParts = literal.match(/^(.+?)(?:\:(before|after))?$/)
-      literalParts or up.fail('Could not parse selector literal "%s"', literal)
-      selector = literalParts[1]
+    u.each disjunction, (expression, i) =>
+      expressionParts = expression.match(/^(.+?)(?:\:(before|after))?$/)
+      expressionParts or up.fail('Could not parse selector literal "%s"', expression)
+      selector = expressionParts[1]
       if selector == 'html'
         # If someone really asked us to replace the <html> root, the best
         # we can do is replace the <body>.
         selector = 'body'
 
-      pseudoClass = literalParts[2]
+      pseudoClass = expressionParts[2]
 
       # When extracting multiple selectors, we only want to reveal the first element.
       # So we set the { reveal } option to false for the next iteration.
       doReveal = if i == 0 then @reveal else false
 
       @steps.push
+        expression: expression
         selector: selector
         pseudoClass: pseudoClass
         transition: @transition

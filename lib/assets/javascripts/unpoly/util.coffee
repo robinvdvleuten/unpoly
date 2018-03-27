@@ -270,13 +270,20 @@ up.util = (($) ->
 
   @function up.util.map
   @param {Array<T>} array
-  @param {Function(T, number): any} block
+  @param {Function(T, number): any|String} block
     A function that will be called with each element and (optional) iteration index.
+
+    You can also pass a property name as a String,
+    which will be collected from each item in the array.
   @return {Array}
     A new array containing the result of each function call.
   @stable
   ###
-  map = each
+  map = (array, block) ->
+    if isString(block)
+      prop = block
+      block = (item) -> item[prop]
+    each(array, block)
 
   ###*
   Calls the given function for the given number of times.

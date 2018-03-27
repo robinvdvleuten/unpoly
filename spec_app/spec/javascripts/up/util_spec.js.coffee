@@ -4,6 +4,18 @@ describe 'up.util', ->
 
   describe 'JavaScript functions', ->
 
+    describe 'up.util.map', ->
+
+      it 'creates a new array of values by calling the given function on each item of the given array', ->
+        array = ["apple", "orange", "cucumber"]
+        mapped = up.util.map(array, (element) -> element.length)
+        expect(mapped).toEqual [5, 6, 8]
+
+      it 'accepts a property name instead of a string, which collects that property from each item', ->
+        array = ["apple", "orange", "cucumber"]
+        mapped = up.util.map(array, 'length')
+        expect(mapped).toEqual [5, 6, 8]
+
     describe 'up.util.previewable', ->
 
       it 'wraps a function into a proxy function with an additional .promise attribute', ->

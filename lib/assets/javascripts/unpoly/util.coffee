@@ -673,8 +673,8 @@ up.util = (($) ->
   ###
   all = (array, tester) ->
     match = true
-    for element in array
-      unless tester(element)
+    for element, index in array
+      unless tester(element, index)
         match = false
         break
     match
@@ -700,12 +700,40 @@ up.util = (($) ->
   @stable
   ###
   uniq = (array) ->
-    seen = {}
-    select array, (element) ->
-      if seen.hasOwnProperty(element)
+    return array if array.length < 2
+    set = new Set(array)
+    setToArray(set)
+
+  ###*
+  This function is like [`uniq`](/up.util.uniq), accept that
+  the given function is invoked for each element to generate the value
+  for which uniquness is computed.
+
+  @function up.util.uniqBy
+  @param {Array<T>} array
+  @param {Function<T>: any} array
+  @return {Array<T>}
+  @experimental
+  ###
+  uniqBy = (array, mapper) ->
+    return array if array.length < 2
+    set = new Set()
+    select array, (elem) ->
+      mapped = mapper(elem)
+      if set.has(mapped)
         false
       else
-        seen[element] = true
+        set.add(mapped)
+        true
+
+  ###*
+  @function up.util.setToArray
+  @internal
+  ###
+  setToArray = (set) ->
+    array = []
+    set.forEach (elem) -> array.push(elem)
+    array
 
   ###*
   Returns all elements from the given array that return
@@ -713,13 +741,14 @@ up.util = (($) ->
 
   @function up.util.select
   @param {Array<T>} array
+  @param {Function(T, number): boolean} tester
   @return {Array<T>}
   @stable
   ###
   select = (array, tester) ->
     matches = []
-    each array, (element) ->
-      if tester(element)
+    each array, (element, index) ->
+      if tester(element, index)
         matches.push(element)
     matches
 
@@ -729,11 +758,12 @@ up.util = (($) ->
 
   @function up.util.reject
   @param {Array<T>} array
+  @param {Function(T, number): boolean} tester
   @return {Array<T>}
   @stable
   ###
   reject = (array, tester) ->
-    select(array, (element) -> !tester(element))
+    select(array, (element, index) -> !tester(element, index))
 
   ###*
   Returns the intersection of the given two arrays.
@@ -1822,6 +1852,7 @@ up.util = (($) ->
   intersect: intersect
   compact: compact
   uniq: uniq
+  uniqBy: uniqBy
   last: last
   isNull: isNull
   isDefined: isDefined

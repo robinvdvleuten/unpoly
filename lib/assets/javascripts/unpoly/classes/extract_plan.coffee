@@ -35,7 +35,7 @@ class up.ExtractPlan
     @steps = @steps.concat(steps)
     
   compressedSteps: =>
-    if @steps.length > 1
+    return @steps if @steps.length < 2
 
 #      candidates = u.copy(@steps)
 #      compressed = []
@@ -47,23 +47,45 @@ class up.ExtractPlan
 #        if safe
 #          compressed.push(candidate)
 
-      containers = u.map @steps, (step) ->
-        unless step.pseudoClass
-          step.$old.get(0)
-      containers = u.compact(containers)
-      $containers = $(containers)
-      $containers.addClass('up-step')
-      compressed = u.select @steps, (step) ->
-        $element = step.$old
-        $parent = $element.parents('.up-step')
-      $containers.removeClass('up-step')
+#      containers = u.map @steps, (step) ->
+#        unless step.pseudoClass
+#          step.$old.get(0)
+#      containers = u.compact(containers)
+#      $containers = $(containers)
+#      $containers.addClass('up-step')
+#      compressed = u.select @steps, (step) ->
+#        $element = step.$old
+#        $parent = $element.parents('.up-step')
+#        $parent.length == 0
+#      $containers.removeClass('up-step')
 
-      if @steps[0].reveal
-        compressed[0].reveal = @steps[0].selector
-      console.info("Compressed steps are %o", compressed)
-      compressed
-    else
-      @steps
+    compressed = u.copy(@steps)
+
+    # When two replacements target the same element, we would process
+    # the same content twice. We necer want that, so we only keep the first step.
+    compressed = u.uniqBy(compressed, (step) -> step.$old[0])
+
+
+
+
+
+    compressed = u.select compressed, (candidateStep, c) =>
+      u.all @steps, (otherStep, o) =>
+        console.debug("c == %o, o == %o", c, o)
+        o == c || !@containsStep(otherStep, candidateStep)
+
+
+
+    if @steps[0].reveal
+      compressed[0].reveal = @steps[0].selector
+    console.info("Compressed steps are %o", compressed)
+    compressed
+
+  containsStep: (containerStep, childStep) ->
+    $container = containerStep.$old
+    $child = childStep.$old
+    console.info("!!! containsStep(%o,  %o) => %o", $container.get(0), $child.get(0), ($child.closest($container).length > 0))
+    $child.parents($container).length > 0
 
   compressedSelector: =>
     u.map(@compressedSteps(), 'expression').join(', ')

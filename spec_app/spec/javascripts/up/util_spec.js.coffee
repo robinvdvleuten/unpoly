@@ -4,6 +4,32 @@ describe 'up.util', ->
 
   describe 'JavaScript functions', ->
 
+    describe 'up.util.uniq', ->
+
+      it 'returns the given array with duplicates elements removed', ->
+        input = [1, 2, 1, 1, 3]
+        result = up.util.uniq(input)
+        expect(result).toEqual [1, 2, 3]
+
+      it 'works on DOM elements', ->
+        one = document.createElement("div")
+        two = document.createElement("div")
+        input = [one, one, two, two]
+        result = up.util.uniq(input)
+        expect(result).toEqual [one, two]
+
+      it 'preserves insertion order', ->
+        input = [1, 2, 1]
+        result = up.util.uniq(input)
+        expect(result).toEqual [1, 2]
+
+    describe 'up.util.uniqBy', ->
+
+      it 'returns the given array with duplicate elements removed, calling the given function to determine value for uniqueness', ->
+        input = ["foo", "bar", "apple", 'orange', 'banana']
+        result = up.util.uniqBy(input, (element) -> element.length)
+        expect(result).toEqual ['foo', 'apple', 'orange']
+
     describe 'up.util.map', ->
 
       it 'creates a new array of values by calling the given function on each item of the given array', ->

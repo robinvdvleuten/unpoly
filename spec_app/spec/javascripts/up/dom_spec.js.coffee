@@ -683,7 +683,7 @@ describe 'up.dom', ->
                 promise = promiseState(replacePromise)
                 promise.then (result) => expect(result.state).toEqual('fulfilled')
 
-            it 'does not crash if the same element is targeted twice in a single replacement', asyncSpec (next) ->
+            it 'updates the first selector if the same element is targeted twice in a single replacement', asyncSpec (next) ->
               $one = affix('.one.alias').text('old one text')
 
               replacePromise = up.replace('.one, .alias', '/path')
@@ -705,13 +705,13 @@ describe 'up.dom', ->
                 promise = promiseState(replacePromise)
                 promise.then (result) => expect(result.state).toEqual('fulfilled')
 
-            it 'does not crash if the same element is prepended or appended twice in a single replacement', asyncSpec (next) ->
+            it 'updates the first selector if the same element is prepended or appended twice in a single replacement', asyncSpec (next) ->
               $one = affix('.one').text('old one text')
 
               replacePromise = up.replace('.one:before, .one:after', '/path')
 
               next =>
-                expect(@lastRequest().requestHeaders['X-Up-Target']).toEqual('.one')
+                expect(@lastRequest().requestHeaders['X-Up-Target']).toEqual('.one:before')
 
                 @respondWith """
                   <div class="one">
@@ -721,12 +721,29 @@ describe 'up.dom', ->
 
               next =>
                 expect($('.one')).toExist()
-                expect($('.one').text()).toHaveText('new one text old one text')
+                expect($('.one').text()).toMatchText('new one text old one text')
 
               next.await =>
                 promise = promiseState(replacePromise)
                 promise.then (result) => expect(result.state).toEqual('fulfilled')
 
+            it "updates the first selector if the same element is prepended, replaced and appended in a single replacement", asyncSpec (next) ->
+              $elem = affix('.elem.alias1.alias2').text("old text")
+
+              replacePromise = up.replace('.elem:before, .alias1, .alias2:after')
+
+              next =>
+                expect(@lastRequest()).requestHeaders['X-Up-Target'].toEqual('.elem:before')
+
+                @respondWith """
+                  <div class="elem alias1 alias2">
+                    new text
+                  </div>
+                  """
+
+              next =>
+                expect('.elem').toExist()
+                expect('.elem').toMatchText('new text old text')
 
           it 'replaces the body if asked to replace the "html" selector'
 

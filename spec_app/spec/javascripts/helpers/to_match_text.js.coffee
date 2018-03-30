@@ -1,6 +1,6 @@
 beforeEach ->
   jasmine.addMatchers
-    toContain: (util, customEqualityTesters) ->
+    toMatchText: (util, customEqualityTesters) ->
       compare: (actualString, expectedString) ->
         normalize = (str) ->
           str = up.util.trim(str)

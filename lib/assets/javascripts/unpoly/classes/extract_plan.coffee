@@ -62,30 +62,26 @@ class up.ExtractPlan
     compressed = u.copy(@steps)
 
     # When two replacements target the same element, we would process
-    # the same content twice. We necer want that, so we only keep the first step.
+    # the same content twice. We never want that, so we only keep the first step.
     compressed = u.uniqBy(compressed, (step) -> step.$old[0])
 
-
-
-
+    console.debug("compressed = %o, @steps = %o", compressed.length, @steps.length)
 
     compressed = u.select compressed, (candidateStep, c) =>
+      console.debug("checking step #%o", c)
       u.all @steps, (otherStep, o) =>
-        console.debug("c == %o, o == %o", c, o)
-        o == c || !@containsStep(otherStep, candidateStep)
-
-
+        console.debug("comparing c: %o (%o) with o: %o (%o)", c, candidateStep.expression, o, otherStep.expression)
+        if o == c
+          true
+        else
+          candidateElement = candidateStep.$old[0]
+          otherElement = otherStep.$old[0]
+          not $.contains(otherElement, candidateElement)
 
     if @steps[0].reveal
       compressed[0].reveal = @steps[0].selector
     console.info("Compressed steps are %o", compressed)
     compressed
-
-  containsStep: (containerStep, childStep) ->
-    $container = containerStep.$old
-    $child = childStep.$old
-    console.info("!!! containsStep(%o,  %o) => %o", $container.get(0), $child.get(0), ($child.closest($container).length > 0))
-    $child.parents($container).length > 0
 
   compressedSelector: =>
     u.map(@compressedSteps(), 'expression').join(', ')

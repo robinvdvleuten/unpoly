@@ -1580,7 +1580,7 @@ up.util = (($) ->
   isAttached = (element) ->
     element = unJQuery(element)
     # This is by far the fastest way to do this
-    jQuery.contains(document.documentElement, element)
+    $.contains(document.documentElement, element)
 
   ###*
   Given a function that will return a promise, returns a proxy function

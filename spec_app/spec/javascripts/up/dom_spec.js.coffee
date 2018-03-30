@@ -730,10 +730,10 @@ describe 'up.dom', ->
             it "updates the first selector if the same element is prepended, replaced and appended in a single replacement", asyncSpec (next) ->
               $elem = affix('.elem.alias1.alias2').text("old text")
 
-              replacePromise = up.replace('.elem:before, .alias1, .alias2:after')
+              replacePromise = up.replace('.elem:before, .alias1, .alias2:after', '/path')
 
               next =>
-                expect(@lastRequest()).requestHeaders['X-Up-Target'].toEqual('.elem:before')
+                expect(@lastRequest().requestHeaders['X-Up-Target']).toEqual('.elem:before')
 
                 @respondWith """
                   <div class="elem alias1 alias2">
@@ -743,7 +743,11 @@ describe 'up.dom', ->
 
               next =>
                 expect('.elem').toExist()
-                expect('.elem').toMatchText('new text old text')
+                expect($('.elem').text()).toMatchText('new text old text')
+
+              next.await =>
+                promise = promiseState(replacePromise)
+                promise.then (result) => expect(result.state).toEqual('fulfilled')
 
           it 'replaces the body if asked to replace the "html" selector'
 

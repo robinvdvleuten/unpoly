@@ -67,16 +67,16 @@ class up.ExtractPlan
 
     console.debug("compressed = %o, @steps = %o", compressed.length, @steps.length)
 
-    compressed = u.select compressed, (candidateStep, c) =>
-      console.debug("checking step #%o", c)
-      u.all @steps, (otherStep, o) =>
-        console.debug("comparing c: %o (%o) with o: %o (%o)", c, candidateStep.expression, o, otherStep.expression)
-        if o == c
+    compressed = u.select compressed, (candidateStep, candidateIndex) =>
+      console.debug("checking step #%o", candidateIndex)
+      u.all compressed, (rivalStep, rivalIndex) =>
+        console.debug("comparing candidate (%o) with rival (%o)", candidateStep.expression, rivalStep.expression)
+        if rivalIndex == candidateIndex
           true
         else
           candidateElement = candidateStep.$old[0]
-          otherElement = otherStep.$old[0]
-          not $.contains(otherElement, candidateElement)
+          rivalElement = rivalStep.$old[0]
+          rivalStep.pseudoClass || !$.contains(rivalElement, candidateElement)
 
     if @steps[0].reveal
       compressed[0].reveal = @steps[0].selector

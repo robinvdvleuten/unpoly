@@ -387,6 +387,8 @@ up.dom = (($) ->
         responseDoc = parseResponseDoc(html)
         extractSteps = bestMatchingSteps(selectorOrElement, responseDoc, options)
 
+        console.debug("extractSteps are %o", extractSteps)
+
         if shouldExtractTitle(options) && responseTitle = responseDoc.title()
           options.title = responseTitle
         updateHistoryAndTitle(options)
@@ -398,6 +400,7 @@ up.dom = (($) ->
             # Note that we must copy the options hash instead of changing it in-place,  since the
             # async swapElements() is scheduled for the next microtask and we must not change the options
             # for the previous iteration.
+            debugger
             swapOptions = u.merge(options, u.only(step, 'origin', 'reveal'))
 
             fixScripts(step.$new)

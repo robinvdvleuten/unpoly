@@ -604,7 +604,35 @@ describe 'up.dom', ->
                 promise = promiseState(replacePromise)
                 promise.then (result) => expect(result.state).toEqual('fulfilled')
 
-            it 'still reveals the first element if the first selector was merged into a subsequent selector'
+            it 'still reveals the first element if the first selector was merged into a subsequent selector', asyncSpec (next) ->
+              revealStub = up.layout.knife.mock('reveal')
+
+              $outer = affix('.outer').text('old outer text')
+              $inner = $outer.affix('.inner').text('old inner text')
+
+              up.replace('.inner, .outer', '/path', reveal: true)
+
+              next =>
+                expect(@lastRequest().requestHeaders['X-Up-Target']).toEqual('.outer')
+
+                @respondWith """
+                  <div class="outer">
+                    new outer text
+                    <div class="inner">
+                      new inner text
+                    </div>
+                  </div>
+                  """
+
+              next =>
+                expect($('.outer')).toExist()
+                expect($('.outer').text()).toContain('new outer text')
+                expect($('.inner')).toExist()
+                expect($('.inner').text()).toContain('new inner text')
+
+                expect(revealStub).toHaveBeenCalled()
+                debugger
+                expect(revealStub.calls.mostRecent().args[0]).toBeMatchedBy('.inner')
 
             it 'replaces a single fragment if the nesting differs in current page and response', asyncSpec (next) ->
               $outer = affix('.outer').text('old outer text')

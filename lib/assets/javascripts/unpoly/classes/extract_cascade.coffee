@@ -50,7 +50,7 @@ class up.ExtractCascade
       plan = @oldPlan()
 
     if plan
-      plan.compressedSelector()
+      plan.disjointSelector()
     else
       @oldPlanNotFound()
 
@@ -59,7 +59,7 @@ class up.ExtractCascade
       # Only when we have a match in the required selectors, we
       # append the optional steps for [up-hungry] elements.
       plan.addSteps(@hungrySteps())
-      plan.compressedSteps()
+      plan.disjointSteps()
     else
       @matchingPlanNotFound()
 

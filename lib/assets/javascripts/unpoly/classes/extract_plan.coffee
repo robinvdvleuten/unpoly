@@ -34,7 +34,7 @@ class up.ExtractPlan
   addSteps: (steps) =>
     @steps = @steps.concat(steps)
     
-  compressedSteps: =>
+  disjointSteps: =>
     return @steps if @steps.length < 2
 
     compressed = u.copy(@steps)
@@ -52,12 +52,12 @@ class up.ExtractPlan
           rivalElement = rivalStep.$old[0]
           rivalStep.pseudoClass || !$.contains(rivalElement, candidateElement)
 
-    if @steps[0].reveal
-      compressed[0].reveal = @steps[0].selector
+    # If we revealed before, we should reveal now
+    compressed[0].reveal = @steps[0].reveal
     compressed
 
-  compressedSelector: =>
-    u.map(@compressedSteps(), 'expression').join(', ')
+  disjointSelector: =>
+    u.map(@disjointSteps(), 'expression').join(', ')
 
   parseSteps: =>
     comma = /\ *,\ */

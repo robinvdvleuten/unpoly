@@ -6,6 +6,24 @@ Changes to this project will be documented in this file.
 This project mostly adheres to [Semantic Versioning](http://semver.org/).
 
 
+Unreleased
+----------
+
+- [`up.util.uniq()`](/up.util.uniq) now works on DOM elements
+- New experimental function [`up.util.uniqBy()`](/up.util.uniqBy). This function is like [`uniq`](/up.util.uniq), accept that the given function is invoked for each element to generate the value for which uniquness is computed.
+- You can now call [`up.util.map()`](up.util.map) with a property name instead of a mapping function:
+
+  ```
+  users = [{ name: 'foo' }, { name: 'bar' }]
+  up.util.map(users, 'name') # ['foo', 'bar']
+  ```
+- Many utility functions that work on lists now pass the iteration index as a second argument to the given function:
+  - [`up.util.each()`](/up.util.each)
+  - [`up.util.all()`](/up.util.all)
+  - [`up.util.none()`](/up.util.none)
+  - [`up.util.any()`](/up.util.any)
+
+
 0.54.1
 ------
 

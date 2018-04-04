@@ -649,14 +649,16 @@ up.util = (($) ->
 
   @function up.util.any
   @param {Array<T>} array
-  @param {Function(T): boolean} tester
+  @param {Function(T, number): boolean} tester
+    A function that will be called with each element and (optional) iteration index.
+
   @return {boolean}
   @experimental
   ###
   any = (array, tester) ->
     match = false
-    for element in array
-      if tester(element)
+    for element, index in array
+      if tester(element, index)
         match = true
         break
     match
@@ -667,7 +669,9 @@ up.util = (($) ->
 
   @function up.util.all
   @param {Array<T>} array
-  @param {Function(T): boolean} tester
+  @param {Function(T, number): boolean} tester
+    A function that will be called with each element and (optional) iteration index.
+
   @return {boolean}
   @experimental
   ###

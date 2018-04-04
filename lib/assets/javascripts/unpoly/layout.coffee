@@ -469,7 +469,6 @@ up.layout = (($) ->
       return restoreScroll(around: $element)
 
     if options.reveal
-      debugger
       revealOptions = { duration: options.duration }
       if u.isString(options.reveal)
         selector = revealSelector(options.reveal, options)

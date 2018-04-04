@@ -387,8 +387,6 @@ up.dom = (($) ->
         responseDoc = parseResponseDoc(html)
         extractSteps = bestMatchingSteps(selectorOrElement, responseDoc, options)
 
-        console.debug("extractSteps are %o", extractSteps)
-
         if shouldExtractTitle(options) && responseTitle = responseDoc.title()
           options.title = responseTitle
         updateHistoryAndTitle(options)
@@ -474,9 +472,6 @@ up.dom = (($) ->
     document.title = options.title if u.isString(options.title)
 
   swapElements = ($old, $new, pseudoClass, transition, options) ->
-#    unless u.isAttached($old) && u.isDetached($new)
-#      return Promise.resolve()
-
     transition ||= 'none'
 
     if options.source == 'keep'

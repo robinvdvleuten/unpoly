@@ -43,12 +43,8 @@ class up.ExtractPlan
     # the same content twice. We never want that, so we only keep the first step.
     compressed = u.uniqBy(compressed, (step) -> step.$old[0])
 
-    console.debug("compressed = %o, @steps = %o", compressed.length, @steps.length)
-
     compressed = u.select compressed, (candidateStep, candidateIndex) =>
-      console.debug("checking step #%o", candidateIndex)
       u.all compressed, (rivalStep, rivalIndex) =>
-        console.debug("comparing candidate (%o) with rival (%o)", candidateStep.expression, rivalStep.expression)
         if rivalIndex == candidateIndex
           true
         else
@@ -58,7 +54,6 @@ class up.ExtractPlan
 
     if @steps[0].reveal
       compressed[0].reveal = @steps[0].selector
-    console.info("Compressed steps are %o", compressed)
     compressed
 
   compressedSelector: =>

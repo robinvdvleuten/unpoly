@@ -604,7 +604,7 @@ describe 'up.dom', ->
                 promise = promiseState(replacePromise)
                 promise.then (result) => expect(result.state).toEqual('fulfilled')
 
-            it 'still reveals the first element if the first selector was merged into a subsequent selector', asyncSpec (next) ->
+            it 'does not lose a { reveal: true } option if the first selector was merged into a subsequent selector', asyncSpec (next) ->
               revealStub = up.layout.knife.mock('reveal')
 
               $outer = affix('.outer').text('old outer text')
@@ -631,8 +631,41 @@ describe 'up.dom', ->
                 expect($('.inner').text()).toContain('new inner text')
 
                 expect(revealStub).toHaveBeenCalled()
-                debugger
-                expect(revealStub.calls.mostRecent().args[0]).toBeMatchedBy('.inner')
+
+
+            it 'does not lose a { reveal: string } option if the first selector was merged into a subsequent selector', asyncSpec (next) ->
+              revealStub = up.layout.knife.mock('reveal')
+
+              $outer = affix('.outer').text('old outer text')
+              $inner = $outer.affix('.inner').text('old inner text')
+
+              up.replace('.inner, .outer', '/path', reveal: '.revealee')
+
+              next =>
+                expect(@lastRequest().requestHeaders['X-Up-Target']).toEqual('.outer')
+
+                @respondWith """
+                  <div class="outer">
+                    new outer text
+                    <div class="inner">
+                      new inner text
+                      <div class="revealee">
+                        revealee text
+                      </div>
+                    </div>
+                  </div>
+                  """
+
+              next =>
+                expect($('.outer')).toExist()
+                expect($('.outer').text()).toContain('new outer text')
+                expect($('.inner')).toExist()
+                expect($('.inner').text()).toContain('new inner text')
+
+                expect(revealStub).toHaveBeenCalled()
+                revealArg = revealStub.calls.mostRecent().args[0]
+                expect(revealArg).toBeMatchedBy('.revealee')
+
 
             it 'replaces a single fragment if the nesting differs in current page and response', asyncSpec (next) ->
               $outer = affix('.outer').text('old outer text')

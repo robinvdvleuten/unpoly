@@ -5,11 +5,12 @@ class up.ExtractPlan
   constructor: (selector, options) ->
     @reveal = options.reveal
     @origin = options.origin
-    @originalSelector = up.dom.resolveSelector(selector, @origin)
+    @hungry = options.hungry
     @transition = options.transition
     @response = options.response
     @oldLayer = options.layer
-    @parseSteps()
+    originalSelector = up.dom.resolveSelector(selector, @origin)
+    @parseSteps(originalSelector)
 
   findOld: =>
     u.each @steps, (step) =>
@@ -34,8 +35,8 @@ class up.ExtractPlan
   addSteps: (steps) =>
     @steps = @steps.concat(steps)
     
-  disjointSteps: =>
-    return @steps if @steps.length < 2
+  resolveNesting: =>
+    return if @steps.length < 2
 
     compressed = u.copy(@steps)
 
@@ -54,17 +55,17 @@ class up.ExtractPlan
 
     # If we revealed before, we should reveal now
     compressed[0].reveal = @steps[0].reveal
-    compressed
+    @steps = compressed
 
-  disjointSelector: =>
-    u.map(@disjointSteps(), 'expression').join(', ')
+  selector: =>
+    u.map(@steps, 'expression').join(', ')
 
-  parseSteps: =>
+  parseSteps: (originalSelector) =>
     comma = /\ *,\ */
 
     @steps = []
 
-    disjunction = @originalSelector.split(comma)
+    disjunction = originalSelector.split(comma)
 
     u.each disjunction, (expression, i) =>
       expressionParts = expression.match(/^(.+?)(?:\:(before|after))?$/)
@@ -88,3 +89,23 @@ class up.ExtractPlan
         transition: @transition
         origin: @origin
         reveal: doReveal
+
+  addHungrySteps: =>
+    hungrySteps = []
+    if @hungry
+      $hungries = up.radio.hungrySelector().select()
+      transition = u.option(up.radio.config.hungryTransition, @transition)
+      for hungry in $hungries
+        $hungry = $(hungry)
+        selector = u.selectorForElement($hungry)
+        if $newHungry = @response.first(selector)
+          hungrySteps.push
+            selector: selector
+            $old: $hungry
+            $new: $newHungry
+            transition: transition
+            reveal: false # we never auto-reveal a hungry element
+            origin: null # don't let the hungry element auto-close a non-sticky modal or popup
+
+    @addSteps(hungrySteps)
+

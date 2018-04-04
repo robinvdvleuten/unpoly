@@ -50,7 +50,8 @@ class up.ExtractCascade
       plan = @oldPlan()
 
     if plan
-      plan.disjointSelector()
+      plan.resolveNesting()
+      plan.selector()
     else
       @oldPlanNotFound()
 
@@ -58,28 +59,11 @@ class up.ExtractCascade
     if plan = @matchingPlan()
       # Only when we have a match in the required selectors, we
       # append the optional steps for [up-hungry] elements.
-      plan.addSteps(@hungrySteps())
-      plan.disjointSteps()
+      plan.addHungrySteps()
+      plan.resolveNesting()
+      plan.steps
     else
       @matchingPlanNotFound()
-
-  hungrySteps: =>
-    steps = []
-    if @options.hungry
-      $hungries = up.radio.hungrySelector().select()
-      for hungry in $hungries
-        $hungry = $(hungry)
-        selector = u.selectorForElement($hungry)
-        if $newHungry = @options.response.first(selector)
-          transition = u.option(up.radio.config.hungryTransition, @options.transition)
-          steps.push
-            selector: selector
-            $old: $hungry
-            $new: $newHungry
-            transition: transition
-            reveal: false # we never auto-reveal a hungry element
-            origin: null # don't let the hungry element auto-close a non-sticky modal or popup
-    steps
 
   matchingPlanNotFound: =>
     # The job of this method is to simply throw an error.

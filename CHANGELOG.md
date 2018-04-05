@@ -9,20 +9,25 @@ This project mostly adheres to [Semantic Versioning](http://semver.org/).
 Unreleased
 ----------
 
+
+
+### Utility functions
+
 - [`up.util.uniq()`](/up.util.uniq) now works on DOM elements
 - New experimental function [`up.util.uniqBy()`](/up.util.uniqBy). This function is like [`uniq`](/up.util.uniq), accept that the given function is invoked for each element to generate the value for which uniquness is computed.
-- You can now call [`up.util.map()`](up.util.map) with a property name instead of a mapping function:
+- Changes to [utility functions](/up.util) that work on lists ([`up.util.each()`](/up.util.each), [`up.util.map()`](/up.util.map), [`up.util.all()`](/up.util.all), [`up.util.any()`](/up.util.any), [`up.util.select()`](/up.util.select), [`up.util.reject()`](/up.util.reject)):
+  - List functions now accept a property name instead of a mapping function:
 
-  ```
-  users = [{ name: 'foo' }, { name: 'bar' }]
-  up.util.map(users, 'name') # ['foo', 'bar']
-  ```
-- Many utility functions that work on lists now pass the iteration index as a second argument to the given function:
-  - [`up.util.each()`](/up.util.each)
-  - [`up.util.all()`](/up.util.all)
-  - [`up.util.none()`](/up.util.none)
-  - [`up.util.any()`](/up.util.any)
+    ```
+    users = [{ name: 'foo' }, { name: 'bar' }]
+    up.util.map(users, 'name') # ['foo', 'bar']
+    ```
+  - List functions now pass the iteration index as a second argument to the given function:
 
+    ```
+    users = [{ name: 'foo' }, { name: 'bar' }]
+    up.util.map(users, function(user, index) { return index }) # [0, 1]
+    ```
 
 0.54.1
 ------

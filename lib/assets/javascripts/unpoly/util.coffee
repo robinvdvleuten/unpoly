@@ -252,18 +252,11 @@ up.util = (($) ->
   ###
   trim = $.trim
 
-  ###**
-  Calls the given function for each element (and, optional, index)
-  of the given array.
-
-  @function up.util.each
-  @param {Array<T>} array
-  @param {Function(T, number)} block
-    A function that will be called with each element and (optional) iteration index.
-  @stable
-  ###
-  each = (array, block) ->
-    block(item, index) for item, index in array
+  listBlock = (block) ->
+    if isString(block)
+      (item) -> item[block]
+    else
+      block
 
   ###**
   Translate all items in an array to new array of items.
@@ -280,10 +273,21 @@ up.util = (($) ->
   @stable
   ###
   map = (array, block) ->
-    if isString(block)
-      prop = block
-      block = (item) -> item[prop]
-    each(array, block)
+    block = listBlock(block)
+    for item, index in array
+      block(item, index)
+
+  ###**
+  Calls the given function for each element (and, optional, index)
+  of the given array.
+
+  @function up.util.each
+  @param {Array<T>} array
+  @param {Function(T, number)} block
+    A function that will be called with each element and (optional) iteration index.
+  @stable
+  ###
+  each = map
 
   ###**
   Calls the given function for the given number of times.
@@ -656,6 +660,7 @@ up.util = (($) ->
   @experimental
   ###
   any = (array, tester) ->
+    tester = listBlock(tester)
     match = false
     for element, index in array
       if tester(element, index)
@@ -676,6 +681,7 @@ up.util = (($) ->
   @experimental
   ###
   all = (array, tester) ->
+    tester = listBlock(tester)
     match = true
     for element, index in array
       unless tester(element, index)
@@ -721,9 +727,10 @@ up.util = (($) ->
   ###
   uniqBy = (array, mapper) ->
     return array if array.length < 2
+    mapper = listBlock(mapper)
     set = new Set()
-    select array, (elem) ->
-      mapped = mapper(elem)
+    select array, (elem, index) ->
+      mapped = mapper(elem, index)
       if set.has(mapped)
         false
       else
@@ -750,6 +757,7 @@ up.util = (($) ->
   @stable
   ###
   select = (array, tester) ->
+    tester = listBlock(tester)
     matches = []
     each array, (element, index) ->
       if tester(element, index)
@@ -767,6 +775,7 @@ up.util = (($) ->
   @stable
   ###
   reject = (array, tester) ->
+    tester = listBlock(tester)
     select(array, (element, index) -> !tester(element, index))
 
   ###**

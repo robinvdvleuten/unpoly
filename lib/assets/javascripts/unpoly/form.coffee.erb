@@ -1,4 +1,4 @@
-###*
+###**
 Forms
 =====
   
@@ -12,7 +12,7 @@ up.form = (($) ->
   
   u = up.util
 
-  ###*
+  ###**
   Sets default options for form submission and validation.
 
   @property up.form.config
@@ -40,14 +40,14 @@ up.form = (($) ->
   reset = ->
     config.reset()
 
-  ###*
+  ###**
   @function up.form.fieldSelector
   @internal
   ###
   fieldSelector = ->
     u.multiSelector(config.fields)
 
-  ###*
+  ###**
   Submits a form via AJAX and updates a page fragment with the response.
 
       up.submit('form.new-user', { target: '.main' })
@@ -75,12 +75,16 @@ up.form = (($) ->
     Defaults to the form's `up-method`, `data-method` or `method` attribute, or to `'post'`
     if none of these attributes are given.
   @param {string} [options.target]
-    The selector to update when the form submission succeeds (server responds with status 200).
+    The CSS selector to update when the form submission succeeds (server responds with status 200).
     Defaults to the form's `up-target` attribute.
+
+    Inside the CSS selector you may refer to the form as `&` ([like in Sass](https://sass-lang.com/documentation/file.SASS_REFERENCE.html#parent-selector)).
   @param {string} [options.failTarget]
-    The selector to update when the form submission fails (server responds with non-200 status).
+    The CSS selector to update when the form submission fails (server responds with non-200 status).
     Defaults to the form's `up-fail-target` attribute, or to an auto-generated
     selector that matches the form itself.
+
+    Inside the CSS selector you may refer to the form as `&` ([like in Sass](https://sass-lang.com/documentation/file.SASS_REFERENCE.html#parent-selector)).
   @param {string} [options.fallback]
     The selector to update when the original target was not found in the page.
     Defaults to the form's `up-fallback` attribute.
@@ -176,7 +180,7 @@ up.form = (($) ->
       u.always promise, -> up.feedback.stop($form)
       promise
 
-  ###*
+  ###**
   This event is [emitted](/up.emit) when a form is [submitted](/up.submit) through Unpoly.
 
   @event up:form:submit
@@ -187,7 +191,7 @@ up.form = (($) ->
   @stable
   ###
 
-  ###*
+  ###**
   Observes form fields and runs a callback when a value changes.
 
   This is useful for observing text fields while the user is typing.
@@ -272,7 +276,7 @@ up.form = (($) ->
     callback = null
     rawCallback = u.option(callbackArg, u.presentAttr($element, 'up-observe'))
     if u.isString(rawCallback)
-      callback = (value, $field) -> eval(rawCallback)
+      callback = new Function('value', '$field', rawCallback)
     else
       callback = rawCallback or up.fail('up.observe: No change callback given')
 
@@ -291,7 +295,7 @@ up.form = (($) ->
     observer.start()
     return observer.stop
 
-  ###*
+  ###**
   [Observes](/up.observe) a field or form and submits the form when a value changes.
 
   Both the form and the changed field will be assigned a CSS class [`form-up-active`](/form-up-active)
@@ -327,7 +331,7 @@ up.form = (($) ->
       target = u.selectorForElement(target)
     target
 
-  ###*
+  ###**
   Performs a server-side validation of a form field.
 
   `up.validate()` submits the given field's form with an additional `X-Up-Validate`
@@ -394,7 +398,7 @@ up.form = (($) ->
       values.push(meta)
     values
 
-  ###*
+  ###**
   Shows or hides a target selector depending on the value.
 
   See [`input[up-switch]`](/input-up-switch) for more documentation and examples.
@@ -419,7 +423,7 @@ up.form = (($) ->
     $(targetSelector).each ->
       switchTarget($(this), fieldValues)
 
-  ###*
+  ###**
   @internal
   ###
   switchTarget = (target, fieldValues) ->
@@ -440,7 +444,7 @@ up.form = (($) ->
     $target.toggle(show)
     $target.addClass('up-switched')
 
-  ###*
+  ###**
   @internal
   ###
   findSwitcherForTarget = ($target) ->
@@ -453,7 +457,7 @@ up.form = (($) ->
     else
       u.fail('Could not find [up-switch] field for %o', $target.get(0))
 
-  ###*
+  ###**
   Forms with an `up-target` attribute are [submitted via AJAX](/up.submit)
   instead of triggering a full page reload.
 
@@ -521,11 +525,15 @@ up.form = (($) ->
 
   @selector form[up-target]
   @param {string} up-target
-    The selector to [replace](/up.replace) if the form submission is successful (200 status code).
+    The CSS selector to [replace](/up.replace) if the form submission is successful (200 status code).
+
+    Inside the CSS selector you may refer to this form as `&` ([like in Sass](https://sass-lang.com/documentation/file.SASS_REFERENCE.html#parent-selector)).
   @param {string} [up-fail-target]
-    The selector to [replace](/up.replace) if the form submission is not successful (non-200 status code).
-    If omitted, Unpoly will replace the `<form>` tag itself, assuming that the
-    server has echoed the form with validation errors.
+    The CSS selector to [replace](/up.replace) if the form submission is not successful (non-200 status code).
+
+    Inside the CSS selector you may refer to this form as `&` ([like in Sass](https://sass-lang.com/documentation/file.SASS_REFERENCE.html#parent-selector)).
+
+    If omitted, Unpoly will replace the `<form>` tag itself, assuming that the server has echoed the form with validation errors.
   @param [up-fallback]
     The selector to replace if the server responds with an error.
   @param {string} [up-transition]
@@ -559,6 +567,7 @@ up.form = (($) ->
     Whether to reveal the target element after it was replaced.
 
     You can also pass a CSS selector for the element to reveal.
+    Inside the CSS selector you may refer to the form as `&` ([like in Sass](https://sass-lang.com/documentation/file.SASS_REFERENCE.html#parent-selector)).
   @param {string} [up-fail-reveal='true']
     Whether to reveal the target element when the server responds with an error.
 
@@ -568,6 +577,8 @@ up.form = (($) ->
         <form up-target=".content" up-fail-reveal=".error">
           ...
         </form>
+
+    Inside the CSS selector you may refer to the form as `&` ([like in Sass](https://sass-lang.com/documentation/file.SASS_REFERENCE.html#parent-selector)).
   @param {string} [up-restore-scroll='false']
     Whether to restore previously known scroll position of all viewports
     within the target selector.
@@ -583,7 +594,7 @@ up.form = (($) ->
     up.bus.consumeAction(event)
     u.muteRejection submit($form)
 
-  ###*
+  ###**
   When a form field with this attribute is changed, the form is validated on the server
   and is updated with validation messages.
 
@@ -731,7 +742,7 @@ up.form = (($) ->
   up.on 'change', '[up-validate]', (event, $field) ->
     u.muteRejection validate($field)
 
-  ###*
+  ###**
   Show or hide elements when a `<select>` or `<input>` has a given value.
 
   \#\#\# Example: Select options
@@ -814,7 +825,7 @@ up.form = (($) ->
   up.compiler '[up-show-for]:not(.up-switched), [up-hide-for]:not(.up-switched)', ($element) ->
     switchTarget($element)
 
-  ###*
+  ###**
   Observes this field and runs a callback when a value changes.
 
   This is useful for observing text fields while the user is typing.
@@ -849,7 +860,7 @@ up.form = (($) ->
   @stable
   ###
 
-  ###*
+  ###**
   Observes this form and runs a callback when any field changes.
 
   This is useful for observing text fields while the user is typing.
@@ -886,7 +897,7 @@ up.form = (($) ->
   ###
   up.compiler '[up-observe]', ($formOrField) -> observe($formOrField)
 
-  ###*
+  ###**
   [Observes](/up.observe) this form field and submits the form when its value changes.
 
   Both the form and the changed field will be assigned a CSS class [`up-active`](/form-up-active)
@@ -909,7 +920,7 @@ up.form = (($) ->
   @stable
   ###
 
-  ###*
+  ###**
   [Observes](/up.observe) this form and submits the form when *any* field changes.
 
   Both the form and the field will be assigned a CSS class [`up-active`](/form-up-active)
@@ -935,7 +946,7 @@ up.form = (($) ->
 
   up.on 'up:framework:reset', reset
 
-  knife: eval(Knife?.point)
+  <% if ENV['JS_KNIFE'] %>knife: eval(Knife.point)<% end %>
   config: config
   submit: submit
   observe: observe

@@ -1,4 +1,4 @@
-###*
+###**
 Passive updates
 ===============
 
@@ -11,7 +11,7 @@ up.radio = (($) ->
 
   u = up.util
 
-  ###*
+  ###**
   Configures defaults for passive updates.
 
   @property up.radio.config
@@ -19,8 +19,7 @@ up.radio = (($) ->
     An array of CSS selectors that is replaced whenever a matching element is found in a response.
     These elements are replaced even when they were not targeted directly.
 
-    By default this contains the [`[up-hungry]`](/up-hungry) attribute as well as
-    `<meta name="csrf-param">` and `<meta name="csrf-token">` tags.
+    By default this contains the [`[up-hungry]`](/up-hungry) attribute.
   @param {string} [options.hungryTransition=null]
     The transition to use when a [hungry element](/up-hungry) is replacing itself
     while another target is replaced.
@@ -29,20 +28,20 @@ up.radio = (($) ->
   @stable
   ###
   config = u.config
-    hungry: ['[up-hungry]', 'meta[name="csrf-param"]', 'meta[name="csrf-token"]']
+    hungry: ['[up-hungry]']
     hungryTransition: null
 
   reset = ->
     config.reset()
 
-  ###*
+  ###**
   @function up.radio.hungrySelector
   @internal
   ###
   hungrySelector = ->
     u.multiSelector(config.hungry)
 
-  ###*
+  ###**
   Elements with this attribute are [updated](/up.replace) whenever there is a
   matching element found in a successful response. The element is replaced even
   when it isn't [targeted](/a-up-target) directly.

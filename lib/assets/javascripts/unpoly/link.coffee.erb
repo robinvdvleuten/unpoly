@@ -1,4 +1,4 @@
-###*
+###**
 Linking to fragments
 ====================
 
@@ -71,7 +71,7 @@ up.link = (($) ->
 
   u = up.util
   
-  ###*
+  ###**
   Visits the given URL without a full page load.
   This is done by fetching `url` through an AJAX request
   and [replacing](/up.replace) the current `<body>` element with the response's `<body>` element.
@@ -105,7 +105,7 @@ up.link = (($) ->
       else
         up.fail("Cannot directly visit a URL in layer \"#{options.layer}\"")
 
-  ###*
+  ###**
   Follows the given link via AJAX and [replaces](/up.replace) the current page
   with HTML from the response.
 
@@ -153,7 +153,7 @@ up.link = (($) ->
     variant = followVariantForLink($link)
     variant.followLink($link, options)
 
-  ###*
+  ###**
   This event is [emitted](/up.emit) when a link is [followed](/up.follow) through Unpoly.
 
   @event up:link:follow
@@ -164,7 +164,7 @@ up.link = (($) ->
   @stable
   ###
 
-  ###*
+  ###**
   @function defaultFollow
   @internal
   ###
@@ -199,7 +199,7 @@ up.link = (($) ->
     options.preload = true
     defaultFollow($link, options)
 
-  ###*
+  ###**
   Returns the HTTP method that should be used when following the given link.
 
   Looks at the link's `up-method` or `data-method` attribute.
@@ -215,7 +215,7 @@ up.link = (($) ->
     options = u.options(options)
     u.option(options.method, $link.attr('up-method'), $link.attr('data-method'), 'get').toUpperCase()
 
-  ###*
+  ###**
   No-op that is called when we allow a browser's default action to go through,
   so we can spy on it in unit tests. See `link_spec.js`.
 
@@ -226,7 +226,7 @@ up.link = (($) ->
 
   followVariants = []
 
-  ###*
+  ###**
   Registers the given handler for links with the given selector.
 
   This does more than a simple `click` handler:
@@ -237,8 +237,8 @@ up.link = (($) ->
   @function up.link.addFollowVariant
   @param {string} simplifiedSelector
     A selector without `a` or `[up-href]`, e.g. `[up-target]`
-  @param {Function<jQuery, Object>} options.follow
-  @param {Function<jQuery, Object>} options.preload
+  @param {Function(jQuery, Object)} options.follow
+  @param {Function(jQuery, Object)} options.preload
   @internal
   ###
   addFollowVariant = (simplifiedSelector, options) ->
@@ -247,7 +247,7 @@ up.link = (($) ->
     variant.registerEvents()
     variant
 
-  ###*
+  ###**
   Returns whether the given link will be handled by Unpoly instead of making a full page load.
 
   A link will be handled by Unpoly if it has an attribute
@@ -261,7 +261,7 @@ up.link = (($) ->
   isFollowable = (link) ->
     !!followVariantForLink(link, default: false)
 
-  ###*
+  ###**
   Returns the handler function that can be used to follow the given link.
   E.g. it wil return a handler calling `up.modal.follow` if the link is a `[up-modal]`,
   but a handler calling `up.link.follow` if the links is `[up-target]`.
@@ -277,7 +277,7 @@ up.link = (($) ->
     variant ||= DEFAULT_FOLLOW_VARIANT unless options.default is false
     variant
 
-  ###*
+  ###**
   Makes sure that the given link will be handled by Unpoly instead of making a full page load.
 
   This is done by giving the link an `up-follow` attribute
@@ -299,7 +299,7 @@ up.link = (($) ->
     $targetedInput = up.form.fieldSelector().seekUp($target)
     $targetedChildLink.length == 0 && $targetedInput.length == 0 && u.isUnmodifiedMouseEvent(event)
 
-  ###*
+  ###**
   Returns whether the given link has a [safe](https://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html#sec9.1.1)
   HTTP method like `GET`.
 
@@ -311,7 +311,7 @@ up.link = (($) ->
     method = followMethod($link, options)
     up.proxy.isSafeMethod(method)
 
-  ###*
+  ###**
   Follows this link via AJAX and replaces a CSS selector in the current page
   with corresponding elements from a new page fetched from the server:
 
@@ -361,12 +361,16 @@ up.link = (($) ->
   @selector a[up-target]
   @param {string} up-target
     The CSS selector to replace
+
+    Inside the CSS selector you may refer to this link as `&` ([like in Sass](https://sass-lang.com/documentation/file.SASS_REFERENCE.html#parent-selector)).
   @param {string} [up-method='get']
     The HTTP method to use for the request.
   @param {string} [up-transition='none']
     The [transition](/up.motion) to use for morphing between the old and new elements.
   @param [up-fail-target='body']
-    The selector to replace if the server responds with an error.
+    The CSS selector to replace if the server responds with an error.
+
+    Inside the CSS selector you may refer to this link as `&` ([like in Sass](https://sass-lang.com/documentation/file.SASS_REFERENCE.html#parent-selector)).
   @param {string} [up-fail-transition='none']
     The [transition](/up.motion) to use for morphing between the old and new elements
     when the server responds with an error.
@@ -382,10 +386,12 @@ up.link = (($) ->
     Whether to reveal the target element after it was replaced.
 
     You can also pass a CSS selector for the element to reveal.
+    Inside the CSS selector you may refer to this link as `&` ([like in Sass](https://sass-lang.com/documentation/file.SASS_REFERENCE.html#parent-selector)).
   @param {string} [up-fail-reveal='true']
     Whether to reveal the target element when the server responds with an error.
 
     You can also pass a CSS selector for the element to reveal.
+    Inside the CSS selector you may refer to this link as `&` ([like in Sass](https://sass-lang.com/documentation/file.SASS_REFERENCE.html#parent-selector)).
   @param {string} [up-restore-scroll='false']
     Whether to restore previously known scroll position of all viewports
     within the target selector.
@@ -415,7 +421,7 @@ up.link = (($) ->
     follow: ($link, options) -> defaultFollow($link, options)
     preload: ($link, options) -> defaultPreload($link, options)
 
-  ###*
+  ###**
   If applied on a link, follows this link via AJAX and replaces the
   current `<body>` element with the response's `<body>` element.
 
@@ -466,7 +472,7 @@ up.link = (($) ->
   @stable
   ###
 
-  ###*
+  ###**
   By adding an `up-instant` attribute to a link, the destination will be
   fetched on `mousedown` instead of `click` (`mouseup`).
 
@@ -488,7 +494,7 @@ up.link = (($) ->
   @stable
   ###
 
-  ###*
+  ###**
   Marks up the current link to be followed *as fast as possible*.
 
   This is done by:
@@ -523,7 +529,7 @@ up.link = (($) ->
       newAttrs['up-target'] = target
     u.setMissingAttrs($element, newAttrs)
 
-  ###*
+  ###**
   Add an `[up-expand]` attribute to any element that contains a link
   in order to enlarge the link's click area.
 
@@ -586,7 +592,7 @@ up.link = (($) ->
       $area.removeAttr('up-expand')
       makeFollowable($area)
 
-  knife: eval(Knife?.point)
+  <% if ENV['JS_KNIFE'] %>knife: eval(Knife.point)<% end %>
   visit: visit
   follow: follow
   makeFollowable: makeFollowable

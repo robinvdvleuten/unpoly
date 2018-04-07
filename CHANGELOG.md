@@ -6,6 +6,104 @@ Changes to this project will be documented in this file.
 This project mostly adheres to [Semantic Versioning](http://semver.org/).
 
 
+0.55.0
+------
+
+### Fragment updates
+
+- Unpoly now detects when an [`[up-target]`](/up-target) with multiple selectors would [replace](/up.replace) the same element multiple times. In such a case the target selector will be shortened to contain the element once.
+- Unpoly now detects when an [`[up-target]`](/up-target) with multiple selectors contains nested elements. In such a case the target selector will be shortened to only contain the outmost element.
+
+
+### Utility functions
+
+- [`up.util.uniq()`](/up.util.uniq) now works on DOM elements and other object references.
+- New experimental function [`up.util.uniqBy()`](/up.util.uniqBy). This function is like [`uniq`](/up.util.uniq), accept that the given function is invoked for each element to generate the value for which uniquness is computed.
+- Changes to [utility functions](/up.util) that work on lists ([`up.util.each()`](/up.util.each), [`up.util.map()`](/up.util.map), [`up.util.all()`](/up.util.all), [`up.util.any()`](/up.util.any), [`up.util.select()`](/up.util.select), [`up.util.reject()`](/up.util.reject)):
+  - List functions now accept a property name instead of a mapping function:
+
+    ```
+    users = [{ name: 'foo' }, { name: 'bar' }]
+    up.util.map(users, 'name') // ['foo', 'bar']
+    ```
+  - List functions now pass the iteration index as a second argument to the given function:
+
+    ```
+    users = [{ name: 'foo' }, { name: 'bar' }]
+    up.util.map(users, function(user, index) { return index }) // [0, 1]
+    ```
+
+0.54.1
+------
+
+This release contains no new features, but will help you when using tools like Babel or Webpack:
+
+- Unpoly now ship without any uses of [`eval()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/eval) in its JavaScript sources. Use of `eval()` had previously prevented minifiers from shortening local variables in some files. It could also trigger some bugs with Webpack 3.
+- Documentation in Unpoly's JavaScript sources can no longer be confused with [JSDoc](http://usejsdoc.org/) comments. Unpoly does not use JSDoc, but some build pipelines eagerly look for JSDoc comments to generate type information.
+
+
+0.54.0
+------
+
+### Passive updates
+
+- [`[up-hungry]`](/up-hungry) elements will now also be updated when the server responds with an error code. This helps when `[up-hungry]` is used to display error messages.
+
+### Forms
+
+- When a [form is submitted](/form-up-target) you can now consistently refer to that form element as `&` in CSS selectors ([like in Sass](https://sass-lang.com/documentation/file.SASS_REFERENCE.html#parent-selector)).
+
+  E.g. to reveal the first error message within a failed form submission:
+
+  ```
+  <form id="my-form" up-target=".page" up-fail-reveal="& .error">
+    ...
+  </form>
+  ```
+
+  In this case `& .error` will be replaced by `#my-form .error` before submission.
+
+  This affects CSS selectors in the following HTML attributes:
+
+  - `form[up-target]`
+  - `form[up-fail-target]`
+  - `form[up-reveal]`
+  - `form[up-fail-reveal]`
+
+
+### Linking to fragments
+
+* When a [link is followed](/a-up-target) you can now consistently refer to that link element as `&` in CSS selectors ([like in Sass](https://sass-lang.com/documentation/file.SASS_REFERENCE.html#parent-selector)).
+
+  This affects CSS selectors in the following HTML attributes:
+
+  - `a[up-target]`
+  - `a[up-fail-target]`
+  - `a[up-reveal]`
+  - `a[up-fail-reveal]`
+
+
+### Fragment update API
+
+- New option for [`up.replace()`](/up.replace): `{ keep: false }` will disable preservation of [`[up-keep]`](/up-keep) elements.
+- New option for [`up.replace()`](/up.replace): `{ hungry: false }` will disable updates of [`[up-hungry]`](/up-hungry) elements.
+
+
+
+0.53.4
+------
+
+### Passive updates
+
+- Updates for [`[up-hungry]`](/up-hungry) elements will no longer auto-close a [modal dialog](/up.modal).
+- Updates for [`[up-hungry]`](/up-hungry) elements will no longer auto-close a [popup overlay](/up.popup).
+- CSRF-related `<meta>` tags are no longer updated automatically with every request. This is to prevent unnecessary DOM jitter in applications that don't rotate CSRF tokens.
+
+### Popup overlays
+
+- Calling `up.popup.attach()` without a target selector will now throw an error.
+
+
 0.53.2
 ------
 

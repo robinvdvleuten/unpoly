@@ -1,4 +1,4 @@
-###*
+###**
 Fragment update API
 ===================
   
@@ -15,7 +15,7 @@ up.dom = (($) ->
   
   u = up.util
 
-  ###*
+  ###**
   Configures defaults for fragment insertion.
 
   @property up.dom.config
@@ -46,7 +46,7 @@ up.dom = (($) ->
     sourceUrl = u.normalizeUrl(sourceUrl) if u.isPresent(sourceUrl)
     $element.attr("up-source", sourceUrl)
 
-  ###*
+  ###**
   Returns the URL the given element was retrieved from.
 
   @method up.dom.source
@@ -57,9 +57,12 @@ up.dom = (($) ->
     $element = $(selectorOrElement).closest('[up-source]')
     u.presence($element.attr("up-source")) || up.browser.url()
 
-  ###*
-  Resolves the given selector (which might contain `&` references)
-  to an absolute selector.
+  ###**
+  Resolves the given CSS selector (which might contain `&` references)
+  to a full CSS selector without ampersands.
+
+  If passed an `Element` or `jQuery` element, returns a CSS selector string
+  for that element.
 
   @function up.dom.resolveSelector
   @param {string|Element|jQuery} selectorOrElement
@@ -82,7 +85,7 @@ up.dom = (($) ->
       selector = u.selectorForElement(selectorOrElement)
     selector
 
-  ###*
+  ###**
   Replaces elements on the current page with corresponding elements
   from a new page fetched from the server.
 
@@ -165,7 +168,7 @@ up.dom = (($) ->
     here, in which case a selector will be inferred from the element's class and ID.
   @param {string} url
     The URL to fetch from the server.
-  @param {string} [options.failTarget='body']
+  @param {string} [options.failTarget]
     The CSS selector to update if the server sends a non-200 status code.
   @param {string} [options.fallback]
     The selector to update when the original target was not found in the page.
@@ -214,7 +217,7 @@ up.dom = (($) ->
   @param {Element|jQuery} [options.origin]
     The element that triggered the replacement.
 
-    The element's selector will be substituted for the `&` shorthand in the target selector.
+    The element's selector will be substituted for the `&` shorthand in the target selector ([like in Sass](https://sass-lang.com/documentation/file.SASS_REFERENCE.html#parent-selector)).
   @param {string} [options.layer='auto']
     The name of the layer that ought to be updated. Valid values are
     `'auto'`, `'page'`, `'modal'` and `'popup'`.
@@ -225,6 +228,10 @@ up.dom = (($) ->
     Unpoly will search in other layers, starting from the topmost layer.
   @param {string} [options.failLayer='auto']
     The name of the layer that ought to be updated if the server sends a non-200 status code.
+  @param {boolean} [options.keep=true]
+    Whether this replacement will preserve [`[up-keep]`](/up-keep) elements.
+  @param {boolean} [options.hungry=true]
+    Whether this replacement will update [`[up-hungry]`](/up-hungry) elements.
 
   @return {Promise}
     A promise that will be fulfilled when the page has been updated.
@@ -289,7 +296,7 @@ up.dom = (($) ->
     promise = promise.then(onSuccess, onFailure) unless options.preload
     promise
 
-  ###*
+  ###**
   @internal
   ###
   processResponse = (isSuccess, selector, response, options) ->
@@ -329,7 +336,7 @@ up.dom = (($) ->
   shouldExtractTitle = (options) ->
     not (options.title is false || u.isString(options.title) || (options.history is false && options.title isnt true))
 
-  ###*
+  ###**
   Updates a selector on the current page with the
   same selector from the given HTML string.
 
@@ -388,17 +395,18 @@ up.dom = (($) ->
         updateHistoryAndTitle(options)
 
         swapPromises = []
+
         for step in extractSteps
           up.log.group 'Updating %s', step.selector, ->
-            fixScripts(step.$new)
-            swapPromise = swapElements(step.$old, step.$new, step.pseudoClass, step.transition, options)
-            swapPromises.push(swapPromise)
-            # When extracting multiple selectors, we only want to reveal the first element.
-            # So we set the { reveal } option to false for the next iteration.
             # Note that we must copy the options hash instead of changing it in-place,  since the
             # async swapElements() is scheduled for the next microtask and we must not change the options
             # for the previous iteration.
-            options = u.merge(options, reveal: false)
+            swapOptions = u.merge(options, u.only(step, 'origin', 'reveal'))
+
+            fixScripts(step.$new)
+
+            swapPromise = swapElements(step.$old, step.$new, step.pseudoClass, step.transition, swapOptions)
+            swapPromises.push(swapPromise)
 
         # Delay all further links in the promise chain until all fragments have been swapped
         Promise.all(swapPromises)
@@ -598,7 +606,7 @@ up.dom = (($) ->
           if up.bus.nobodyPrevents('up:fragment:keep', keepEventArgs)
             plan
 
-  ###*
+  ###**
   Elements with an `up-keep` attribute will be persisted during
   [fragment updates](/a-up-target).
 
@@ -648,7 +656,7 @@ up.dom = (($) ->
   @stable
   ###
 
-  ###*
+  ###**
   This event is [emitted](/up.emit) before an existing element is [kept](/up-keep) during
   a page update.
 
@@ -669,7 +677,7 @@ up.dom = (($) ->
   @stable
   ###
 
-  ###*
+  ###**
   This event is [emitted](/up.emit) when an existing element has been [kept](/up-keep)
   during a page update.
 
@@ -687,7 +695,7 @@ up.dom = (($) ->
   @stable
   ###
 
-  ###*
+  ###**
   Compiles a page fragment that has been inserted into the DOM
   by external code.
 
@@ -723,7 +731,7 @@ up.dom = (($) ->
     emitFragmentInserted($element, options)
     $element
 
-  ###*
+  ###**
   When a page fragment has been [inserted or updated](/up.replace),
   this event is [emitted](/up.emit) on the fragment.
 
@@ -760,7 +768,7 @@ up.dom = (($) ->
     # Closest matches both the element itself as well as its ancestors
     $(element).closest(unreal).length == 0
 
-  ###*
+  ###**
   Returns the first element matching the given selector, but
   ignores elements that are being [destroyed](/up.destroy) or [transitioned](/up.morph).
 
@@ -857,7 +865,7 @@ up.dom = (($) ->
       $element = $(element)
       isRealElement($element) && matchesLayer($element, options.layer)
 
-  ###*
+  ###**
   Destroys the given element or selector.
 
   Takes care that all [`up.compiler()`](/up.compiler) destructors, if any, are called.
@@ -925,7 +933,7 @@ up.dom = (($) ->
     # Don't log destruction for elements that are either Unpoly internals or frequently destroyed
     options.log != false && !$element.is('.up-placeholder, .up-tooltip, .up-modal, .up-popup')
 
-  ###*
+  ###**
   Before a page fragment is being [destroyed](/up.destroy), this
   event is [emitted](/up.emit) on the fragment.
 
@@ -938,7 +946,7 @@ up.dom = (($) ->
   @stable
   ###
 
-  ###*
+  ###**
   This event is [emitted](/up.emit) right before a [destroyed](/up.destroy)
   page fragment is removed from the DOM.
 
@@ -951,7 +959,7 @@ up.dom = (($) ->
   @stable
   ###
 
-  ###*
+  ###**
   Replaces the given element with a fresh copy fetched from the server.
 
   \#\#\# Example
@@ -984,7 +992,7 @@ up.dom = (($) ->
 
   up.on 'up:framework:reset', reset
 
-  knife: eval(Knife?.point)
+  <% if ENV['JS_KNIFE'] %>knife: eval(Knife.point)<% end %>
   replace: replace
   reload: reload
   destroy: destroy

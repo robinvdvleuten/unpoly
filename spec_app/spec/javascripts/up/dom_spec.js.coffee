@@ -479,6 +479,337 @@ describe 'up.dom', ->
               expect($('.after')).toHaveText('new-after')
               done()
 
+          describe 'nested selector merging', ->
+
+            it 'replaces a single fragment if a selector contains a subsequent selector in the current page', asyncSpec (next) ->
+              $outer = affix('.outer').text('old outer text')
+              $inner = $outer.affix('.inner').text('old inner text')
+
+              replacePromise = up.replace('.outer, .inner', '/path')
+
+              next =>
+                expect(@lastRequest().requestHeaders['X-Up-Target']).toEqual('.outer')
+
+                @respondWith """
+                  <div class="outer">
+                    new outer text
+                    <div class="inner">
+                      new inner text
+                    </div>
+                  </div>
+                  """
+
+              next =>
+                expect($('.outer')).toExist()
+                expect($('.outer').text()).toContain('new outer text')
+                expect($('.inner')).toExist()
+                expect($('.inner').text()).toContain('new inner text')
+
+              next.await =>
+                promise = promiseState(replacePromise)
+                promise.then (result) => expect(result.state).toEqual('fulfilled')
+
+            it 'does not merge selectors if a selector contains a subsequent selector, but prepends instead of replacing', asyncSpec (next) ->
+              $outer = affix('.outer').text('old outer text')
+              $inner = $outer.affix('.inner').text('old inner text')
+
+              replacePromise = up.replace('.outer:before, .inner', '/path')
+
+              next =>
+                expect(@lastRequest().requestHeaders['X-Up-Target']).toEqual('.outer:before, .inner')
+
+                @respondWith """
+                  <div class="outer">
+                    new outer text
+                    <div class="inner">
+                      new inner text
+                    </div>
+                  </div>
+                  """
+
+              next =>
+                expect($('.outer')).toExist()
+                expect($('.outer').text()).toContain('new outer text')
+                expect($('.outer').text()).toContain('old outer text')
+                expect($('.inner')).toExist()
+                expect($('.inner').text()).toContain('new inner text')
+
+              next.await =>
+                promise = promiseState(replacePromise)
+                promise.then (result) => expect(result.state).toEqual('fulfilled')
+
+            it 'does not merge selectors if a selector contains a subsequent selector, but appends instead of replacing', asyncSpec (next) ->
+              $outer = affix('.outer').text('old outer text')
+              $inner = $outer.affix('.inner').text('old inner text')
+
+              replacePromise = up.replace('.outer:after, .inner', '/path')
+
+              next =>
+                expect(@lastRequest().requestHeaders['X-Up-Target']).toEqual('.outer:after, .inner')
+
+                @respondWith """
+                  <div class="outer">
+                    new outer text
+                    <div class="inner">
+                      new inner text
+                    </div>
+                  </div>
+                  """
+
+              next =>
+                expect($('.outer')).toExist()
+                expect($('.outer').text()).toContain('old outer text')
+                expect($('.outer').text()).toContain('new outer text')
+                expect($('.inner')).toExist()
+                expect($('.inner').text()).toContain('new inner text')
+
+              next.await =>
+                promise = promiseState(replacePromise)
+                promise.then (result) => expect(result.state).toEqual('fulfilled')
+
+            it 'does not lose selector pseudo-classes when merging selectors (bugfix)', asyncSpec (next) ->
+              $outer = affix('.outer').text('old outer text')
+              $inner = $outer.affix('.inner').text('old inner text')
+
+              replacePromise = up.replace('.outer:after, .inner', '/path')
+
+              next =>
+                expect(@lastRequest().requestHeaders['X-Up-Target']).toEqual('.outer:after, .inner')
+
+            it 'replaces a single fragment if a selector contains a previous selector in the current page', asyncSpec (next) ->
+              $outer = affix('.outer').text('old outer text')
+              $inner = $outer.affix('.inner').text('old inner text')
+
+              replacePromise = up.replace('.outer, .inner', '/path')
+
+              next =>
+                expect(@lastRequest().requestHeaders['X-Up-Target']).toEqual('.outer')
+
+                @respondWith """
+                  <div class="outer">
+                    new outer text
+                    <div class="inner">
+                      new inner text
+                    </div>
+                  </div>
+                  """
+
+              next =>
+                expect($('.outer')).toExist()
+                expect($('.outer').text()).toContain('new outer text')
+                expect($('.inner')).toExist()
+                expect($('.inner').text()).toContain('new inner text')
+
+              next.await =>
+                promise = promiseState(replacePromise)
+                promise.then (result) => expect(result.state).toEqual('fulfilled')
+
+            it 'does not lose a { reveal: true } option if the first selector was merged into a subsequent selector', asyncSpec (next) ->
+              revealStub = up.layout.knife.mock('reveal')
+
+              $outer = affix('.outer').text('old outer text')
+              $inner = $outer.affix('.inner').text('old inner text')
+
+              up.replace('.inner, .outer', '/path', reveal: true)
+
+              next =>
+                expect(@lastRequest().requestHeaders['X-Up-Target']).toEqual('.outer')
+
+                @respondWith """
+                  <div class="outer">
+                    new outer text
+                    <div class="inner">
+                      new inner text
+                    </div>
+                  </div>
+                  """
+
+              next =>
+                expect($('.outer')).toExist()
+                expect($('.outer').text()).toContain('new outer text')
+                expect($('.inner')).toExist()
+                expect($('.inner').text()).toContain('new inner text')
+
+                expect(revealStub).toHaveBeenCalled()
+
+
+            it 'does not lose a { reveal: string } option if the first selector was merged into a subsequent selector', asyncSpec (next) ->
+              revealStub = up.layout.knife.mock('reveal')
+
+              $outer = affix('.outer').text('old outer text')
+              $inner = $outer.affix('.inner').text('old inner text')
+
+              up.replace('.inner, .outer', '/path', reveal: '.revealee')
+
+              next =>
+                expect(@lastRequest().requestHeaders['X-Up-Target']).toEqual('.outer')
+
+                @respondWith """
+                  <div class="outer">
+                    new outer text
+                    <div class="inner">
+                      new inner text
+                      <div class="revealee">
+                        revealee text
+                      </div>
+                    </div>
+                  </div>
+                  """
+
+              next =>
+                expect($('.outer')).toExist()
+                expect($('.outer').text()).toContain('new outer text')
+                expect($('.inner')).toExist()
+                expect($('.inner').text()).toContain('new inner text')
+
+                expect(revealStub).toHaveBeenCalled()
+                revealArg = revealStub.calls.mostRecent().args[0]
+                expect(revealArg).toBeMatchedBy('.revealee')
+
+
+            it 'replaces a single fragment if the nesting differs in current page and response', asyncSpec (next) ->
+              $outer = affix('.outer').text('old outer text')
+              $inner = $outer.affix('.inner').text('old inner text')
+
+              replacePromise = up.replace('.outer, .inner', '/path')
+
+              next =>
+                @respondWith """
+                  <div class="inner">
+                    new inner text
+                    <div class="outer">
+                      new outer text
+                    </div>
+                  </div>
+                  """
+
+              next =>
+                expect($('.outer')).toExist()
+                expect($('.outer').text()).toContain('new outer text')
+                expect($('.inner')).not.toExist()
+
+              next.await =>
+                promise = promiseState(replacePromise)
+                promise.then (result) => expect(result.state).toEqual('fulfilled')
+
+            it 'does not crash if two selectors that are siblings in the current page are nested in the response', asyncSpec (next) ->
+              $outer = affix('.one').text('old one text')
+              $inner = affix('.two').text('old two text')
+
+              replacePromise = up.replace('.one, .two', '/path')
+
+              next =>
+                @respondWith """
+                  <div class="one">
+                    new one text
+                    <div class="two">
+                      new two text
+                    </div>
+                  </div>
+                  """
+
+              next =>
+                expect($('.one')).toExist()
+                expect($('.one').text()).toContain('new one text')
+                expect($('.two')).toExist()
+                expect($('.two').text()).toContain('new two text')
+
+              next.await =>
+                promise = promiseState(replacePromise)
+                promise.then (result) => expect(result.state).toEqual('fulfilled')
+
+            it 'does not crash if selectors that siblings in the current page are inversely nested in the response', asyncSpec (next) ->
+              $outer = affix('.one').text('old one text')
+              $inner = affix('.two').text('old two text')
+
+              replacePromise = up.replace('.one, .two', '/path')
+
+              next =>
+                @respondWith """
+                  <div class="two">
+                    new two text
+                    <div class="one">
+                      new one text
+                    </div>
+                  </div>
+                  """
+
+              next =>
+                expect($('.one')).toExist()
+                expect($('.one').text()).toContain('new one text')
+                expect($('.two')).toExist()
+                expect($('.two').text()).toContain('new two text')
+
+              next.await =>
+                promise = promiseState(replacePromise)
+                promise.then (result) => expect(result.state).toEqual('fulfilled')
+
+            it 'updates the first selector if the same element is targeted twice in a single replacement', asyncSpec (next) ->
+              $one = affix('.one.alias').text('old one text')
+
+              replacePromise = up.replace('.one, .alias', '/path')
+
+              next =>
+                expect(@lastRequest().requestHeaders['X-Up-Target']).toEqual('.one')
+
+                @respondWith """
+                  <div class="one">
+                    new one text
+                  </div>
+                  """
+
+              next =>
+                expect($('.one')).toExist()
+                expect($('.one').text()).toContain('new one text')
+
+              next.await =>
+                promise = promiseState(replacePromise)
+                promise.then (result) => expect(result.state).toEqual('fulfilled')
+
+            it 'updates the first selector if the same element is prepended or appended twice in a single replacement', asyncSpec (next) ->
+              $one = affix('.one').text('old one text')
+
+              replacePromise = up.replace('.one:before, .one:after', '/path')
+
+              next =>
+                expect(@lastRequest().requestHeaders['X-Up-Target']).toEqual('.one:before')
+
+                @respondWith """
+                  <div class="one">
+                    new one text
+                  </div>
+                  """
+
+              next =>
+                expect($('.one')).toExist()
+                expect($('.one').text()).toMatchText('new one text old one text')
+
+              next.await =>
+                promise = promiseState(replacePromise)
+                promise.then (result) => expect(result.state).toEqual('fulfilled')
+
+            it "updates the first selector if the same element is prepended, replaced and appended in a single replacement", asyncSpec (next) ->
+              $elem = affix('.elem.alias1.alias2').text("old text")
+
+              replacePromise = up.replace('.elem:before, .alias1, .alias2:after', '/path')
+
+              next =>
+                expect(@lastRequest().requestHeaders['X-Up-Target']).toEqual('.elem:before')
+
+                @respondWith """
+                  <div class="elem alias1 alias2">
+                    new text
+                  </div>
+                  """
+
+              next =>
+                expect('.elem').toExist()
+                expect($('.elem').text()).toMatchText('new text old text')
+
+              next.await =>
+                promise = promiseState(replacePromise)
+                promise.then (result) => expect(result.state).toEqual('fulfilled')
+
           it 'replaces the body if asked to replace the "html" selector'
 
           it 'prepends instead of replacing when the target has a :before pseudo-selector', (done) ->
@@ -886,8 +1217,7 @@ describe 'up.dom', ->
             # No need to respond because /foo has been cached before
             next => expect($viewport.scrollTop()).toEqual(65)
 
-
-        describe 'with { reveal: true } option', ->
+        describe 'with { reveal } option', ->
 
           beforeEach ->
             @revealedHTML = []
@@ -909,6 +1239,73 @@ describe 'up.dom', ->
             next =>
               expect(@revealMock).not.toHaveBeenCalledWith(@oldMiddle)
               expect(@revealedText).toEqual ['new-middle']
+
+          it 'allows to pass another selector to reveal', asyncSpec (next)->
+            $other = affix('.other').text('other text')
+
+            up.replace('.middle', '/path', reveal: '.other')
+
+            next =>
+              @respond()
+
+            next =>
+              expect(@revealedText).toEqual ['other text']
+
+          it 'allows to refer to the replacement { origin } as "&" in the { reveal } selector', asyncSpec (next) ->
+            $origin = affix('.origin').text('origin text')
+
+            up.replace('.middle', '/path', reveal: '&', origin: '.origin')
+
+            next =>
+              @respond()
+
+            next =>
+              expect(@revealedText).toEqual ['origin text']
+
+          describe 'when the server responds with an error code', ->
+
+            it 'ignores the { reveal } option', asyncSpec (next) ->
+              $failTarget = affix('.fail-target')
+              up.replace('.middle', '/path', failTarget: '.fail-target', reveal: true)
+
+              next =>
+                @respond(status: 500)
+
+              next =>
+                expect(@revealMock).not.toHaveBeenCalled()
+
+            it 'accepts a { failReveal } option for error responses', asyncSpec (next) ->
+              $failTarget = affix('.fail-target').text('old fail target text')
+              up.replace('.middle', '/path', failTarget: '.fail-target', reveal: false, failReveal: true)
+
+              next =>
+              @respondWith
+                status: 500
+                responseText: """
+                  <div class="fail-target">
+                    new fail target text
+                  </div>
+                  """
+
+              next =>
+                expect(@revealedText).toEqual ['new fail target text']
+
+            it 'allows to refer to the replacement { origin } as "&" in the { failTarget } selector', asyncSpec (next) ->
+              $origin = affix('.origin').text('origin text')
+              $failTarget = affix('.fail-target').text('old fail target text')
+              up.replace('.middle', '/path', failTarget: '.fail-target', reveal: false, failReveal: '&', origin: $origin)
+
+              next =>
+              @respondWith
+                status: 500
+                responseText: """
+                  <div class="fail-target">
+                    new fail target text
+                  </div>
+                  """
+
+              next =>
+                expect(@revealedText).toEqual ['origin text']
 
           describe 'when more than one fragment is replaced', ->
 
@@ -1187,7 +1584,7 @@ describe 'up.dom', ->
           string
 
         beforeEach ->
-# Need to refactor this spec file so examples don't all share one example
+          # Need to refactor this spec file so examples don't all share one example
           $('.before, .middle, .after').remove()
 
         it 'keeps an [up-keep] element, but does replace other elements around it', asyncSpec (next) ->
@@ -1227,6 +1624,26 @@ describe 'up.dom', ->
 
           next =>
             expect(squish($('.container').text())).toEqual('new-before old-inside new-after')
+
+        it 'updates an [up-keep] element with { keep: false } option', asyncSpec (next) ->
+          $container = affix('.container')
+          $container.html """
+            old-before
+            <div class='element' up-keep>old-inside</div>
+            old-after
+            """
+
+          up.extract '.container', """
+            <div class='container'>
+              new-before
+              <div class='element' up-keep>new-inside</div>
+              new-after
+            </div>
+            """,
+            keep: false
+
+          next =>
+            expect(squish($('.container').text())).toEqual('new-before new-inside new-after')
 
         describe 'if an [up-keep] element is itself a direct replacement target', ->
 
@@ -1286,7 +1703,6 @@ describe 'up.dom', ->
           barDestructor = jasmine.createSpy()
           up.compiler '.bar', ($bar) ->
             text = $bar.text()
-            console.info('Compiling %o', text)
             barCompiler(text)
             return -> barDestructor(text)
 
@@ -1559,6 +1975,8 @@ describe 'up.dom', ->
             expect(oldTextDuringTransition).toEqual('old-foo old-bar')
             expect(newTextDuringTransition).toEqual('new-foo old-bar')
             done()
+
+
 
     describe 'up.destroy', ->
 

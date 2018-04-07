@@ -43,6 +43,8 @@ end
 namespace :publish do
   desc 'Build release artifacts'
   task :build do
+    ENV['JS_KNIFE'] = nil
+
     Rake::Task['minified_assets:compile'].invoke
     Unpoly::Tasks::SPROCKETS_MANIFESTS.each do |manifest|
       source = "dist/#{manifest}"
@@ -50,7 +52,24 @@ namespace :publish do
       File.rename(source, target)
     end
     Rake::Task['source_assets:compile'].invoke
+    Rake::Task['publish:validate_dist'].invoke
     Rake::Task['npm:bump_version'].invoke
+  end
+
+  desc 'Validate build files in dist folder'
+  task :validate_dist do
+    script_paths = Dir['dist/*.js']
+    script_paths.each do |script_path|
+      content = File.read(script_path)
+
+      if content.size == 0
+        raise "Zero-byte build file: #{script_path}"
+      end
+
+      if content =~ /\beval\b/
+        raise "`eval` found in build file: #{script_path}"
+      end
+    end
   end
 
   desc 'Commit and push build release artifacts'

@@ -1,4 +1,4 @@
-###*
+###**
 Waypoints
 =========
 
@@ -8,7 +8,7 @@ up.waypoint = (($) ->
 
   u = up.util
 
-  ###*
+  ###**
   Configures behavior for waypoints.
 
   @property up.waypoint.config
@@ -28,7 +28,7 @@ up.waypoint = (($) ->
     config.reset()
     waypoints.clear()
 
-  ###*
+  ###**
   DOCUMENT ME
 
   @function up.waypoint.restore
@@ -135,7 +135,7 @@ up.waypoint = (($) ->
   allNames = (names) ->
     u.map all(names), (waypoint) -> waypoint.name
 
-  ###*
+  ###**
   DOCUMENT ME
 
   @function up.waypoint.discard

@@ -243,7 +243,7 @@ up.util = (($) ->
   valuesPolyfill = (object) ->
     value for key, value of object
 
-  ###*
+  ###**
   Returns an array of values of the given object.
 
   @function up.util.values
@@ -744,7 +744,7 @@ up.util = (($) ->
     set = new Set(array)
     setToArray(set)
 
-  ###*
+  ###**
   This function is like [`uniq`](/up.util.uniq), accept that
   the given function is invoked for each element to generate the value
   for which uniquness is computed.
@@ -767,7 +767,7 @@ up.util = (($) ->
         set.add(mapped)
         true
 
-  ###*
+  ###**
   @function up.util.setToArray
   @internal
   ###
@@ -1383,7 +1383,7 @@ up.util = (($) ->
 #    else
 #      error('Could not parse argument names of %o', fun)
 
-  ###*
+  ###**
   Throws a [JavaScript error](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error)
   with the given message.
 

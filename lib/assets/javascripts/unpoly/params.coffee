@@ -1,4 +1,4 @@
-###*
+###**
 Params
 ======
 
@@ -33,7 +33,7 @@ up.params = (($) ->
   unknownNature = (obj) ->
     up.fail("Not a supported params nature: %o", obj)
 
-  ###*
+  ###**
   Returns an array representation of the given `params`.
 
   Each array element will be an object with `{ name }` and `{ key }` properties.
@@ -63,7 +63,7 @@ up.params = (($) ->
         # We need to flatten the nesting from the given object
         buildArrayFromNestedObject(params)
 
-  ###*
+  ###**
   Returns an object representation of the given `params`.
 
   The object will have a nested structure if `params` has keys like `foo[bar]` or `baz[]`.
@@ -119,7 +119,7 @@ up.params = (($) ->
 
     query
 
-  ###*
+  ###**
   # Adds the given name (which might have nesting marks like `foo[bar][][baz]`) and
   # string value to the given object. The name is recursively expanded to create
   # an object of nested sub-objects and arrays.
@@ -263,7 +263,7 @@ up.params = (($) ->
     separator = if u.contains(base, '?') then '&' else '?'
     parts.join(separator)
 
-  ###*
+  ###**
   Adds a new entry with the given `name` and `value` to the given `params`.
 
   Returns a new params value that includes the added entry.
@@ -275,7 +275,7 @@ up.params = (($) ->
   add = (params, name, value) ->
     merge(params, [{ name, value }])
 
-  ###*
+  ###**
   Merges the request params from `otherParams` into `params`.
 
   Returns a new params value that includes the new entries.

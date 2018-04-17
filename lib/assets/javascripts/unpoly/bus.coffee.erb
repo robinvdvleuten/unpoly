@@ -283,18 +283,23 @@ up.bus = (($) ->
     A message to print to the console when the event is emitted.
     If omitted, a default message is printed.
     Set this to `false` to prevent any console output.
+  @return {Event}
+    The emitted event
   @experimental
   ###
   emit = (eventName, eventProps = {}) ->
-    event = $.Event(eventName, eventProps)
+    event = document.createEvent('Event')
+    event.initEvent(eventName, bubbles = true, canceable = true)
+    u.assign(event, eventProps)
     if $target = eventProps.$element
       # If a `.$element` option is given, we trigger the event
       # on that element instead of the document.
       delete eventProps.$element
     else
-      $target = $(document)
+      $target = document
     logEmission(eventName, eventProps)
-    $target.trigger(event)
+    target = u.unJQuery($target)
+    target.dispatchEvent(event)
     event
 
   logEmission = (eventName, eventProps) ->
@@ -331,7 +336,7 @@ up.bus = (($) ->
   ###
   nobodyPrevents = (args...) ->
     event = emit(args...)
-    not event.isDefaultPrevented()
+    not event.defaultPrevented
 
   ###**
   [Emits](/up.emit) the given event and returns a promise

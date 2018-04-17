@@ -1,0 +1,9 @@
+- jQuery kopiert keine Custom Properties vom nativen Event an das jQuery Event
+- jQuery kopiert nur Properties aus $.event.props (jQuery 1 + 2) oder es erstellt einen on-Demand-Getter an $.Event.prototype, wenn man $.Event.addProp('name') aufruft
+- Native Event-Handler (element.addEventListener) erhalten keine Events, die mit jQuery.trigger emittet werden
+
+Man bräuchte jetzt relativ viel Code, damit Custom Events sowohl für jQuery als auch native Event Handler funktionieren
+
+Außerdem läuft sehr viel Event-Normalisierung trotzdem, denn sobald es auch nur einen einzigen jQuery.on Handler gibt, wird normalisieirt
+
+Wenn wir jQuery ganz ausbauen, wäre alles einfach...

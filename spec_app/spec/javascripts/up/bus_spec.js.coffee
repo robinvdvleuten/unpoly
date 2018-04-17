@@ -107,10 +107,12 @@ describe 'up.bus', ->
         emittedEvent = undefined
 
         up.on 'foo', (event) ->
+          debugger
           emittedEvent = event
 
         up.emit('foo', { customField: 'custom-value' })
 
+        expect(emittedEvent).toBeGiven()
         expect(emittedEvent.customField).toEqual('custom-value')
 
       describe 'with .$element option', ->

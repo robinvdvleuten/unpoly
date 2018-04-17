@@ -159,7 +159,8 @@ up.util = (($) ->
     $root
 
   ###**
-  @function $create
+  @function $createHolder
+  @internal
   ###
   $createPlaceholder = (selector, container = document.body) ->
     $placeholder = $createElementFromSelector(selector)
@@ -1503,6 +1504,36 @@ up.util = (($) ->
     else
       {}
 
+  CASE_CONVERSION_GROUP = /[^\-\_]+?(?=[A-Z\-\_]|$)/g
+
+  convertCase = (string, separator, fn) ->
+    parts = string.match(CASE_CONVERSION_GROUP)
+    parts = map parts, fn
+    parts.join(separator)
+
+  kebabCase = (string) ->
+    convertCase string, '-', (part) ->part.toLowerCase()
+
+  camelCase = (string) ->
+    convertCase string, '', (part, i) ->
+      if i == 0
+        part.toLowerCase()
+      else
+        part.charAt(0).toUpperCase() + part.substr(1).toLowerCase()
+
+  copyWithRenamedKeys = (obj, keyTransformer) ->
+    result = {}
+    for k, v of obj
+      k = keyTransformer(k)
+      result[k] = v
+    result
+
+  kebabCaseKeys = (obj) ->
+    copyWithRenamedKeys(obj, kebabCase)
+
+  camelCaseKeys = (obj) ->
+    copyWithRenamedKeys(obj, camelCase)
+
   opacity = (element) ->
     rawOpacity = $(element).css('opacity')
     if isGiven(rawOpacity)
@@ -1669,9 +1700,35 @@ up.util = (($) ->
     $insertion.replaceWith($new)
     $old
 
-  fastHide = (element) ->
+  ###**
+  Hides the given element faster than `jQuery.fn.hide()`.
+
+  @function up.util.hide
+  @param {jQuery|Element} element
+  ###
+  hide = (element) ->
+    setStyle(element, display: 'none')
+
+  ###**
+  Gets the computed style(s) for the given element.
+
+  @function up.util.getStyle
+  @param {jQuery|Element} element
+  @param {String|Array} propOrProps
+    One or more CSS properties in camelCase.
+  @return {string|object}
+  ###
+  getStyle = (element, props) ->
     element = unJQuery(element)
-    element.style.display = 'none'
+    style = getComputedStyle(element)
+    if isString(props)
+      style[props]
+    else # array
+      only style, props
+
+  setStyle = (element, props) ->
+    element = unJQuery(element)
+    assign(element.style, props)
 
   ###**
   Flattens the given `array` a single level deep.
@@ -1865,6 +1922,10 @@ up.util = (($) ->
   config: config
   openConfig: openConfig
   unwrapElement: unwrapElement
+  camelCase: camelCase
+  camelCaseKeys: camelCaseKeys
+  kebabCase: kebabCase
+  kebabCaseKeys: kebabCaseKeys
   error: fail
   pluckData: pluckData
   pluckKey: pluckKey
@@ -1894,7 +1955,9 @@ up.util = (($) ->
   isCrossDomain: isCrossDomain
   microtask: microtask
   isEqual: isEqual
-  fastHide: fastHide
+  hide: hide
+  getStyle: getStyle
+  setStyle: setStyle
 
 )(jQuery)
 

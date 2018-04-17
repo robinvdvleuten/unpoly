@@ -527,7 +527,7 @@ up.motion = (($) ->
   ###
   skipMorph = ($old, $new, options) ->
     # Simply hide the old element, which would be the side effect of withGhosts(...) below.
-    u.fastHide($old)
+    u.hide($old)
 
     # Don't animate the scrolling.
     # We just want to scroll $new into position before we start the enter animation.

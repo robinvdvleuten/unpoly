@@ -245,10 +245,12 @@ up.modal = (($) ->
     $modal = $(templateHtml())
     $modal.attr('up-flavor', state.flavor)
     $modal.attr('up-position', state.position) if u.isPresent(state.position)
-    $dialog = $modal.find('.up-modal-dialog')
-    $dialog.css('width', options.width) if u.isPresent(options.width)
-    $dialog.css('max-width', options.maxWidth) if u.isPresent(options.maxWidth)
-    $dialog.css('height', options.height) if u.isPresent(options.height)
+
+    dialogStyles = u.only(options, 'width', 'maxWidth', 'height')
+    if u.isPresent(dialogStyles)
+      $dialog = $modal.find('.up-modal-dialog')
+      u.setStyles($dialog, dialogStyles)
+
     $modal.find('.up-modal-close').remove() unless state.closable
     $content = $modal.find('.up-modal-content')
     # Create an empty element that will match the

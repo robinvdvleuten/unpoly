@@ -824,6 +824,10 @@ up.util = (($) ->
     addClass(element, klassOrKlasses)
     -> removeClass(element, klassOrKlasses)
 
+  hasClass = (element, klass) ->
+    classList = getElement(element).classList
+    classList.contains(klass)
+
   ###**
   Returns the first [present](/up.util.isPresent) element attribute
   among the given list of attribute names.
@@ -2031,8 +2035,9 @@ up.util = (($) ->
   nextFrame: nextFrame
   measure: measure
   addClass: addClass
-  addTemporaryClass: addTemporaryClass
   removeClass: removeClass
+  hasClass: hasClass
+  addTemporaryClass: addTemporaryClass
   writeTemporaryStyle: writeTemporaryStyle
   cssAnimate: cssAnimate
   forceRepaint: forceRepaint

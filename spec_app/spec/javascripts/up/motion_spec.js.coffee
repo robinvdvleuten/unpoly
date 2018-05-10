@@ -56,10 +56,8 @@ describe 'up.motion', ->
             expect($element).toHaveOpacity(1.0, 0.25)
             done()
 
-        it 'only calls up.finish() once', (done) ->
+        it "finishes animations only once", (done) ->
           $element = affix('.element').text('content')
-
-          finishSpy = up.motion.knife.mock('finish').and.returnValue(Promise.resolve())
 
           animation = ($element, options) ->
             u.writeInlineStyle($element, opacity: 0)
@@ -68,7 +66,8 @@ describe 'up.motion', ->
           up.animate($element, animation, duration: 200, easing: 'linear')
 
           u.nextFrame =>
-            expect(finishSpy.calls.count()).toEqual(1)
+            console.debug("++++++++ expectation here")
+            expect(up.motion.finishCount()).toEqual(1)
             done()
 
 
@@ -388,11 +387,9 @@ describe 'up.motion', ->
             expect($old).toBeDetached()
             expect($new).toBeAttached()
 
-        it 'only calls up.finish() once', asyncSpec (next) ->
+        it 'finishes animations only once', asyncSpec (next) ->
           $old = affix('.old').text('old content')
           $new = affix('.new').text('new content').detach()
-
-          finishSpy = up.motion.knife.mock('finish').and.returnValue(Promise.resolve())
 
           transition = ($old, $new, options) ->
             up.animate($old, 'fade-out', options)
@@ -401,7 +398,7 @@ describe 'up.motion', ->
           up.morph($old, $new, transition, duration: 200, easing: 'linear')
 
           next ->
-            expect(finishSpy.calls.count()).toEqual(1)
+            expect(up.motion.finishCount()).toEqual(1)
 
       describe 'when up.morph() is called from inside a transition function', ->
 
@@ -432,11 +429,9 @@ describe 'up.motion', ->
             expect($old).toBeDetached()
             expect($new).toBeAttached()
 
-        it 'only calls up.finish() once', asyncSpec (next) ->
+        it "finishes animations only once", asyncSpec (next) ->
           $old = affix('.old').text('old content')
           $new = affix('.new').text('new content').detach()
-
-          finishSpy = up.motion.knife.mock('finish').and.returnValue(Promise.resolve())
 
           transition = ($old, $new, options) ->
             up.morph($old, $new, 'cross-fade', options)
@@ -444,7 +439,7 @@ describe 'up.motion', ->
           up.morph($old, $new, transition, duration: 200, easing: 'linear')
 
           next ->
-            expect(finishSpy.calls.count()).toEqual(1)
+            expect(up.motion.finishCount()).toEqual(1)
 
 
       describe 'with { reveal: true } option', ->

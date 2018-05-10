@@ -72,7 +72,7 @@ up.motion = (($) ->
     enabled: true
 
   reset = ->
-    finish()
+    motionTracker.reset()
     namedAnimations = u.copy(defaultNamedAnimations)
     namedTransitions = u.copy(defaultNamedTransitions)
     config.reset()
@@ -704,6 +704,7 @@ up.motion = (($) ->
   animateOptions: animateOptions
   willAnimate: willAnimate
   finish: finish
+  finishCount: -> motionTracker.finishCount
   transition: registerTransition
   animation: registerAnimation
   config: config

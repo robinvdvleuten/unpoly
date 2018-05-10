@@ -164,7 +164,7 @@ up.motion = (($) ->
   animate = (elementOrSelector, animation, options) ->
     $element = $(elementOrSelector)
     if u.isString(animation)
-      console.debug('--- animate(%o, %o)---', $element.get(0), animation)
+      console.debug('--- animate(%o, %o, %o)---', $element.get(0), animation, options)
     options = animateOptions(options)
 
     finishOnce($element, options).then ->
@@ -289,9 +289,10 @@ up.motion = (($) ->
       # or someone finishes the animation.
       deferred.promise()
 
-    if options.motionTracked
+    if options.trackedMotion
       startCssTransition()
     else
+      console.debug('~~~ Tracking animation on %o', $element.get(0))
       motionTracker.start($element, startCssTransition)
 
   ###**
@@ -473,9 +474,11 @@ up.motion = (($) ->
             scrollTopAfterReveal = $viewport.scrollTop()
             oldRemote.moveTop(scrollTopAfterReveal - scrollTopBeforeReveal)
 
+            console.debug('~~~ trackable calling transitionFn wit options %o', options)
             transitionFn($old, $new, options)
 
           promise = promise.then ->
+            console.debug('--- tracked transifionFn done')
             options.beforeDetach()
             $old.detach()
             oldRemote.$bounds.remove()

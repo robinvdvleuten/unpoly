@@ -1588,7 +1588,7 @@ describe 'up.dom', ->
             expect($ghost2.css('opacity')).toBeAround(1.0, 0.1)
 
             $ghost3 = $('.element:contains("version 3")')
-            console.debug("Ghost 3 is %o", $ghost1.get(0))
+            console.debug("Ghost 3 is %o", $ghost3.get(0))
             expect($ghost3).toHaveLength(1)
             expect($ghost3.css('opacity')).toBeAround(0.0, 0.1)
 

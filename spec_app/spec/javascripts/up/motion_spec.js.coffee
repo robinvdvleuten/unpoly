@@ -37,6 +37,41 @@ describe 'up.motion', ->
         next => up.animate($element, { 'fade-in' }, duration: 100, easing: 'linear')
         next => expect($element.css('font-size')).toEqual('40px')
 
+      describe 'when up.animate() is called from inside an animation function', ->
+
+        it 'animates', (done) ->
+          $element = affix('.element').text('content')
+
+          animation = ($element, options) ->
+            u.writeInlineStyle($element, opacity: 0)
+            up.animate($element, { opacity: 1 }, options)
+
+          up.animate($element, animation, duration: 200, easing: 'linear')
+
+          u.setTimer 5, ->
+            expect($element).toHaveOpacity(0.0, 0.25)
+          u.setTimer 100, ->
+            expect($element).toHaveOpacity(0.5, 0.25)
+          u.setTimer 200, ->
+            expect($element).toHaveOpacity(1.0, 0.25)
+            done()
+
+        it 'only calls up.finish() once', (done) ->
+          $element = affix('.element').text('content')
+
+          finishSpy = up.motion.knife.mock('finish').and.returnValue(Promise.resolve())
+
+          animation = ($element, options) ->
+            u.writeInlineStyle($element, opacity: 0)
+            up.animate($element, { opacity: 1 }, options)
+
+          up.animate($element, animation, duration: 200, easing: 'linear')
+
+          u.nextFrame =>
+            expect(finishSpy.calls.count()).toEqual(1)
+            done()
+
+
       describe 'with animations disabled globally', ->
 
         beforeEach ->
@@ -314,6 +349,96 @@ describe 'up.motion', ->
         morphDone.then ->
           expect('.up-bounds').not.toExist()
           done()
+
+
+      describe 'when up.animate() is called from inside a transition function', ->
+
+        it 'animates', asyncSpec (next) ->
+          $old = affix('.old').text('old content')
+          $new = affix('.new').text('new content').detach()
+
+          oldDims = u.measure($old)
+
+          transition = ($old, $new, options) ->
+            up.animate($old, 'fade-out', options)
+            up.animate($new, 'fade-in', options)
+
+          up.morph($old, $new, transition, duration: 200, easing: 'linear')
+
+          next =>
+            expect(u.measure($old)).toEqual(oldDims)
+            expect(u.measure($new)).toEqual(oldDims)
+
+            expect(u.opacity($old)).toBeAround(1.0, 0.25)
+            expect(u.opacity($new)).toBeAround(0.0, 0.25)
+
+          next.after 100, =>
+            expect(u.opacity($old)).toBeAround(0.5, 0.25)
+            expect(u.opacity($new)).toBeAround(0.5, 0.25)
+
+          next.after 150, =>
+            expect(u.opacity($new)).toBeAround(1.0, 0.25)
+            expect($old).toBeDetached()
+            expect($new).toBeAttached()
+
+        it 'only calls up.finish() once', asyncSpec (next) ->
+          $old = affix('.old').text('old content')
+          $new = affix('.new').text('new content').detach()
+
+          finishSpy = up.motion.knife.mock('finish').and.returnValue(Promise.resolve())
+
+          transition = ($old, $new, options) ->
+            up.animate($old, 'fade-out', options)
+            up.animate($new, 'fade-in', options)
+
+          up.morph($old, $new, transition, duration: 200, easing: 'linear')
+
+          next ->
+            expect(finishSpy.calls.count()).toEqual(1)
+
+      describe 'when up.morph() is called from inside a transition function', ->
+
+        it 'morphs', asyncSpec (next) ->
+          $old = affix('.old').text('old content')
+          $new = affix('.new').text('new content').detach()
+
+          oldDims = u.measure($old)
+
+          transition = ($old, $new, options) ->
+            up.morph($old, $new, 'cross-fade', options)
+
+          up.morph($old, $new, transition, duration: 200, easing: 'linear')
+
+          next =>
+            expect(u.measure($old)).toEqual(oldDims)
+            expect(u.measure($new)).toEqual(oldDims)
+
+            expect(u.opacity($old)).toBeAround(1.0, 0.25)
+            expect(u.opacity($new)).toBeAround(0.0, 0.25)
+
+          next.after 100, =>
+            expect(u.opacity($old)).toBeAround(0.5, 0.25)
+            expect(u.opacity($new)).toBeAround(0.5, 0.25)
+
+          next.after 150, =>
+            expect(u.opacity($new)).toBeAround(1.0, 0.25)
+            expect($old).toBeDetached()
+            expect($new).toBeAttached()
+
+        it 'only calls up.finish() once', asyncSpec (next) ->
+          $old = affix('.old').text('old content')
+          $new = affix('.new').text('new content').detach()
+
+          finishSpy = up.motion.knife.mock('finish').and.returnValue(Promise.resolve())
+
+          transition = ($old, $new, options) ->
+            up.morph($old, $new, 'cross-fade', options)
+
+          up.morph($old, $new, transition, duration: 200, easing: 'linear')
+
+          next ->
+            expect(finishSpy.calls.count()).toEqual(1)
+
 
       describe 'with { reveal: true } option', ->
 

@@ -37,8 +37,8 @@ class up.MotionTracker
   ###
   start: ($elements, animator) ->
     promise = @whileForwardingFinishEvent($elements, animator)
+    promise = promise.then => @unmarkElement($elements)
     @markElement($elements, promise)
-    promise.then => @unmarkElement($elements)
     promise
 
   ###**
@@ -50,8 +50,9 @@ class up.MotionTracker
   ###
   finish: (elements) =>
     $elements = @expandFinishRequest(elements)
+    console.debug("MotionTracker %o finishing on %o", @className, $elements.get())
     allFinished = u.map($elements, @finishOneElement)
-    Promise.all(allFinished)
+    Promise.all(allFinished).then => console.debug("MotionTracker %o done finishing on %o", @className, $elements.get())
 
   expandFinishRequest: (elements) ->
     if elements
@@ -76,6 +77,7 @@ class up.MotionTracker
     # There are some cases related to element ghosting where an element
     # has the class, but not the data value. In that case simply return
     # a resolved promise.
+    console.debug("--- whenElementFinished on %o with data %o, attached is %o", $element.get(0), $element.data(@dataKey), !u.isDetached($element))
     $element.data(@dataKey) || Promise.resolve()
 
   markElement: ($element, promise) =>
@@ -83,6 +85,7 @@ class up.MotionTracker
     $element.data(@dataKey, promise)
 
   unmarkElement: ($element) =>
+    console.debug("--- removing data from %o", $element.get(0))
     $element.removeClass(@className)
     $element.removeData(@dataKey)
 
@@ -100,7 +103,8 @@ class up.MotionTracker
     doForward = (event) =>
       unless event.forwarded
         u.each $elements.not(event.target), (element) =>
-          up.bus.emit(@finishEvent, forwarded: true, $element: $(element))
+          console.debug("Forwarding finishEvent to %o", element)
+          up.emit(@finishEvent, forwarded: true, $element: $(element), message: false)
 
     # Forward the finish event to the $ghost that is actually animating
     $elements.on @finishEvent, doForward

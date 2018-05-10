@@ -163,6 +163,8 @@ up.motion = (($) ->
   ###
   animate = (elementOrSelector, animation, options) ->
     $element = $(elementOrSelector)
+    if u.isString(animation)
+      console.debug('--- animate(%o, %o)---', $element.get(0), animation)
     options = animateOptions(options)
 
     finishOnce($element, options).then ->
@@ -304,12 +306,13 @@ up.motion = (($) ->
     userOptions = args.shift() || {}
     $element = if u.isJQuery(args[0]) then args.shift() else u.nullJQuery()
     moduleDefaults = if u.isObject(args[0]) then args.shift() else {}
+    motionDisabled = !isEnabled()
     consolidatedOptions = {}
     consolidatedOptions.easing = u.option(userOptions.easing, u.presentAttr($element, 'up-easing'), moduleDefaults.easing, config.easing)
     consolidatedOptions.duration = Number(u.option(userOptions.duration, u.presentAttr($element, 'up-duration'), moduleDefaults.duration, config.duration))
     consolidatedOptions.delay = Number(u.option(userOptions.delay, u.presentAttr($element, 'up-delay'), moduleDefaults.delay, config.delay))
-    consolidatedOptions.finishedMotion = userOptions.finishedMotion # this is required by animate() and finishOnceBeforeMotion()
-    consolidatedOptions.trackedMotion = userOptions.trackedMotion # this is required so animate() doesn't override the tracking from morph()
+    consolidatedOptions.finishedMotion = u.option(userOptions.finishedMotion, motionDisabled) # this is required by animate() and finishOnceBeforeMotion()
+    consolidatedOptions.trackedMotion = u.option(userOptions.trackedMotion, motionDisabled) # this is required so animate() doesn't override the tracking from morph()
     consolidatedOptions
       
   findNamedAnimation = (name) ->
@@ -333,8 +336,10 @@ up.motion = (($) ->
   @stable
   ###
   finish = (elementOrSelector) ->
+    console.debug('--- finish on %o ---', $(elementOrSelector).get(0))
+
     # Don't emit expensive events if no animation can be running anyway
-    return Promise.resolve() unless up.motion.isEnabled()
+    return Promise.resolve() unless isEnabled()
     motionTracker.finish(elementOrSelector)
 
   ###**
@@ -413,6 +418,8 @@ up.motion = (($) ->
     $new = $(target)
     $both = $old.add($new)
 
+    console.debug('--- morphing from %o to %o ---', $old.get(0), $new.get(0))
+
     transitionFn = findTransitionFn(transitionObject)
     willMorph = willAnimate($old, transitionFn, options)
 
@@ -427,8 +434,20 @@ up.motion = (($) ->
       up.layout.revealOrRestoreScroll($new, scrollOptions)
 
     finishOnce($both, options).then ->
+      console.debug("--- willMorph is %o", willMorph)
       if willMorph
+        if $old.is('.up-morphing')
+          console.debug("--- $OLD IS ALREADY MORPHING!!!")
+          return transitionFn($old, $new, options)
+
         up.puts 'Morphing %o to %o with transition %o', $old.get(0), $new.get(0), transitionObject
+
+        console.debug("--- old is attached: %o", !u.isDetached($old.get(0)))
+        console.debug("--- new is attached: %o", !u.isDetached($new.get(0)))
+
+        console.debug('--- adding .up-morphing to %o', $old.get(0))
+        console.debug('--- adding .up-morphing to %o', $new.get(0))
+
         restoreOldClass = u.addTemporaryClass($old, ['up-morphing', 'up-old'])
         restoreNewClass = u.addTemporaryClass($new, ['up-morphing', 'up-new'])
 
@@ -439,37 +458,48 @@ up.motion = (($) ->
           # Because the insertion will shift elements visually, we must delay insertion
           # until absolutize() has measured the bounding box of the old element.
           afterMeasure: ->
+            console.debug("--- INSERTING %o before %o", $new.get(0), $old.get(0))
             $new.insertBefore($old)
             options.afterInsert()
 
-        # Scroll $new into position before we start the enter animation.
-        promise = scrollNew()
+        trackable = ->
+          # Scroll $new into position before we start the enter animation.
+          promise = scrollNew()
 
-        promise = promise.then ->
-          # Since we have scrolled the viewport (containing both $old and $new),
-          # we must shift the old copy so it looks like it it is still sitting
-          # in the same position.
-          scrollTopAfterReveal = $viewport.scrollTop()
-          oldRemote.moveTop(scrollTopAfterReveal - scrollTopBeforeReveal)
+          promise = promise.then ->
+            # Since we have scrolled the viewport (containing both $old and $new),
+            # we must shift the old copy so it looks like it it is still sitting
+            # in the same position.
+            scrollTopAfterReveal = $viewport.scrollTop()
+            oldRemote.moveTop(scrollTopAfterReveal - scrollTopBeforeReveal)
 
-          motionTracker.start $both, ->
-            options.trackedMotion = true
             transitionFn($old, $new, options)
 
-        promise = promise.then ->
-          options.beforeDetach()
-          $old.detach()
-          oldRemote.$bounds.remove()
-          options.afterDetach()
-          restoreOldClass()
-          restoreNewClass()
+          promise = promise.then ->
+            options.beforeDetach()
+            $old.detach()
+            oldRemote.$bounds.remove()
+            options.afterDetach()
+            restoreOldClass()
+            restoreNewClass()
+            console.debug('--- removing .up-morphing from %o', $old.get(0))
+            console.debug('--- removing .up-morphing from %o', $new.get(0))
 
-        return promise
+          return promise
+
+        if options.trackedMotion
+          console.debug("-- invoking trackable() directly")
+          return trackable()
+        else
+          console.debug("-- tracking trackable()")
+          options.trackedMotion = true
+          return motionTracker.start($both, trackable)
 
       else
         options.beforeDetach()
         # Swapping the elements directly with replaceWith() will cause
         # jQuery to remove all data attributes, which we use to store destructors
+        console.debug("-- SWAPPING DIRECTLY: %o, %o", $old.get(0), $new.get(0))
         swapElementsDirectly($old, $new)
         options.afterInsert()
         options.afterDetach()
@@ -477,8 +507,11 @@ up.motion = (($) ->
         return promise
 
   finishOnce = ($elements, options) ->
+    # console.debug('--- finishOnce on %o ---', $elements.get())
+
     # Finish existing transitions, but only once in case morph() or animate() is called recursively.
     if options.finishedMotion
+      console.debug("!!! finishOnce returning early")
       Promise.resolve()
     else
       # Use options to persist that we have finished motion.
@@ -600,12 +633,12 @@ up.motion = (($) ->
 
   registerAnimation('fade-in', ($element, options) ->
     u.writeInlineStyle($element, opacity: 0)
-    animate($element, { opacity: 1 }, options)
+    animateWithCss($element, { opacity: 1 }, options)
   )
 
   registerAnimation('fade-out', ($element, options) ->
     u.writeInlineStyle($element, opacity: 1)
-    animate($element, { opacity: 0 }, options)
+    animateWithCss($element, { opacity: 0 }, options)
   )
 
   translateCss = (x, y) ->
@@ -615,7 +648,7 @@ up.motion = (($) ->
     u.writeInlineStyle($element, translateCss(0, 0))
     box = u.measure($element)
     travelDistance = box.top + box.height
-    animate($element, translateCss(0, -travelDistance), options)
+    animateWithCss($element, translateCss(0, -travelDistance), options)
   )
 
   registerAnimation('move-from-top', ($element, options) ->
@@ -623,14 +656,14 @@ up.motion = (($) ->
     box = u.measure($element)
     travelDistance = box.top + box.height
     u.writeInlineStyle($element, translateCss(0, -travelDistance))
-    animate($element, translateCss(0, 0), options)
+    animateWithCss($element, translateCss(0, 0), options)
   )
 
   registerAnimation('move-to-bottom', ($element, options) ->
     u.writeInlineStyle($element, translateCss(0, 0))
     box = u.measure($element)
     travelDistance = u.clientSize().height - box.top
-    animate($element, translateCss(0, travelDistance), options)
+    animateWithCss($element, translateCss(0, travelDistance), options)
   )
 
   registerAnimation('move-from-bottom', ($element, options) ->
@@ -638,14 +671,14 @@ up.motion = (($) ->
     box = u.measure($element)
     travelDistance = u.clientSize().height - box.top
     u.writeInlineStyle($element, translateCss(0, travelDistance))
-    animate($element, translateCss(0, 0), options)
+    animateWithCss($element, translateCss(0, 0), options)
   )
 
   registerAnimation('move-to-left', ($element, options) ->
     u.writeInlineStyle($element, translateCss(0, 0))
     box = u.measure($element)
     travelDistance = box.left + box.width
-    animate($element, translateCss(-travelDistance, 0), options)
+    animateWithCss($element, translateCss(-travelDistance, 0), options)
   )
 
   registerAnimation('move-from-left', ($element, options) ->
@@ -653,14 +686,14 @@ up.motion = (($) ->
     box = u.measure($element)
     travelDistance = box.left + box.width
     u.writeInlineStyle($element, translateCss(-travelDistance, 0))
-    animate($element, translateCss(0, 0), options)
+    animateWithCss($element, translateCss(0, 0), options)
   )
 
   registerAnimation('move-to-right', ($element, options) ->
     u.writeInlineStyle($element, translateCss(0, 0))
     box = u.measure($element)
     travelDistance = u.clientSize().width - box.left
-    animate($element, translateCss(travelDistance, 0), options)
+    animateWithCss($element, translateCss(travelDistance, 0), options)
   )
 
   registerAnimation('move-from-right', ($element, options) ->
@@ -668,7 +701,7 @@ up.motion = (($) ->
     box = u.measure($element)
     travelDistance = u.clientSize().width - box.left
     u.writeInlineStyle($element, translateCss(travelDistance, 0))
-    animate($element, translateCss(0, 0), options)
+    animateWithCss($element, translateCss(0, 0), options)
   )
 
   registerAnimation('roll-down', ($element, options) ->

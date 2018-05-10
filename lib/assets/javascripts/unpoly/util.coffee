@@ -275,6 +275,7 @@ up.util = (($) ->
   @stable
   ###
   map = (array, block) ->
+    return [] if array.length == 0
     block = listBlock(block)
     for item, index in array
       block(item, index)

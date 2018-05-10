@@ -5,5 +5,6 @@ beforeEach ->
   $element.appendTo(document.body)
 
 afterEach ->
+  console.debug("--- destroying default fallback ---")
   up.destroy('.default-fallback', log: false)
 

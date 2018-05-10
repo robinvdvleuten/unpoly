@@ -7,7 +7,6 @@ class up.MotionTracker
     @dataKey = "up-#{name}-finished"
     @selector = ".#{@className}"
     @finishEvent = "up:#{name}:finish"
-    @clusters = []
 
   ###**
   Finishes all animations in the given element's ancestors and descendants,

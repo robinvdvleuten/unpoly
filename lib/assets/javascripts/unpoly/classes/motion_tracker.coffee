@@ -12,34 +12,30 @@ class up.MotionTracker
   Finishes all animations in the given element's ancestors and descendants,
   then calls the animator.
 
-  @method claim
-  @param {jQuery} $element
-  @param {Function(jQuery): Promise} animator
-  @return {Promise} A promise that is fulfilled when the new animation ends.
-  ###
-  claim: ($element, animator) =>
-    @finish($element).then =>
-      @start($element, animator)
-
-  ###**
-  Calls the given animator to animate the given element.
-
   The animation returned by the animator is tracked so it can be
   [`finished`](/up.MotionTracker.finish) later.
 
-  No animations are finished before starting the new animation.
-  Use [`claim()`](/up.MotionTracker.claim) for that.
-
   @method claim
-  @param {jQuery} $elements
+  @param {jQuery} $element
   @param {Function(jQuery): Promise} animator
+  @param {Object} memory.trackMotion = true
+    Whether
   @return {Promise} A promise that is fulfilled when the new animation ends.
   ###
-  start: ($elements, animator) ->
-    promise = @whileForwardingFinishEvent($elements, animator)
-    promise = promise.then => @unmarkElement($elements)
-    @markElement($elements, promise)
-    promise
+  claim: ($elements, animator, memory = {}) =>
+    console.debug("motionTracker<%o>.claim(%o, { trackMotion = %o })", @className, $elements.get(), memory.trackMotion)
+    if memory.trackMotion is false
+      # Since we don't want recursive tracking or finishing, we could run
+      # the animator() now. However, since the else branch is async, we push
+      # the animator into the microtask queue to be async as well.
+      u.microtask(animator)
+    else
+      memory.trackMotion = false
+      @finish($elements).then =>
+        promise = @whileForwardingFinishEvent($elements, animator)
+        promise = promise.then => @unmarkElement($elements)
+        @markElement($elements, promise)
+        promise
 
   ###**
   @method finish
@@ -49,8 +45,10 @@ class up.MotionTracker
   @return {Promise} A promise that is fulfilled when animations have finished.
   ###
   finish: (elements) =>
+    console.debug("motionTracker<%o>.finish(%o)", @className, elements)
+    return Promise.resolve() unless up.motion.isEnabled()
     $elements = @expandFinishRequest(elements)
-    console.debug("MotionTracker %o finishing on %o", @className, $elements.get())
+    console.debug("... effective elements that need finishing are %o", $elements.get())
     allFinished = u.map($elements, @finishOneElement)
     Promise.all(allFinished).then => console.debug("MotionTracker %o done finishing on %o", @className, $elements.get())
 

@@ -25,7 +25,6 @@ class up.MotionTracker
   @return {Promise} A promise that is fulfilled when the new animation ends.
   ###
   claim: ($cluster, animator, memory = {}) =>
-    console.debug("motionTracker<%o>.claim(%o, { trackMotion = %o })", @activeClass, $cluster.get(), memory.trackMotion)
     memory.trackMotion = u.option(memory.trackMotion, up.motion.isEnabled())
     if memory.trackMotion is false
       # Since we don't want recursive tracking or finishing, we could run
@@ -50,15 +49,11 @@ class up.MotionTracker
   ###
   finish: (elements) =>
     @finishCount++
-    console.debug("motionTracker<%o>.finish(%o)", @activeClass, elements)
     $elements = @expandFinishRequest(elements)
-    console.debug("... effective elements that need finishing are %o", $elements.get())
     allFinished = u.map($elements, @finishOneElement)
-    Promise.all(allFinished).then => console.debug("MotionTracker %o done finishing on %o", @activeClass, $elements.get())
+    Promise.all(allFinished)
 
   expandFinishRequest: (elements) =>
-    console.debug("@@@ expandFinishRequest(%o) with @clusterCount == %o", elements, @clusterCount)
-
     if @clusterCount == 0 || !up.motion.isEnabled()
       return $([])
     else if elements
@@ -90,19 +85,15 @@ class up.MotionTracker
     # There are some cases related to element ghosting where an element
     # has the class, but not the data value. In that case simply return
     # a resolved promise.
-    console.debug("--- whenElementFinished on %o with data %o, attached is %o", $element.get(0), $element.data(@dataKey), !u.isDetached($element))
     $element.data(@dataKey) || Promise.resolve()
 
   markCluster: ($cluster, promise) =>
     @clusterCount++
-    console.debug("@@@ clusterCount increased to %o", @clusterCount)
     $cluster.addClass(@activeClass)
     $cluster.data(@dataKey, promise)
 
   unmarkCluster: ($cluster) =>
     @clusterCount--
-    console.debug("@@@ clusterCount reduced to %o", @clusterCount)
-    console.debug("--- removing data from %o", $cluster.get(0))
     $cluster.removeClass(@activeClass)
     $cluster.removeData(@dataKey)
 
@@ -121,7 +112,6 @@ class up.MotionTracker
         u.each $elements, (element) =>
           $element = $(element)
           if element != event.target && @isActive($element)
-            console.debug("Forwarding finishEvent to %o", element)
             @emitFinishEvent($element, forwarded: true)
 
     # Forward the finish event to the $ghost that is actually animating
@@ -133,4 +123,3 @@ class up.MotionTracker
     @finish().then =>
       @finishCount = 0
       @clusterCount = 0
-      console.debug("@@@ RESET clusterCount to %o", @clusterCount)

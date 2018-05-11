@@ -66,7 +66,6 @@ describe 'up.motion', ->
           up.animate($element, animation, duration: 200, easing: 'linear')
 
           u.nextFrame =>
-            console.debug("++++++++ expectation here")
             expect(up.motion.finishCount()).toEqual(1)
             done()
 
@@ -160,20 +159,13 @@ describe 'up.motion', ->
           $v1 = affix('.element').text('v1')
           $v2 = affix('.element').text('v2')
 
-          console.debug('### spec morphs')
           up.morph($v1, $v2, 'cross-fade', duration: 200)
 
           next =>
-            console.debug('### spec checks opacity')
-
             expect($v1).toHaveOpacity(1.0, 0.2)
             expect($v2).toHaveOpacity(0.0, 0.2)
 
-            console.debug('### spec calls finish()')
-
             up.motion.finish($v1)
-
-            console.debug('### spec done')
 
           next =>
             expect($v1).toBeDetached()

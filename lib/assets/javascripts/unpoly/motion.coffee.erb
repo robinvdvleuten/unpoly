@@ -163,8 +163,6 @@ up.motion = (($) ->
   ###
   animate = (elementOrSelector, animation, options) ->
     $element = $(elementOrSelector)
-    if u.isString(animation)
-      console.debug('--- animate(%o, %o, %o)---', $element.get(0), animation, options)
     options = animateOptions(options)
 
     if !willAnimate($element, animation, options)
@@ -411,8 +409,6 @@ up.motion = (($) ->
     $new = $(target)
     $both = $old.add($new)
 
-    console.debug('--- morphing from %o to %o ---', $old.get(0), $new.get(0))
-
     transitionFn = findTransitionFn(transitionObject)
     willMorph = willAnimate($old, transitionFn, options)
 
@@ -426,19 +422,11 @@ up.motion = (($) ->
       # Scroll $new into position before we start the enter animation.
       up.layout.revealOrRestoreScroll($new, scrollOptions)
 
-    console.debug("--- willMorph is %o", willMorph)
     if willMorph
       if $old.is('.up-morphing') && options.trackMotion is false
-        console.debug("--- $OLD IS ALREADY MORPHING!!!")
         return transitionFn($old, $new, options)
 
       up.puts 'Morphing %o to %o with transition %o', $old.get(0), $new.get(0), transitionObject
-
-      console.debug("--- old is attached: %o", !u.isDetached($old.get(0)))
-      console.debug("--- new is attached: %o", !u.isDetached($new.get(0)))
-
-      console.debug('--- adding .up-morphing to %o', $old.get(0))
-      console.debug('--- adding .up-morphing to %o', $new.get(0))
 
       restoreOldClass = u.addTemporaryClass($old, ['up-morphing', 'up-old'])
       restoreNewClass = u.addTemporaryClass($new, ['up-morphing', 'up-new'])
@@ -450,7 +438,6 @@ up.motion = (($) ->
         # Because the insertion will shift elements visually, we must delay insertion
         # until absolutize() has measured the bounding box of the old element.
         afterMeasure: ->
-          console.debug("--- INSERTING %o before %o", $new.get(0), $old.get(0))
           $new.insertBefore($old)
           options.afterInsert()
 
@@ -465,19 +452,15 @@ up.motion = (($) ->
           scrollTopAfterReveal = $viewport.scrollTop()
           oldRemote.moveTop(scrollTopAfterReveal - scrollTopBeforeReveal)
 
-          console.debug('~~~ trackable calling transitionFn wit options %o', options)
           transitionFn($old, $new, options)
 
         promise = promise.then ->
-          console.debug('--- tracked transifionFn done')
           options.beforeDetach()
           $old.detach()
           oldRemote.$bounds.remove()
           options.afterDetach()
           restoreOldClass()
           restoreNewClass()
-          console.debug('--- removing .up-morphing from %o', $old.get(0))
-          console.debug('--- removing .up-morphing from %o', $new.get(0))
 
         return promise
 
@@ -487,7 +470,6 @@ up.motion = (($) ->
       options.beforeDetach()
       # Swapping the elements directly with replaceWith() will cause
       # jQuery to remove all data attributes, which we use to store destructors
-      console.debug("-- SWAPPING DIRECTLY: %o, %o", $old.get(0), $new.get(0))
       swapElementsDirectly($old, $new)
       options.afterInsert()
       options.afterDetach()

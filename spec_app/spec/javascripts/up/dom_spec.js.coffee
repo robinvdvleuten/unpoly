@@ -1557,43 +1557,29 @@ describe 'up.dom', ->
         it 'cancels an existing transition by instantly jumping to the last frame', asyncSpec (next) ->
           affix('.element.v1').text('version 1')
 
-          console.debug("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-          console.debug("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-          console.debug("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-
-          console.debug('--- first extract starts ---')
           up.extract('.element', '<div class="element v2">version 2</div>', transition: 'cross-fade', duration: 200)
-
 
           next =>
             $ghost1 = $('.element:contains("version 1")')
-            console.debug("Ghost 1 is %o", $ghost1.get(0))
             expect($ghost1).toHaveLength(1)
             expect($ghost1.css('opacity')).toBeAround(1.0, 0.1)
 
             $ghost2 = $('.element:contains("version 2")')
-            console.debug("Ghost 2 is %o", $ghost2.get(0))
             expect($ghost2).toHaveLength(1)
             expect($ghost2.css('opacity')).toBeAround(0.0, 0.1)
 
-
           next =>
-            console.debug('--- second extract starts ---')
             up.extract('.element', '<div class="element v3">version 3</div>', transition: 'cross-fade', duration: 200)
-
 
           next =>
             $ghost1 = $('.element:contains("version 1")')
-            console.debug("Ghost 1 is %o", $ghost1.get(0))
             expect($ghost1).toHaveLength(0)
 
             $ghost2 = $('.element:contains("version 2")')
-            console.debug("Ghost 2 is %o", $ghost2.get(0))
             expect($ghost2).toHaveLength(1)
             expect($ghost2.css('opacity')).toBeAround(1.0, 0.1)
 
             $ghost3 = $('.element:contains("version 3")')
-            console.debug("Ghost 3 is %o", $ghost3.get(0))
             expect($ghost3).toHaveLength(1)
             expect($ghost3.css('opacity')).toBeAround(0.0, 0.1)
 

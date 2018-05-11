@@ -533,7 +533,6 @@ up.dom = (($) ->
         beforeDetach: ->
           up.syntax.clean($old)
         afterDetach: ->
-          console.debug("--- REMOVING %o", $old.get(0))
           $old.remove() # clean up jQuery data
           emitFragmentDestroyed($old, $parent: $parent, log: false)
 

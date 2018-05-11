@@ -228,6 +228,30 @@ describe 'up.motion', ->
             expect($('.up-bounds').length).toBe(0)
 
 
+        it 'emits an up:motion:finish event on the given animating element, so custom animation functions can react to the finish request', asyncSpec (next) ->
+          $element = affix('.element').text('element text')
+          listener = jasmine.createSpy('finish event listener')
+          $element.on('up:motion:finish', listener)
+
+          up.animate($element, 'fade-in')
+
+          next =>
+            expect(listener).not.toHaveBeenCalled()
+            up.motion.finish()
+
+          next =>
+            expect(listener).toHaveBeenCalled()
+
+
+        it 'does not emit an up:motion:finish event if no element is animating', asyncSpec (next) ->
+          listener = jasmine.createSpy('finish event listener')
+          up.on('up:motion:finish', listener)
+          up.motion.finish()
+
+          next =>
+            expect(listener).not.toHaveBeenCalled()
+
+
       describe 'when called without arguments', ->
 
         it 'cancels all animations on the screen', asyncSpec (next) ->

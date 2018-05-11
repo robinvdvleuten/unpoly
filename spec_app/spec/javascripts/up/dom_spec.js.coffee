@@ -1556,6 +1556,11 @@ describe 'up.dom', ->
 
         it 'cancels an existing transition by instantly jumping to the last frame', asyncSpec (next) ->
           affix('.element.v1').text('version 1')
+
+          console.debug("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+          console.debug("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+          console.debug("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+
           console.debug('--- first extract starts ---')
           up.extract('.element', '<div class="element v2">version 2</div>', transition: 'cross-fade', duration: 200)
 
@@ -1954,7 +1959,7 @@ describe 'up.dom', ->
             expect(insertedListener).toHaveBeenCalledWith(jasmine.anything(), $('.container'), jasmine.anything())
             expect(keptListener).toHaveBeenCalledWith(jasmine.anything(), $('.container .keeper'), jasmine.anything())
 
-        it 'emits an up:fragment:kept event on a kept element with a newData property corresponding to the up-data attribute value of the discarded element', (next) ->
+        it 'emits an up:fragment:kept event on a kept element with a newData property corresponding to the up-data attribute value of the discarded element', asyncSpec (next) ->
           keptListener = jasmine.createSpy()
           up.on 'up:fragment:kept', (event) -> keptListener(event.$element, event.newData)
           $container = affix('.container')

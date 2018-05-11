@@ -8,23 +8,25 @@ class up.MotionTracker
     @selector = ".#{@activeClass}"
     @finishEvent = "up:#{name}:finish"
     @finishCount = 0
+    @clusterCount = 0
 
   ###**
-  Finishes all animations in the given element's ancestors and descendants,
+  Finishes all animations in the given element cluster's ancestors and descendants,
   then calls the animator.
 
   The animation returned by the animator is tracked so it can be
   [`finished`](/up.MotionTracker.finish) later.
 
   @method claim
-  @param {jQuery} $element
+  @param {jQuery} $cluster
   @param {Function(jQuery): Promise} animator
   @param {Object} memory.trackMotion = true
     Whether
   @return {Promise} A promise that is fulfilled when the new animation ends.
   ###
-  claim: ($elements, animator, memory = {}) =>
-    console.debug("motionTracker<%o>.claim(%o, { trackMotion = %o })", @activeClass, $elements.get(), memory.trackMotion)
+  claim: ($cluster, animator, memory = {}) =>
+    console.debug("motionTracker<%o>.claim(%o, { trackMotion = %o })", @activeClass, $cluster.get(), memory.trackMotion)
+    memory.trackMotion = u.option(memory.trackMotion, up.motion.isEnabled())
     if memory.trackMotion is false
       # Since we don't want recursive tracking or finishing, we could run
       # the animator() now. However, since the else branch is async, we push
@@ -32,10 +34,11 @@ class up.MotionTracker
       u.microtask(animator)
     else
       memory.trackMotion = false
-      @finish($elements).then =>
-        promise = @whileForwardingFinishEvent($elements, animator)
-        promise = promise.then => @unmarkElement($elements)
-        @markElement($elements, promise)
+      @finish($cluster).then =>
+        promise = @whileForwardingFinishEvent($cluster, animator)
+        promise = promise.then => @unmarkCluster($cluster)
+        # Attach the modified promise to the cluster's elements
+        @markCluster($cluster, promise)
         promise
 
   ###**
@@ -48,19 +51,22 @@ class up.MotionTracker
   finish: (elements) =>
     @finishCount++
     console.debug("motionTracker<%o>.finish(%o)", @activeClass, elements)
-    return Promise.resolve() unless up.motion.isEnabled()
     $elements = @expandFinishRequest(elements)
     console.debug("... effective elements that need finishing are %o", $elements.get())
     allFinished = u.map($elements, @finishOneElement)
     Promise.all(allFinished).then => console.debug("MotionTracker %o done finishing on %o", @activeClass, $elements.get())
 
-  expandFinishRequest: (elements) ->
-    if elements
+  expandFinishRequest: (elements) =>
+    console.debug("@@@ expandFinishRequest(%o) with @clusterCount == %o", elements, @clusterCount)
+
+    if @clusterCount == 0 || !up.motion.isEnabled()
+      return $([])
+    else if elements
       u.selectInDynasty($(elements), @selector)
     else
       $(@selector)
 
-  isActive: (element) ->
+  isActive: (element) =>
     u.hasClass(element, @activeClass)
 
   finishOneElement: (element) =>
@@ -87,14 +93,18 @@ class up.MotionTracker
     console.debug("--- whenElementFinished on %o with data %o, attached is %o", $element.get(0), $element.data(@dataKey), !u.isDetached($element))
     $element.data(@dataKey) || Promise.resolve()
 
-  markElement: ($element, promise) =>
-    $element.addClass(@activeClass)
-    $element.data(@dataKey, promise)
+  markCluster: ($cluster, promise) =>
+    @clusterCount++
+    console.debug("@@@ clusterCount increased to %o", @clusterCount)
+    $cluster.addClass(@activeClass)
+    $cluster.data(@dataKey, promise)
 
-  unmarkElement: ($element) =>
-    console.debug("--- removing data from %o", $element.get(0))
-    $element.removeClass(@activeClass)
-    $element.removeData(@dataKey)
+  unmarkCluster: ($cluster) =>
+    @clusterCount--
+    console.debug("@@@ clusterCount reduced to %o", @clusterCount)
+    console.debug("--- removing data from %o", $cluster.get(0))
+    $cluster.removeClass(@activeClass)
+    $cluster.removeData(@dataKey)
 
   forwardFinishEvent: ($original, $ghost, duration) =>
     @start $original, =>
@@ -120,5 +130,7 @@ class up.MotionTracker
     fn().then => $elements.off @finishEvent, doForward
 
   reset: =>
-    @finish()
-    @finishCount = 0
+    @finish().then =>
+      @finishCount = 0
+      @clusterCount = 0
+      console.debug("@@@ RESET clusterCount to %o", @clusterCount)

@@ -243,7 +243,9 @@ up.motion = (($) ->
       # Animating code is expected to listen to this event to enable external code
       # to fulfil the animation.
       onFinish = fulfill
-      $element.on(motionTracker.finishEvent, onFinish)
+      $element.on motionTracker.finishEvent, (event) ->
+        event.stopPropagation() # don't waste time letting the event bubble up the DOM
+        onFinish()
   
       # Ideally, we want to fulfil when we receive the `transitionend` event
       $element.on('transitionend', onTransitionEnd)
@@ -307,7 +309,7 @@ up.motion = (($) ->
     consolidatedOptions.easing = u.option(userOptions.easing, u.presentAttr($element, 'up-easing'), moduleDefaults.easing, config.easing)
     consolidatedOptions.duration = Number(u.option(userOptions.duration, u.presentAttr($element, 'up-duration'), moduleDefaults.duration, config.duration))
     consolidatedOptions.delay = Number(u.option(userOptions.delay, u.presentAttr($element, 'up-delay'), moduleDefaults.delay, config.delay))
-    consolidatedOptions.trackMotion = u.option(userOptions.trackMotion, isEnabled()) # this is required so we don't override a previous tracking
+    consolidatedOptions.trackMotion = userOptions.trackMotion # required by up.MotionTracker
     consolidatedOptions
       
   findNamedAnimation = (name) ->

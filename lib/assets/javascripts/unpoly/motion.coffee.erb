@@ -194,6 +194,8 @@ up.motion = (($) ->
     # Signal that the animation is already done.
     Promise.resolve()
 
+  animCount = 0
+
   ###**
   Animates the given element's CSS properties using CSS transitions.
 
@@ -225,8 +227,15 @@ up.motion = (($) ->
     lastFrameCamel = u.camelCaseKeys(lastFrame)
     element = u.element($element)
 
+    animCount++
+
+    myAnimCount = animCount
+
     startCssTransition = ->
       hadTransitionBefore = u.hasTransition(element)
+
+      console.debug('~~~ transition before', element, $element.css('transition-property'), hadTransitionBefore, myAnimCount)
+      console.debug('~~~ element visible', $element.is(':visible'))
 
       deferred = u.newDeferred()
       # May not call this finish() since this would override the global finish()
@@ -236,7 +245,13 @@ up.motion = (($) ->
       onTransitionEnd = (event) ->
         # Check if the transitionend event was caused by our own transition,
         # and not by some other transition that happens to affect this element.
-        fulfill() if event.target == element
+        if event.target == element
+          console.debug("~~~ finishing animation because transitionEnd on ", element, event.originalEvent.propertyName, myAnimCount)
+          fulfill()
+        else
+          console.debug("~~~ DISCARDING transitionEnd on ", element, event.originalEvent.propertyName, myAnimCount)
+
+      console.debug('+++ registering finishEvent listener')
 
       # Animating code is expected to listen to this event to enable external code
       # to fulfil the animation.
@@ -244,15 +259,17 @@ up.motion = (($) ->
       $element.on motionTracker.finishEvent, (event) ->
         event.stopPropagation() # don't waste time letting the event bubble up the DOM
         onFinish()
-  
-      # Ideally, we want to fulfil when we receive the `transitionend` event
-      $element.on('transitionend', onTransitionEnd)
-  
-      # The `transitionend` event might not fire reliably if other transitions
-      # are interfering on the same element. This is why we register a fallback
-      # timeout that forces the animation to fulfil a few ms later.
-      transitionTimingTolerance = 8
-      fallbackTimer = u.setTimer(options.duration + transitionTimingTolerance, fulfill)
+
+#      # The `transitionend` event might not fire reliably if other transitions
+#      # are interfering on the same element. This is why we register a fallback
+#      # timeout that forces the animation to fulfil a few ms later.
+#      transitionTimingTolerance = 15
+#      console.debug("~~~ setting fallback timer to ", (options.duration + transitionTimingTolerance), myAnimCount)
+#      fallbackTimer = u.setTimer (options.duration + transitionTimingTolerance), ->
+#        console.debug("~~~ finishing animation because of fallback timer", myAnimCount)
+#        u.writeInlineStyle(element, transition: 'none')
+#        u.forceRepaint(element)
+#        fulfill()
 
       # All clean-up is handled in the following then() handler.
       # This way it will be run both when the animation finishAnimatees naturally and
@@ -261,18 +278,29 @@ up.motion = (($) ->
         # Disable all three triggers that would fulfil the motion:
         $element.off(motionTracker.finishEvent, onFinish)
         $element.off('transitionend', onTransitionEnd)
-        clearTimeout(fallbackTimer)
+
+#        clearTimeout(fallbackTimer)
 
         # To interrupt the running transition we *must* set it to 'none' exactly.
         # We cannot simply restore the old transition properties because browsers
         # would simply keep transitioning.
-        u.writeInlineStyle($element, transition: 'none')
-  
+        u.writeInlineStyle(element, transition: 'none')
+
+
         # If there is no repaint between the "none" transition and restoring the previous
         # transition, the browser will simply keep transitioning. I'm sorry.
         if hadTransitionBefore
-          u.forceRepaint($element)
+          u.forceRepaint(element)
           undoTransition()
+
+
+#      # Edge will not start transitioning unless it shows a frame with a "none" transition
+#      u.forceRepaint(element)
+#      u.writeInlineStyle(element, transition: 'none')
+#      u.forceRepaint(element)
+
+      # Ideally, we want to fulfill when we receive the `transitionend` event
+      $element.on('transitionend', onTransitionEnd)
 
       # CSS will start animating when we set the `transition-*` properties and then change
       # the animating properties to the last frame.
@@ -281,15 +309,17 @@ up.motion = (($) ->
         transitionDuration: "#{options.duration}ms"
         transitionDelay: "#{options.delay}ms"
         transitionTimingFunction: options.easing
-      undoTransition = u.writeTemporaryStyle($element, transitionCamel)
 
-      u.writeInlineStyle($element, lastFrameCamel)
+      undoTransition = u.writeTemporaryStyle(element, transitionCamel)
+      console.debug("+++ writing last frame", lastFrameCamel, myAnimCount)
+      u.writeInlineStyle(element, lastFrameCamel)
+      console.debug("+++ element opacity is now ", u.readInlineStyle(element, 'opacity'), myAnimCount)
   
       # Return a promise that fulfills when either the animation ends
       # or someone finishes the animation.
       deferred.promise()
 
-    motionTracker.claim($element, startCssTransition, options)
+    motionTracker.claim(element, startCssTransition, options)
 
   ###**
   Extracts animation-related options from the given options hash.
@@ -591,6 +621,7 @@ up.motion = (($) ->
 
   registerAnimation('fade-in', ($element, options) ->
     u.writeInlineStyle($element, opacity: 0)
+    console.debug("+++ element start style is ", u.readComputedStyle($element, 'opacity'))
     animateWithCss($element, { opacity: 1 }, options)
   )
 

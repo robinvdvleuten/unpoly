@@ -974,8 +974,6 @@ up.util = (($) ->
     element = getElement(element)
     element.offsetHeight
 
-  cssAnimate = (elementOrSelector, lastFrame, opts) ->
-
   ###**
   @internal
   ###
@@ -2039,7 +2037,6 @@ up.util = (($) ->
   hasClass: hasClass
   addTemporaryClass: addTemporaryClass
   writeTemporaryStyle: writeTemporaryStyle
-  cssAnimate: cssAnimate
   forceRepaint: forceRepaint
   escapePressed: escapePressed
   copyAttributes: copyAttributes

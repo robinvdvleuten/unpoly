@@ -1446,9 +1446,9 @@ describe 'up.dom', ->
           $container = affix('.container').text('old text')
           up.hello($container)
 
-          up.extract('.container', '<div class="container">new text</div>', transition: 'cross-fade', duration: 10)
+          up.extract('.container', '<div class="container">new text</div>', transition: 'cross-fade', duration: 50)
 
-          next.after 50, =>
+          next.after 100, =>
             expect('.container').toHaveText('new text')
             expect(destructor).toHaveBeenCalledWith('old text')
 

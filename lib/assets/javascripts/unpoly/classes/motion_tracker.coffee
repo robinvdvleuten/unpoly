@@ -24,15 +24,19 @@ class up.MotionTracker
     Whether
   @return {Promise} A promise that is fulfilled when the new animation ends.
   ###
-  claim: ($cluster, animator, memory = {}) =>
+  claim: (cluster, animator, memory = {}) =>
+    $cluster = $(cluster)
     memory.trackMotion = u.option(memory.trackMotion, up.motion.isEnabled())
+    console.debug("~~~ motionTracker.claim ~~~", $($cluster).get(0).className)
     if memory.trackMotion is false
+      console.debug("~~~ not tracking motion ~~~", $($cluster).get(0).className)
       # Since we don't want recursive tracking or finishing, we could run
       # the animator() now. However, since the else branch is async, we push
       # the animator into the microtask queue to be async as well.
       u.microtask(animator)
     else
       memory.trackMotion = false
+      console.debug("~~~ WILL finish and track ~~~", $($cluster).get(0).className)
       @finish($cluster).then =>
         promise = @whileForwardingFinishEvent($cluster, animator)
         promise = promise.then => @unmarkCluster($cluster)
@@ -50,6 +54,7 @@ class up.MotionTracker
   finish: (elements) =>
     @finishCount++
     $elements = @expandFinishRequest(elements)
+    console.debug("+++ finishing animations on elements", $elements.get(), @clusterCount, up.motion.isEnabled())
     allFinished = u.map($elements, @finishOneElement)
     Promise.all(allFinished)
 
@@ -89,11 +94,13 @@ class up.MotionTracker
 
   markCluster: ($cluster, promise) =>
     @clusterCount++
+    console.debug("+++ clusterCount increased to", @clusterCount)
     $cluster.addClass(@activeClass)
     $cluster.data(@dataKey, promise)
 
   unmarkCluster: ($cluster) =>
     @clusterCount--
+    console.debug("+++ clusterCount decreased to", @clusterCount)
     $cluster.removeClass(@activeClass)
     $cluster.removeData(@dataKey)
 

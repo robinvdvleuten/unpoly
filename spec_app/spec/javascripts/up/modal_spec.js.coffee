@@ -132,17 +132,24 @@ describe 'up.modal', ->
         it "gives the scrollbar to .up-modal instead of .up-modal-viewport while animating, so we don't see scaled scrollbars in a zoom-in animation", (done) ->
           openPromise = up.modal.extract('.container', '<div class="container">text</div>', animation: 'fade-in', duration: 100)
 
-          u.nextFrame =>
+          u.setTimer 50, ->
             $modal = $('.up-modal')
             $viewport = $modal.find('.up-modal-viewport')
+            console.debug("~~~ spec assertion: should have class")
+            expect($modal).toHaveClass('up-modal-animating')
             expect($modal.css('overflow-y')).toEqual('scroll')
             expect($viewport.css('overflow-y')).toEqual('hidden')
 
             openPromise.then ->
+              console.debug("~~~ spec assertion: should NOT have class")
+              expect($modal).not.toHaveClass('up-modal-animating')
               expect($modal.css('overflow-y')).not.toEqual('scroll')
               expect($viewport.css('overflow-y')).toEqual('scroll')
-              closePromise = up.modal.close(animation: 'fade-out', duration: 200)
-              u.nextFrame ->
+              closePromise = up.modal.close(animation: 'fade-out', duration: 400)
+
+              u.setTimer 50, ->
+                console.debug("~~~ spec assertion: should have class")
+                expect($modal).toHaveClass('up-modal-animating')
                 expect($modal.css('overflow-y')).toEqual('scroll')
                 expect($viewport.css('overflow-y')).toEqual('hidden')
                 done()

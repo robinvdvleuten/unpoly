@@ -974,6 +974,17 @@ up.util = (($) ->
     element = getElement(element)
     element.offsetHeight
 
+  ###*
+  @function up.util.finishTransition
+  @internal
+  ###
+  finishTransition = (element) ->
+    writeInlineStyle(element, transition: 'none')
+    # Browsers need to paint at least one frame without a transition to stop the
+    # animation. In theory we could just wait until the next paint, but in case
+    # someone will set another transition after us, let's force a repaint here.
+    forceRepaint()
+
   ###**
   @internal
   ###
@@ -2038,6 +2049,7 @@ up.util = (($) ->
   addTemporaryClass: addTemporaryClass
   writeTemporaryStyle: writeTemporaryStyle
   forceRepaint: forceRepaint
+  finishTransition: finishTransition
   escapePressed: escapePressed
   copyAttributes: copyAttributes
   selectInSubtree: selectInSubtree

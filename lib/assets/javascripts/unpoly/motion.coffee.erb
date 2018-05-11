@@ -224,15 +224,23 @@ up.motion = (($) ->
   ###
   animateWithCss = ($element, lastFrame, options) ->
     lastFrameKebab = u.kebabCaseKeys(lastFrame)
+    lastFrameKeysKebab = Object.keys(lastFrameKebab)
     lastFrameCamel = u.camelCaseKeys(lastFrame)
     element = u.element($element)
 
-    animCount++
+    if lastFrameKeysKebab.length == 0
+      # If we have nothing to animate, we will never get a transitionEnd event
+      # and the returned promise will never resolve.
+      return Promise.resolve()
 
+    animCount++
     myAnimCount = animCount
 
     startCssTransition = ->
       hadTransitionBefore = u.hasTransition(element)
+
+      if hasTransitionBefore
+        throw 'force a stop so it doesnt trigger transitionEnd events'
 
       console.debug('~~~ transition before', element, $element.css('transition-property'), hadTransitionBefore, myAnimCount)
       console.debug('~~~ element visible', $element.is(':visible'))
@@ -245,11 +253,13 @@ up.motion = (($) ->
       onTransitionEnd = (event) ->
         # Check if the transitionend event was caused by our own transition,
         # and not by some other transition that happens to affect this element.
-        if event.target == element
-          console.debug("~~~ finishing animation because transitionEnd on ", element, event.originalEvent.propertyName, myAnimCount)
-          fulfill()
-        else
-          console.debug("~~~ DISCARDING transitionEnd on ", element, event.originalEvent.propertyName, myAnimCount)
+        return unless event.target == element
+
+        completedPropertyKebab = event.originalEvent.propertyName
+        return unless u.contains(lastFrameKeysKebab, completedPropertyKebab)
+
+        console.debug("~~~ finishing animation because transitionEnd on ", element, event.originalEvent.propertyName, myAnimCount)
+        fulfill()
 
       console.debug('+++ registering finishEvent listener')
 
@@ -305,7 +315,7 @@ up.motion = (($) ->
       # CSS will start animating when we set the `transition-*` properties and then change
       # the animating properties to the last frame.
       transitionCamel =
-        transitionProperty: Object.keys(lastFrameKebab).join(', ') # still kebab
+        transitionProperty: Object.keys(lastFrameKebab).join(', ')
         transitionDuration: "#{options.duration}ms"
         transitionDelay: "#{options.delay}ms"
         transitionTimingFunction: options.easing

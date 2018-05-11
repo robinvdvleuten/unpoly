@@ -162,6 +162,7 @@ describe 'up.motion', ->
             expect(currentTransitionProperty).not.toContain('opacity')
 
 
+
         it 'cancels an existing transition on the old element by instantly jumping to the last frame', asyncSpec (next) ->
           $v1 = affix('.element').text('v1')
           $v2 = affix('.element').text('v2')

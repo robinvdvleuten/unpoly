@@ -250,9 +250,9 @@ describe 'up.modal', ->
 
         it 'closes the current modal and wait for its close animation to finish before starting the open animation of a second modal', asyncSpec (next) ->
           up.modal.config.openAnimation = 'fade-in'
-          up.modal.config.openDuration = 50
+          up.modal.config.openDuration = 100
           up.modal.config.closeAnimation = 'fade-out'
-          up.modal.config.closeDuration = 50
+          up.modal.config.closeDuration = 100
 
           events = []
           u.each ['up:modal:open', 'up:modal:opened', 'up:modal:close', 'up:modal:closed'], (event) ->
@@ -262,40 +262,38 @@ describe 'up.modal', ->
           up.modal.extract('.target', '<div class="target">response1</div>')
 
           next =>
-            # First modal is starting opening animation (will take 50 ms)
+            # First modal is starting opening animation (will take 100 ms)
             expect(events).toEqual ['up:modal:open']
             expect($('.target')).toHaveText('response1')
 
-          next.after (50 + 100), =>
-            # First modal has completed opening animation after 50 ms
+          next.after (100 + (timingTolerance = 100)), =>
+            # First modal has completed opening animation after 100 ms
             expect(events).toEqual ['up:modal:open', 'up:modal:opened']
             expect($('.target')).toHaveText('response1')
 
-            # We open another modal, which will cause the first modal to start closing (will take 50 ms)
+            # We open another modal, which will cause the first modal to start closing (will take 100 ms)
             up.modal.extract('.target', '<div class="target">response2</div>')
 
-          next.after 25, =>
+          next.after 50, =>
             # Second modal is still waiting for first modal's closing animaton to finish.
             expect(events).toEqual ['up:modal:open', 'up:modal:opened', 'up:modal:close']
             expect($('.target')).toHaveText('response1')
 
-          # I don't know why this spec is so off with timing.
-          # We need to add 200ms to make it pass all of the time.
-          next.after (25 + 50 + 200), =>
+          next.after (50 + 100 + (timingTolerance = 200)), =>
             # First modal has finished closing, second modal has finished opening.
             expect(events).toEqual ['up:modal:open', 'up:modal:opened', 'up:modal:close', 'up:modal:closed', 'up:modal:open', 'up:modal:opened']
             expect($('.target')).toHaveText('response2')
 
         it 'closes an opening modal if a second modal starts opening before the first modal has finished its open animation', asyncSpec (next) ->
           up.modal.config.openAnimation = 'fade-in'
-          up.modal.config.openDuration = 50
+          up.modal.config.openDuration = 100
           up.modal.config.closeAnimation = 'fade-out'
-          up.modal.config.closeDuration = 50
+          up.modal.config.closeDuration = 100
 
           # Open the first modal
           up.modal.extract('.target', '<div class="target">response1</div>')
 
-          next.after 10, =>
+          next.after 50, =>
             # First modal is still in its opening animation
             expect($('.target')).toHaveText('response1')
 
@@ -310,7 +308,7 @@ describe 'up.modal', ->
             # Second modal is still waiting for first modal's closing animaton to finish.
             expect($('.target')).toHaveText('response1')
 
-          next.after 150, =>
+          next.after (140 + (timingTolerance = 220)), =>
             # First modal has finished closing, second modal has finished opening.
             expect($('.target')).toHaveText('response2')
 

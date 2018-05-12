@@ -27,7 +27,7 @@ describe 'up.motion', ->
 
         u.setTimer 50, ->
           expect(resolveSpy).not.toHaveBeenCalled()
-          u.setTimer 100, ->
+          u.setTimer 50 + (timingTolerance = 120), ->
             expect(resolveSpy).toHaveBeenCalled()
             done()
 
@@ -331,13 +331,13 @@ describe 'up.motion', ->
 
         oldDims = u.measure($old)
 
-        up.morph($old, $new, 'cross-fade', duration: 30, easing: 'linear')
+        up.morph($old, $new, 'cross-fade', duration: 100, easing: 'linear')
 
         next =>
           expect(u.measure($old)).toEqual(oldDims)
           expect(u.measure($new)).toEqual(oldDims)
 
-        next.after 50, =>
+        next.after (100 + (timingTolerance = 120)), =>
           expect($old).toBeDetached()
           expect(u.measure($new)).toEqual(oldDims)
 

@@ -1439,18 +1439,22 @@ describe 'up.dom', ->
             expect('.container').toHaveText('new text')
             expect(destructor).toHaveBeenCalledWith('old text')
 
-        it 'calls destructors on the old element after a { transition }', asyncSpec (next) ->
+        it 'calls destructors on the old element after a { transition }', (done) ->
           destructor = jasmine.createSpy('destructor')
           up.compiler '.container', ($element) ->
             -> destructor($element.text())
           $container = affix('.container').text('old text')
           up.hello($container)
 
-          up.extract('.container', '<div class="container">new text</div>', transition: 'cross-fade', duration: 50)
+          up.extract('.container', '<div class="container">new text</div>', transition: 'cross-fade', duration: 100)
 
-          next.after 100, =>
+          u.setTimer 50, =>
+            expect(destructor).not.toHaveBeenCalled()
+
+          u.setTimer 220, =>
             expect('.container').toHaveText('new text')
             expect(destructor).toHaveBeenCalledWith('old text')
+            done()
 
         it 'calls destructors when the replaced element is a singleton element like <body> (bugfix)', asyncSpec (next) ->
           # shouldSwapElementsDirectly() is true for body, but can't have the example replace the Jasmine test runner UI
@@ -1586,10 +1590,14 @@ describe 'up.dom', ->
         it 'delays the resolution of the returned promise until the transition is over', (done) ->
           affix('.element').text('version 1')
           resolution = jasmine.createSpy()
-          promise = up.extract('.element', '<div class="element">version 2</div>', transition: 'cross-fade', duration: 30)
+          promise = up.extract('.element', '<div class="element">version 2</div>', transition: 'cross-fade', duration: 60)
           promise.then(resolution)
           expect(resolution).not.toHaveBeenCalled()
-          u.setTimer 80, ->
+
+          u.setTimer 40, ->
+            expect(resolution).not.toHaveBeenCalled()
+
+          u.setTimer 200, ->
             expect(resolution).toHaveBeenCalled()
             done()
 

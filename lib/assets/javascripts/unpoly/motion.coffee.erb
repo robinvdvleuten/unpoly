@@ -169,13 +169,11 @@ up.motion = (($) ->
       skipAnimate($element, animation)
     else if u.isFunction(animation)
       runNow = -> animation($element, options)
-      console.debug("Calling claim 1 with %o, %o, %o", $element, runNow, options)
       motionTracker.claim($element, runNow, options)
     else if u.isString(animation)
       animate($element, findNamedAnimation(animation), options)
     else if u.isOptions(animation)
       runNow = -> animateWithCss($element, animation, options)
-      console.debug("Calling claim 2 with %o, %o, %o", $element, runNow, options)
       motionTracker.claim($element, runNow, options)
     else
       # Error will be converted to rejected promise in a then() callback

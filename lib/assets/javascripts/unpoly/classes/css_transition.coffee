@@ -47,7 +47,10 @@ class up.CssTransition
 
   startFallbackTimer: =>
     timingTolerance = 100
-    @fallbackTimer = u.setTimer(@totalDuration + timingTolerance, @finish)
+    console.debug("will call fallbacktimer after %d", (@totalDuration + timingTolerance))
+    @fallbackTimer = u.setTimer (@totalDuration + timingTolerance), =>
+      console.debug("~~~ finishing animation because fallbacktimer after ", (new Date() - @startTime))
+      @finish()
 
   stopFallbackTimer: =>
     clearTimeout(@fallbackTimer)
@@ -71,7 +74,7 @@ class up.CssTransition
     completedPropertyKebab = event.originalEvent.propertyName
     return unless u.contains(@lastFrameKeysKebab, completedPropertyKebab)
 
-    console.debug("~~~ finishing animation because transitionEnd on ", @element, event.originalEvent.propertyName)
+    console.debug("~~~ finishing animation because transitionEnd on ", @element, event.originalEvent.propertyName, elapsed)
 
     @finish()
 
@@ -125,6 +128,9 @@ class up.CssTransition
       transitionDelay: "#{@delay}ms"
       transitionTimingFunction: @easing
 
+    console.log("styles are", styles)
+
     u.assign(styles, @lastFrameCamel)
 
     u.writeInlineStyle(@element, styles)
+

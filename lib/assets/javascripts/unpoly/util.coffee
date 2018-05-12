@@ -978,7 +978,7 @@ up.util = (($) ->
   @function up.util.finishTransition
   @internal
   ###
-  finishCssTransition = (element) ->
+  concludeCssTransition = (element) ->
     undo = writeTemporaryStyle(element, transition: 'none')
     # Browsers need to paint at least one frame without a transition to stop the
     # animation. In theory we could just wait until the next paint, but in case
@@ -2055,7 +2055,7 @@ up.util = (($) ->
   addTemporaryClass: addTemporaryClass
   writeTemporaryStyle: writeTemporaryStyle
   forceRepaint: forceRepaint
-  finishCssTransition: finishCssTransition
+  concludeCssTransition: concludeCssTransition
   escapePressed: escapePressed
   copyAttributes: copyAttributes
   selectInSubtree: selectInSubtree

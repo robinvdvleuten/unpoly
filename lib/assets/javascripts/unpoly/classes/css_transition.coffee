@@ -14,9 +14,11 @@ class up.CssTransition
     @delay = options.delay
     @totalDuration = @delay + @duration
     @easing = options.easing
+    @finished = false
 
   start: =>
     if @lastFrameKeysKebab.length == 0
+      @finished = true
       # If we have nothing to animate, we will never get a transitionEnd event
       # and the returned promise will never resolve.
       return Promise.resolve()
@@ -79,58 +81,53 @@ class up.CssTransition
     @finish()
 
   finish: =>
+    return if @finished
+    @finished = true
+
     @stopFallbackTimer()
     @stopListenToFinishEvent()
     @stopListenToTransitionEnd()
 
     # Cleanly finish our own transition so the old transition
     # (or any other transition set right after that) will be able to take effect.
-    u.finishCssTransition(@element)
+    u.concludeCssTransition(@element)
 
-    @resumeOldTransition?()
+    @resumeOldTransition()
 
     @deferred.resolve()
 
   pauseOldTransition: =>
     console.debug("pauseOld with %o", @element)
 
-    @oldTransition = u.readComputedStyle(@element, [
+    oldTransition = u.readComputedStyle(@element, [
       'transitionProperty',
       'transitionDuration',
       'transitionDelay',
       'transitionTimingFunction'
     ])
 
-    @hasOldTransition = u.hasCssTransition(@oldTransition)
-
-    if @hasOldTransition
-      # Freeze the previous transition at its current place, by setting the
-      # currently computed, animated CSS properties as inline styles
-      # We don't want to freeze all properties, so we don't support that case.
-      unless @oldTransition.transitionProperty == 'all'
-        oldTransitionFrameKeys = @oldTransition.transitionProperty.split(/\s*,\s*/)
-        oldTransitionCurrentFrameKebab = u.readComputedStyle(@element, oldTransitionFrameKeys)
-        oldTransitionCurrentFrameCamel = u.camelCaseKeys(oldTransitionCurrentFrameKebab)
-        @unfreezeOldTransitionCurrentFrame = u.writeTemporaryStyle(@element, oldTransitionCurrentFrameCamel)
+    if u.hasCssTransition(oldTransition)
+      # Freeze the previous transition at its current place, by setting the currently computed,
+      # animated CSS properties as inline styles. Transitions on all properties will not be frozen,
+      # since that would involve setting every single CSS property as an inline style.
+      unless oldTransition.transitionProperty == 'all'
+        oldTransitionProperties = oldTransition.transitionProperty.split(/\s*,\s*/)
+        oldTransitionFrameKebab = u.readComputedStyle(@element, oldTransitionProperties)
+        oldTransitionFrameCamel = u.camelCaseKeys(oldTransitionFrameKebab)
+        @setOldTransitionTargetFrame = u.writeTemporaryStyle(@element, oldTransitionFrameCamel)
 
       # Stop the existing CSS transition so it does not emit transitionEnd events
-      @setOldTransition = u.finishCssTransition(@element)
+      @setOldTransition = u.concludeCssTransition(@element)
 
   resumeOldTransition: =>
-    if @hasOldTransition
-      @unfreezeOldTransitionCurrentFrame?()
-      @setOldTransition()
+    @setOldTransitionTargetFrame?()
+    @setOldTransition?()
 
   startMotion: =>
-    styles =
+    u.writeInlineStyle @element,
       transitionProperty: Object.keys(@lastFrameKebab).join(', ')
       transitionDuration: "#{@duration}ms"
       transitionDelay: "#{@delay}ms"
       transitionTimingFunction: @easing
-
-    console.log("styles are", styles)
-
-    u.assign(styles, @lastFrameCamel)
-
-    u.writeInlineStyle(@element, styles)
+    u.writeInlineStyle(@element, @lastFrameCamel)
 

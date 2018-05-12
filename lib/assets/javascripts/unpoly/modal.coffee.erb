@@ -459,9 +459,6 @@ up.modal = (($) ->
     options.failLayer = u.option(options.failLayer, $link.attr('up-fail-layer'), 'auto')
 
     animateOptions = up.motion.animateOptions(options, $link, duration: flavorDefault('openDuration', options.flavor), easing: flavorDefault('openEasing', options.flavor))
-    console.debug("=> options before ", options)
-    console.debug("=> flavorDefault ", flavorDefault('openDuration', options.flavor))
-    console.debug("=> animateOptions for open are", animateOptions)
 
     # Although we usually fall back to full page loads if a browser doesn't support pushState,
     # in the case of modals we assume that the developer would rather see a dialog
@@ -580,7 +577,6 @@ up.modal = (($) ->
 
   markAsAnimating = (isAnimating = true) ->
     state.$modal.toggleClass('up-modal-animating', isAnimating)
-    console.debug("~~~ markAsAnimating: current $modal class: " + state.$modal.get(0).className)
 
   animate = (viewportAnimation, backdropAnimation, animateOptions) ->
     # If we're not animating the dialog, don't animate the backdrop either
@@ -588,7 +584,6 @@ up.modal = (($) ->
       Promise.resolve()
     else
       markAsAnimating()
-      console.debug("~~~ animating modal with duration: " + animateOptions.duration)
       promise = Promise.all([
         up.animate(state.$modal.find('.up-modal-viewport'), viewportAnimation, animateOptions),
         up.animate(state.$modal.find('.up-modal-backdrop'), backdropAnimation, animateOptions)

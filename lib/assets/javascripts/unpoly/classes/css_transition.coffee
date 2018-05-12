@@ -3,7 +3,6 @@ u = up.util
 class up.CssTransition
 
   constructor: ($element, lastFrame, options) ->
-    console.debug("new CssTransition for %o, %o", $element, lastFrame)
     @$element = $element
     @element = u.element($element)
     @lastFrameCamel = u.camelCaseKeys(lastFrame)
@@ -49,9 +48,7 @@ class up.CssTransition
 
   startFallbackTimer: =>
     timingTolerance = 100
-    console.debug("will call fallbacktimer after %d", (@totalDuration + timingTolerance))
     @fallbackTimer = u.setTimer (@totalDuration + timingTolerance), =>
-      console.debug("~~~ finishing animation because fallbacktimer after ", (new Date() - @startTime))
       @finish()
 
   stopFallbackTimer: =>
@@ -76,8 +73,6 @@ class up.CssTransition
     completedPropertyKebab = event.originalEvent.propertyName
     return unless u.contains(@lastFrameKeysKebab, completedPropertyKebab)
 
-    console.debug("~~~ finishing animation because transitionEnd on ", @element, event.originalEvent.propertyName, elapsed)
-
     @finish()
 
   finish: =>
@@ -98,8 +93,6 @@ class up.CssTransition
     @deferred.resolve()
 
   pauseOldTransition: =>
-    console.debug("pauseOld with %o", @element)
-
     oldTransition = u.readComputedStyle(@element, [
       'transitionProperty',
       'transitionDuration',

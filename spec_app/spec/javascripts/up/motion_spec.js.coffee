@@ -32,16 +32,13 @@ describe 'up.motion', ->
             done()
 
       it 'cancels an existing animation on the element by instantly jumping to the last frame', asyncSpec (next) ->
-        console.debug("+++ clusterCount before Spec", up.motion.knife.get('motionTracker.clusterCount'))
         $element = affix('.element').text('content')
         up.animate($element, { 'font-size': '40px' }, duration: 10000, easing: 'linear')
 
         next =>
-          console.debug("+++ clusterCount a frame before first animation", up.motion.knife.get('motionTracker.clusterCount'))
           up.animate($element, { 'fade-in' }, duration: 100, easing: 'linear')
 
         next =>
-          console.debug("+++ clusterCount a frame before second animation", up.motion.knife.get('motionTracker.clusterCount'))
           expect($element.css('font-size')).toEqual('40px')
 
       describe 'when up.animate() is called from inside an animation function', ->

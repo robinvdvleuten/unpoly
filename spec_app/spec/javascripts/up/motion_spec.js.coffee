@@ -186,8 +186,8 @@ describe 'up.motion', ->
           next.after 250, =>
             # Original CSS transition should remain paused at ~50%
             # Unpoly animation should now be ~50% done
-            expect(parseFloat($element.css('fontSize'))).toBeAround(@fontSizeBeforeAnimate, 0.1)
-            expect(parseFloat($element.css('height'))).toBeAround(@heightBeforeAnimate, 0.1)
+            expect(parseFloat($element.css('fontSize'))).toBeAround(@fontSizeBeforeAnimate, 2)
+            expect(parseFloat($element.css('height'))).toBeAround(@heightBeforeAnimate, 2)
             expect(parseFloat($element.css('opacity'))).toBeAround(0.5, 0.3)
 
           next.after 250, =>

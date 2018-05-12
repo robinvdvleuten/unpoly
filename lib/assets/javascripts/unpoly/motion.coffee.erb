@@ -169,11 +169,14 @@ up.motion = (($) ->
       skipAnimate($element, animation)
     else if u.isFunction(animation)
       runNow = -> animation($element, options)
+      console.debug("Calling claim 1 with %o, %o, %o", $element, runNow, options)
       motionTracker.claim($element, runNow, options)
     else if u.isString(animation)
       animate($element, findNamedAnimation(animation), options)
     else if u.isOptions(animation)
-      animateWithCss($element, animation, options)
+      runNow = -> animateWithCss($element, animation, options)
+      console.debug("Calling claim 2 with %o, %o, %o", $element, runNow, options)
+      motionTracker.claim($element, runNow, options)
     else
       # Error will be converted to rejected promise in a then() callback
       up.fail('Animation must be a function, animation name or object of CSS properties, but it was %o', animation)
@@ -199,13 +202,11 @@ up.motion = (($) ->
   ###**
   Animates the given element's CSS properties using CSS transitions.
 
-  If the element is already being animated, the previous animation
-  will instantly jump to its last frame before the new animation begins.
+  Does not track the animation, nor does it finishes existing animations
+  (use `up.motion.animate()` for that). It does, however, listen to the motionTracker's
+  finish event.
 
-  To improve performance, the element will be forced into compositing for
-  the duration of the animation.
-
-  @function up.util.cssAnimate
+  @function cssAnimate
   @param {Element|jQuery|string} elementOrSelector
     The element to animate.
   @param {Object} lastFrame
@@ -223,113 +224,135 @@ up.motion = (($) ->
   @internal
   ###
   animateWithCss = ($element, lastFrame, options) ->
-    lastFrameKebab = u.kebabCaseKeys(lastFrame)
-    lastFrameKeysKebab = Object.keys(lastFrameKebab)
-    lastFrameCamel = u.camelCaseKeys(lastFrame)
-    element = u.element($element)
-
-    if lastFrameKeysKebab.length == 0
-      # If we have nothing to animate, we will never get a transitionEnd event
-      # and the returned promise will never resolve.
-      return Promise.resolve()
-
-    animCount++
-    myAnimCount = animCount
-
-    startCssTransition = ->
-      hadTransitionBefore = u.hasTransition(element)
-
-      if hasTransitionBefore
-        throw 'force a stop so it doesnt trigger transitionEnd events'
-
-      console.debug('~~~ transition before', element, $element.css('transition-property'), hadTransitionBefore, myAnimCount)
-      console.debug('~~~ element visible', $element.is(':visible'))
-
-      deferred = u.newDeferred()
-      # May not call this finish() since this would override the global finish()
-      # function in this scope. We really need `let`, which CoffeeScript will never get.
-      fulfill = -> deferred.resolve()
-  
-      onTransitionEnd = (event) ->
-        # Check if the transitionend event was caused by our own transition,
-        # and not by some other transition that happens to affect this element.
-        return unless event.target == element
-
-        completedPropertyKebab = event.originalEvent.propertyName
-        return unless u.contains(lastFrameKeysKebab, completedPropertyKebab)
-
-        console.debug("~~~ finishing animation because transitionEnd on ", element, event.originalEvent.propertyName, myAnimCount)
-        fulfill()
-
-      console.debug('+++ registering finishEvent listener')
-
-      # Animating code is expected to listen to this event to enable external code
-      # to fulfil the animation.
-      onFinish = fulfill
-      $element.on motionTracker.finishEvent, (event) ->
-        event.stopPropagation() # don't waste time letting the event bubble up the DOM
-        onFinish()
-
-#      # The `transitionend` event might not fire reliably if other transitions
-#      # are interfering on the same element. This is why we register a fallback
-#      # timeout that forces the animation to fulfil a few ms later.
-#      transitionTimingTolerance = 15
-#      console.debug("~~~ setting fallback timer to ", (options.duration + transitionTimingTolerance), myAnimCount)
-#      fallbackTimer = u.setTimer (options.duration + transitionTimingTolerance), ->
-#        console.debug("~~~ finishing animation because of fallback timer", myAnimCount)
-#        u.writeInlineStyle(element, transition: 'none')
-#        u.forceRepaint(element)
-#        fulfill()
-
-      # All clean-up is handled in the following then() handler.
-      # This way it will be run both when the animation finishAnimatees naturally and
-      # when it is finishAnimateed externally.
-      deferred.then ->
-        # Disable all three triggers that would fulfil the motion:
-        $element.off(motionTracker.finishEvent, onFinish)
-        $element.off('transitionend', onTransitionEnd)
-
-#        clearTimeout(fallbackTimer)
-
-        # To interrupt the running transition we *must* set it to 'none' exactly.
-        # We cannot simply restore the old transition properties because browsers
-        # would simply keep transitioning.
-        u.writeInlineStyle(element, transition: 'none')
+    options = u.merge(options, finishEvent: motionTracker.finishEvent)
+    cssTransition = new up.CssTransition($element, lastFrame, options)
+    return cssTransition.start()
 
 
-        # If there is no repaint between the "none" transition and restoring the previous
-        # transition, the browser will simply keep transitioning. I'm sorry.
-        if hadTransitionBefore
-          u.forceRepaint(element)
-          undoTransition()
-
-
-#      # Edge will not start transitioning unless it shows a frame with a "none" transition
-#      u.forceRepaint(element)
+#    lastFrameKebab = u.kebabCaseKeys(lastFrame)
+#    lastFrameKeysKebab = Object.keys(lastFrameKebab)
+#    lastFrameCamel = u.camelCaseKeys(lastFrame)
+#    element = u.element($element)
+#
+#    if lastFrameKeysKebab.length == 0
+#      # If we have nothing to animate, we will never get a transitionEnd event
+#      # and the returned promise will never resolve.
+#      return Promise.resolve()
+#
+#    animCount++
+#    myAnimCount = animCount
+#
+#    oldTransition = u.readComputedStyle(element, ['transitionProperty', 'transitionDuration', 'transitionDelay', 'transitionTimingFunction'])
+#    hasOldTransition = u.hasCssTransition(oldTransition)
+#
+#    startTime = new Date()
+#
+#    if hasOldTransition
+#      # Freeze the previous transition at its current place
+#      if transitionProperty == 'all'
+#        oldTransitionFrameKeys = []
+#      else
+#        oldTransitionFrameKeys = oldTransition.transitionProperty.split(/\s*,\s*/)
+#      oldTransitionFrame = u.readComputedStyle(element, oldTransitionFrameKeys)
+#      u.writeInlineStyle(oldTransitionFrame)
+#
+#      # Stop the existing CSS transition so it does not emit transitionEnd events
+#      u.finishCssTransition(element)
+#
+#    deferred = u.newDeferred()
+#    # May not call this finish() since this would override the global finish()
+#    # function in this scope. We really need `let`, which CoffeeScript will never get.
+#    fulfill = -> deferred.resolve()
+#
+#    onTransitionEnd = (event) ->
+#      # Check if the transitionend event was caused by our own transition,
+#      # and not by some other transition that happens to affect this element.
+#      return unless event.target == element
+#
+#      # Check if we are receiving a late transitionEnd event
+#      # from a previous CSS transition.
+#      elapsed = new Date() - startTime
+#      return end unless elapsed > 0.4 * (options.delay + options.duration)
+#
+#      completedPropertyKebab = event.originalEvent.propertyName
+#      return unless u.contains(lastFrameKeysKebab, completedPropertyKebab)
+#
+#      console.debug("~~~ finishing animation because transitionEnd on ", element, event.originalEvent.propertyName, myAnimCount)
+#      fulfill()
+#
+#    console.debug('+++ registering finishEvent listener')
+#
+#    regularFinish = ->
+#      fulfill()
+#
+#    forceFinish = ->
+#      regularFinish()
+#
+#    # Animating code is expected to listen to this event to enable external code
+#    # to fulfil the animation.
+#    onFinishEvent = (event) ->
+#      event.stopPropagation()
+#      fulfill()
+#
+#
+#    $element.on motionTracker.finishEvent, onFinishEvent
+#
+##      # The `transitionend` event might not fire reliably if other transitions
+##      # are interfering on the same element. This is why we register a fallback
+##      # timeout that forces the animation to fulfil a few ms later.
+##      transitionTimingTolerance = 15
+##      console.debug("~~~ setting fallback timer to ", (options.duration + transitionTimingTolerance), myAnimCount)
+##      fallbackTimer = u.setTimer (options.duration + transitionTimingTolerance), ->
+##        console.debug("~~~ finishing animation because of fallback timer", myAnimCount)
+##        u.writeInlineStyle(element, transition: 'none')
+##        u.forceRepaint(element)
+##        fulfill()
+#
+#    # All clean-up is handled in the following then() handler.
+#    # This way it will be run both when the animation finishAnimatees naturally and
+#    # when it is finishAnimateed externally.
+#    deferred.then ->
+#      # Disable all three triggers that would fulfil the motion:
+#      $element.off(motionTracker.finishEvent, onFinishEvent)
+#      $element.off('transitionend', onTransitionEnd)
+#
+##        clearTimeout(fallbackTimer)
+#
+#      # To interrupt the running transition we *must* set it to 'none' exactly.
+#      # We cannot simply restore the old transition properties because browsers
+#      # would simply keep transitioning.
 #      u.writeInlineStyle(element, transition: 'none')
+#
+#
+#      # If there is no repaint between the "none" transition and restoring the previous
+#      # transition, the browser will simply keep transitioning. I'm sorry.
 #      u.forceRepaint(element)
-
-      # Ideally, we want to fulfill when we receive the `transitionend` event
-      $element.on('transitionend', onTransitionEnd)
-
-      # CSS will start animating when we set the `transition-*` properties and then change
-      # the animating properties to the last frame.
-      transitionCamel =
-        transitionProperty: Object.keys(lastFrameKebab).join(', ')
-        transitionDuration: "#{options.duration}ms"
-        transitionDelay: "#{options.delay}ms"
-        transitionTimingFunction: options.easing
-
-      undoTransition = u.writeTemporaryStyle(element, transitionCamel)
-      console.debug("+++ writing last frame", lastFrameCamel, myAnimCount)
-      u.writeInlineStyle(element, lastFrameCamel)
-      console.debug("+++ element opacity is now ", u.readInlineStyle(element, 'opacity'), myAnimCount)
-  
-      # Return a promise that fulfills when either the animation ends
-      # or someone finishes the animation.
-      deferred.promise()
-
-    motionTracker.claim(element, startCssTransition, options)
+#      undoTransition()
+#
+##      # Edge will not start transitioning unless it shows a frame with a "none" transition
+##      u.forceRepaint(element)
+##      u.writeInlineStyle(element, transition: 'none')
+##      u.forceRepaint(element)
+#
+#    # Ideally, we want to fulfill when we receive the `transitionend` event
+#    $element.on('transitionend', onTransitionEnd)
+#
+#    # CSS will start animating when we set the `transition-*` properties and then change
+#    # the animating properties to the last frame.
+#    transitionCamel =
+#      transitionProperty: Object.keys(lastFrameKebab).join(', ')
+#      transitionDuration: "#{options.duration}ms"
+#      transitionDelay: "#{options.delay}ms"
+#      transitionTimingFunction: options.easing
+#
+#    undoTransition = u.writeTemporaryStyle(element, transitionCamel)
+#    console.debug("+++ writing last frame", lastFrameCamel, myAnimCount)
+#    u.writeInlineStyle(element, lastFrameCamel)
+#    console.debug("+++ element opacity is now ", u.readInlineStyle(element, 'opacity'), myAnimCount)
+#
+#    # Return a promise that fulfills when either the animation ends
+#    # or someone finishes the animation.
+#    deferred.promise()
 
   ###**
   Extracts animation-related options from the given options hash.

@@ -27,7 +27,7 @@ class up.MotionTracker
   claim: (cluster, animator, memory = {}) =>
     $cluster = $(cluster)
     memory.trackMotion = u.option(memory.trackMotion, up.motion.isEnabled())
-    console.debug("~~~ motionTracker.claim ~~~", $($cluster).get(0).className)
+    console.debug("~~~ motionTracker.claim ~~~", $($cluster).get(0).className, animator)
     if memory.trackMotion is false
       console.debug("~~~ not tracking motion ~~~", $($cluster).get(0).className)
       # Since we don't want recursive tracking or finishing, we could run
@@ -36,7 +36,7 @@ class up.MotionTracker
       u.microtask(animator)
     else
       memory.trackMotion = false
-      console.debug("~~~ WILL finish and track ~~~", $($cluster).get(0).className)
+      console.debug("~~~ WILL finish and track ~~~", $($cluster).get(0).className, animator)
       @finish($cluster).then =>
         promise = @whileForwardingFinishEvent($cluster, animator)
         promise = promise.then => @unmarkCluster($cluster)

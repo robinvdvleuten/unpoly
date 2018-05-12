@@ -978,12 +978,13 @@ up.util = (($) ->
   @function up.util.finishTransition
   @internal
   ###
-  finishTransition = (element) ->
-    writeInlineStyle(element, transition: 'none')
+  finishCssTransition = (element) ->
+    undo = writeTemporaryStyle(element, transition: 'none')
     # Browsers need to paint at least one frame without a transition to stop the
     # animation. In theory we could just wait until the next paint, but in case
     # someone will set another transition after us, let's force a repaint here.
-    forceRepaint()
+    forceRepaint(element)
+    return undo
 
   ###**
   @internal
@@ -1862,14 +1863,19 @@ up.util = (($) ->
   ###*
   Returns whether the given element has a CSS transition set.
 
-  @function up.util.hasTransition
+  @function up.util.hasCssTransition
   @return {boolean}
   @internal
   ###
-  hasTransition = (element) ->
-    element = getElement(element)
-    prop = readComputedStyle(element, 'transitionProperty')
-    duration = readComputedStyleNumber(element,  'transitionDuration')
+  hasCssTransition = (elementOrStyleHash) ->
+    if isOptions(elementOrStyleHash)
+      style = elementOrStyleHash
+    else
+      element = getElement(element)
+      style = getComputedStyle(element)
+
+    prop = style.transitionProperty
+    duration = style.transitionDuration
     # The default transition for elements is actually "all 0s ease 0s"
     # instead of "none", although that has the same effect as "none".
     noTransition = (prop == 'none' || (prop == 'all' && duration == 0))
@@ -2049,7 +2055,7 @@ up.util = (($) ->
   addTemporaryClass: addTemporaryClass
   writeTemporaryStyle: writeTemporaryStyle
   forceRepaint: forceRepaint
-  finishTransition: finishTransition
+  finishCssTransition: finishCssTransition
   escapePressed: escapePressed
   copyAttributes: copyAttributes
   selectInSubtree: selectInSubtree
@@ -2109,7 +2115,7 @@ up.util = (($) ->
   readComputedStyleNumber: readComputedStyleNumber
   readInlineStyle: readInlineStyle
   writeInlineStyle: writeInlineStyle
-  hasTransition: hasTransition
+  hasCssTransition: hasCssTransition
 
 )(jQuery)
 

@@ -81,6 +81,7 @@ class up.CssTransition
     @finish()
 
   finish: =>
+    # Make sure that any queued events won't finish multiple times.
     return if @finished
     @finished = true
 

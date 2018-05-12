@@ -143,7 +143,7 @@ describe 'up.motion', ->
             expect(Number($element1.css('opacity'))).toEqual(1)
             expect(Number($element2.css('opacity'))).toBeAround(0, 0.1)
 
-        it 'restores CSS transitions from before the Unpoly transition', asyncSpec (next) ->
+        it 'restores CSS transitions from before the Unpoly animation', asyncSpec (next) ->
           $element = affix('.element').text('content')
           $element.css('transition': 'font-size 3s ease')
           oldTransitionProperty = $element.css('transition-property')
@@ -161,6 +161,45 @@ describe 'up.motion', ->
             expect(currentTransitionProperty).toContain('font-size')
             expect(currentTransitionProperty).not.toContain('opacity')
 
+        it 'pauses an existing CSS transitions and restores it once the Unpoly animation is done', asyncSpec (next) ->
+          $element = affix('.element').text('content').css
+            backgroundColor: 'yellow'
+            fontSize: '10px'
+            height: '20px'
+
+          expect(parseFloat($element.css('fontSize'))).toBeAround(10, 0.1)
+          expect(parseFloat($element.css('height'))).toBeAround(20, 0.1)
+
+          next.after 10, =>
+            $element.css
+              transition: 'font-size 500ms linear, height 500ms linear'
+              fontSize: '100px'
+              height: '200px'
+
+          next.after 250, =>
+            # Original CSS transition should now be ~50% done
+            @fontSizeBeforeAnimate = parseFloat($element.css('fontSize'))
+            @heightBeforeAnimate = parseFloat($element.css('height'))
+
+            expect(@fontSizeBeforeAnimate).toBeAround(0.5 * (100 - 10), 20)
+            expect(@heightBeforeAnimate).toBeAround(0.5 * (200 - 20), 40)
+
+            up.animate($element, 'fade-in', duration: 500, easing: 'linear')
+
+          next.after 250, =>
+            # Original CSS transition should remain paused at ~50%
+            # Unpoly animation should now be ~50% done
+            expect(parseFloat($element.css('fontSize'))).toBeAround(@fontSizeBeforeAnimate, 0.1)
+            expect(parseFloat($element.css('height'))).toBeAround(@heightBeforeAnimate, 0.1)
+            expect(parseFloat($element.css('opacity'))).toBeAround(0.5, 0.3)
+
+          next.after 250, =>
+            # Unpoly animation should now be done
+            expect(parseFloat($element.css('opacity'))).toBeAround(1.0, 0.3)
+
+          next.after (250 + (tolerance = 125)), =>
+            expect(parseFloat($element.css('fontSize'))).toBeAround(100, 20)
+            expect(parseFloat($element.css('height'))).toBeAround(200, 40)
 
 
         it 'cancels an existing transition on the old element by instantly jumping to the last frame', asyncSpec (next) ->
@@ -294,7 +333,7 @@ describe 'up.motion', ->
           expect(u.opacity($old)).toBeAround(0.5, 0.25)
           expect(u.opacity($new)).toBeAround(0.5, 0.25)
 
-        next.after 150, =>
+        next.after (100 + (tolerance = 110)), =>
           expect(u.opacity($new)).toBeAround(1.0, 0.25)
           expect($old).toBeDetached()
 
@@ -406,8 +445,8 @@ describe 'up.motion', ->
             expect(u.opacity($old)).toBeAround(0.5, 0.25)
             expect(u.opacity($new)).toBeAround(0.5, 0.25)
 
-          next.after 150, =>
-            expect(u.opacity($new)).toBeAround(1.0, 0.25)
+          next.after (100 + (tolerance = 110)), =>
+            expect(u.opacity($new)).toBeAround(1.0, 0.1)
             expect($old).toBeDetached()
             expect($new).toBeAttached()
 
@@ -448,7 +487,7 @@ describe 'up.motion', ->
             expect(u.opacity($old)).toBeAround(0.5, 0.25)
             expect(u.opacity($new)).toBeAround(0.5, 0.25)
 
-          next.after 150, =>
+          next.after (100 + (tolerance = 110)), =>
             expect(u.opacity($new)).toBeAround(1.0, 0.25)
             expect($old).toBeDetached()
             expect($new).toBeAttached()

@@ -353,13 +353,10 @@ up.motion = (($) ->
       up.layout.revealOrRestoreScroll($new, scrollOptions)
 
     if willMorph
-      if $old.is('.up-morphing') && options.trackMotion is false
+      if motionTracker.isActive($old) && options.trackMotion is false
         return transitionFn($old, $new, options)
 
       up.puts 'Morphing %o to %o with transition %o', $old.get(0), $new.get(0), transitionObject
-
-      restoreOldClass = u.addTemporaryClass($old, ['up-morphing', 'up-old'])
-      restoreNewClass = u.addTemporaryClass($new, ['up-morphing', 'up-new'])
 
       $viewport = up.layout.viewportOf($old)
       scrollTopBeforeReveal = $viewport.scrollTop()
@@ -389,8 +386,6 @@ up.motion = (($) ->
           $old.detach()
           oldRemote.$bounds.remove()
           options.afterDetach()
-          restoreOldClass()
-          restoreNewClass()
 
         return promise
 

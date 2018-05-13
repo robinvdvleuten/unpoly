@@ -1503,15 +1503,15 @@ describe 'up.dom', ->
       describe 'with { transition } option', ->
 
         it 'morphs between the old and new element', asyncSpec (next) ->
-          affix('.element').text('version 1')
-          up.extract('.element', '<div class="element">version 2</div>', transition: 'cross-fade', duration: 100, easing: 'linear')
+          affix('.element.v1').text('version 1')
+          up.extract('.element', '<div class="element v2">version 2</div>', transition: 'cross-fade', duration: 100, easing: 'linear')
 
           $old = undefined
           $new = undefined
 
           next =>
-            $old = $('.element.up-old')
-            $new = $('.element.up-new')
+            $old = $('.element.v1')
+            $new = $('.element.v2')
 
             expect($old).toHaveLength(1)
             expect(u.opacity($old)).toBeAround(1.0, 0.2)

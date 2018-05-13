@@ -165,19 +165,14 @@ up.motion = (($) ->
     $element = $(elementOrSelector)
     options = animateOptions(options)
 
-    if !willAnimate($element, animation, options)
-      skipAnimate($element, animation)
-    else if u.isFunction(animation)
-      runNow = -> animation($element, options)
-      motionTracker.claim($element, runNow, options)
-    else if u.isString(animation)
-      animate($element, findNamedAnimation(animation), options)
-    else if u.isOptions(animation)
-      runNow = -> animateWithCss($element, animation, options)
+    animationFn = findAnimationFn(animation)
+    willRun = willAnimate($element, animation, options)
+
+    if willRun
+      runNow = -> animationFn($element, options)
       motionTracker.claim($element, runNow, options)
     else
-      # Error will be converted to rejected promise in a then() callback
-      up.fail('Animation must be a function, animation name or object of CSS properties, but it was %o', animation)
+      skipAnimate($element, animation)
 
   willAnimate = ($elements, animationOrTransition, options) ->
     options = animateOptions(options)
@@ -417,21 +412,40 @@ up.motion = (($) ->
     else if u.isFunction(object)
       object
     else if u.isArray(object)
-      if isNone(object[0]) && isNone(object[1])
-        # A composition of two "none" animations is again a "none" animation
-        undefined
-      else
-        ($old, $new, options) -> Promise.all([
-          animate($old, object[0], options),
-          animate($new, object[1], options)
-        ])
+      composeTransitionFn(object...)
     else if u.isString(object)
       if object.indexOf('/') >= 0 # Compose a transition from two animation names
-        findTransitionFn(object.split('/'))
+        composeTransitionFn(object.split('/')...)
       else if namedTransition = namedTransitions[object]
         findTransitionFn(namedTransition)
-      else
-        up.fail("Unknown transition %o", object)
+    else
+      up.fail("Unknown transition %o", object)
+
+  composeTransitionFn = (oldAnimation, newAnimation) ->
+    if isNone(oldAnimation) && isNone(oldAnimation)
+      # A composition of two null-animations is a null-transform
+      # and should be skipped.
+      undefined
+    else
+      oldAnimationFn = findAnimationFn(oldAnimation) || u.asyncNoop
+      newAnimationFn = findAnimationFn(newAnimation) || u.asyncNoop
+      ($old, $new, options) ->
+        Promise.all([
+          oldAnimationFn($old, options),
+          newAnimationFn($new, options)
+        ])
+
+  findAnimationFn = (object) ->
+    if isNone(object)
+      undefined
+    else if u.isFunction(object)
+      object
+    else if u.isString(object)
+      findNamedAnimation(object)
+    else if u.isOptions(object)
+      ($element, options) -> animateWithCss($element, object, options)
+    else
+      up.fail('Unknown animation %o', object)
 
   swapElementsDirectly = ($old, $new) ->
     # jQuery will actually let us .insertBefore the new <body> tag,
@@ -472,7 +486,7 @@ up.motion = (($) ->
   @stable
   ###
   registerTransition = (name, transition) ->
-    namedTransitions[name] = transition
+    namedTransitions[name] = findTransitionFn(transition)
 
   ###**
   Defines a named animation.
@@ -507,7 +521,7 @@ up.motion = (($) ->
   @stable
   ###
   registerAnimation = (name, animation) ->
-    namedAnimations[name] = animation
+    namedAnimations[name] = findAnimationFn(animation)
 
   snapshot = ->
     defaultNamedAnimations = u.copy(namedAnimations)

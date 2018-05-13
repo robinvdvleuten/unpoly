@@ -18,6 +18,14 @@ up.util = (($) ->
   noop = (->)
 
   ###**
+  A function that returns a resolved promise.
+
+  @function up.util.asyncNoop
+  @internal
+  ###
+  asyncNoop = -> Promise.resolve()
+
+  ###**
   Ensures that the given function can only be called a single time.
   Subsequent calls will return the return value of the first call.
 
@@ -2087,6 +2095,7 @@ up.util = (($) ->
   extractOptions: extractOptions
   isDetached: isDetached
   noop: noop
+  asyncNoop: asyncNoop
   opacity: opacity
   whenReady: whenReady
   identity: identity

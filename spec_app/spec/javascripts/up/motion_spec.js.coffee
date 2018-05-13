@@ -192,9 +192,11 @@ describe 'up.motion', ->
 
           next.after 250, =>
             # Unpoly animation should now be done
+            # The original transition resumes. For technical reasons it will take
+            # its full duration for the remaining frames of the transition.
             expect(parseFloat($element.css('opacity'))).toBeAround(1.0, 0.3)
 
-          next.after (250 + (tolerance = 125)), =>
+          next.after (500 + (tolerance = 125)), =>
             expect(parseFloat($element.css('fontSize'))).toBeAround(100, 20)
             expect(parseFloat($element.css('height'))).toBeAround(200, 40)
 

@@ -50,14 +50,13 @@ class up.MotionTracker
   ###
   finish: (elements) =>
     @finishCount++
+    return Promise.resolve() if @clusterCount == 0 || !up.motion.isEnabled()
     $elements = @expandFinishRequest(elements)
     allFinished = u.map($elements, @finishOneElement)
     Promise.all(allFinished)
 
   expandFinishRequest: (elements) =>
-    if @clusterCount == 0 || !up.motion.isEnabled()
-      return $([])
-    else if elements
+    if elements
       u.selectInDynasty($(elements), @selector)
     else
       $(@selector)

@@ -199,7 +199,7 @@ up.motion = (($) ->
   (use `up.motion.animate()` for that). It does, however, listen to the motionTracker's
   finish event.
 
-  @function cssAnimate
+  @function animateNow
   @param {Element|jQuery|string} elementOrSelector
     The element to animate.
   @param {Object} lastFrame
@@ -216,7 +216,7 @@ up.motion = (($) ->
     A promise that fulfills when the animation ends.
   @internal
   ###
-  animateWithCss = ($element, lastFrame, options) ->
+  animateNow = ($element, lastFrame, options) ->
     options = u.merge(options, finishEvent: motionTracker.finishEvent)
     cssTransition = new up.CssTransition($element, lastFrame, options)
     return cssTransition.start()
@@ -438,7 +438,7 @@ up.motion = (($) ->
     else if u.isString(object)
       findNamedAnimation(object)
     else if u.isOptions(object)
-      ($element, options) -> animateWithCss($element, object, options)
+      ($element, options) -> animateNow($element, object, options)
     else
       up.fail('Unknown animation %o', object)
 
@@ -535,12 +535,12 @@ up.motion = (($) ->
 
   registerAnimation('fade-in', ($element, options) ->
     u.writeInlineStyle($element, opacity: 0)
-    animateWithCss($element, { opacity: 1 }, options)
+    animateNow($element, { opacity: 1 }, options)
   )
 
   registerAnimation('fade-out', ($element, options) ->
     u.writeInlineStyle($element, opacity: 1)
-    animateWithCss($element, { opacity: 0 }, options)
+    animateNow($element, { opacity: 0 }, options)
   )
 
   translateCss = (x, y) ->
@@ -550,7 +550,7 @@ up.motion = (($) ->
     u.writeInlineStyle($element, translateCss(0, 0))
     box = u.measure($element)
     travelDistance = box.top + box.height
-    animateWithCss($element, translateCss(0, -travelDistance), options)
+    animateNow($element, translateCss(0, -travelDistance), options)
   )
 
   registerAnimation('move-from-top', ($element, options) ->
@@ -558,14 +558,14 @@ up.motion = (($) ->
     box = u.measure($element)
     travelDistance = box.top + box.height
     u.writeInlineStyle($element, translateCss(0, -travelDistance))
-    animateWithCss($element, translateCss(0, 0), options)
+    animateNow($element, translateCss(0, 0), options)
   )
 
   registerAnimation('move-to-bottom', ($element, options) ->
     u.writeInlineStyle($element, translateCss(0, 0))
     box = u.measure($element)
     travelDistance = u.clientSize().height - box.top
-    animateWithCss($element, translateCss(0, travelDistance), options)
+    animateNow($element, translateCss(0, travelDistance), options)
   )
 
   registerAnimation('move-from-bottom', ($element, options) ->
@@ -573,14 +573,14 @@ up.motion = (($) ->
     box = u.measure($element)
     travelDistance = u.clientSize().height - box.top
     u.writeInlineStyle($element, translateCss(0, travelDistance))
-    animateWithCss($element, translateCss(0, 0), options)
+    animateNow($element, translateCss(0, 0), options)
   )
 
   registerAnimation('move-to-left', ($element, options) ->
     u.writeInlineStyle($element, translateCss(0, 0))
     box = u.measure($element)
     travelDistance = box.left + box.width
-    animateWithCss($element, translateCss(-travelDistance, 0), options)
+    animateNow($element, translateCss(-travelDistance, 0), options)
   )
 
   registerAnimation('move-from-left', ($element, options) ->
@@ -588,14 +588,14 @@ up.motion = (($) ->
     box = u.measure($element)
     travelDistance = box.left + box.width
     u.writeInlineStyle($element, translateCss(-travelDistance, 0))
-    animateWithCss($element, translateCss(0, 0), options)
+    animateNow($element, translateCss(0, 0), options)
   )
 
   registerAnimation('move-to-right', ($element, options) ->
     u.writeInlineStyle($element, translateCss(0, 0))
     box = u.measure($element)
     travelDistance = u.clientSize().width - box.left
-    animateWithCss($element, translateCss(travelDistance, 0), options)
+    animateNow($element, translateCss(travelDistance, 0), options)
   )
 
   registerAnimation('move-from-right', ($element, options) ->
@@ -603,7 +603,7 @@ up.motion = (($) ->
     box = u.measure($element)
     travelDistance = u.clientSize().width - box.left
     u.writeInlineStyle($element, translateCss(travelDistance, 0))
-    animateWithCss($element, translateCss(0, 0), options)
+    animateNow($element, translateCss(0, 0), options)
   )
 
   registerAnimation('roll-down', ($element, options) ->

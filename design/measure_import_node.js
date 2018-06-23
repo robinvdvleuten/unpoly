@@ -1,47 +1,96 @@
-ITERATIONS = 2000;
+ITERATIONS = 100;
 CHUNK_SIZE = 10;
 
 HTML = "<body>" + document.body.innerHTML + "</body>";
+
+QUEUE = [];
+
+function pokeQueue() {
+  var job;
+  if (job = QUEUE.shift()) {
+    job();
+    setTimeout(pokeQueue, 15);
+  }
+}
+
+function queue(fn) {
+  QUEUE.push(fn);
+}
+
+
+ESCAPE_HTML_ENTITY_MAP = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': '&quot;'
+};
+
+/***
+Escapes the given string of HTML by replacing control chars with their HTML entities.
+
+@function up.util.escapeHtml
+@param {string} string
+  The text that should be escaped
+@experimental
+ */
+escapeHtml = function(string) {
+  return string.replace(/[&<>"]/g, function(char) {
+    return ESCAPE_HTML_ENTITY_MAP[char];
+  });
+};
+
 
 
 function experiment(name, fn) {
   performance.clearMarks();
   performance.clearMeasures();
 
-  // warm-up
-  for (var i = 0; i < 100; i++) {
-    fn();
-  }
-  
+  queue(function() {
+    // warm-up
+    for (var i = 0; i < 100; i++) {
+      fn();
+    }
+  })
+
   var chunkCount = Math.floor(ITERATIONS / CHUNK_SIZE);
 
   for (var i = 0; i < chunkCount; i++) {
-    performance.mark(name + "-start");
-    for (var j = 0; j < CHUNK_SIZE; j++) {
-      fn();
-    }
-    performance.mark(name + "-end");
-    performance.measure(name, name + "-start", name + "-end");
+    queue(function() {
+      performance.mark(name + "-start");
+      for (var j = 0; j < CHUNK_SIZE; j++) {
+        fn();
+      }
+      performance.mark(name + "-end");
+      performance.measure(name, name + "-start", name + "-end");
+    })
   }
-  
-  var entries = performance.getEntriesByName(name);
-  var durations = entries.map(function(e) { return e.duration });
-  
-  var outlyerLength = Math.floor(chunkCount * 0.01);
-  
-  durations = durations.slice(outlyerLength, durations.length - outlyerLength);
-  
-  durations.sort(function(a, b,) { return a - b });
 
-  var times = {
-    minimum: durations[0],
-    maximum: durations[durations.length - 1],
-    median: durations[Math.floor(durations.length / 2)],
-    total: durations.reduce(function(total, num) { return total + num }),
-    setSize: durations.length
-  }
-  
-  console.debug("Experiment %s: %o", name, times);
+  queue(function() {
+    var entries = performance.getEntriesByName(name);
+    var durations = entries.map(function (e) {
+      return e.duration
+    });
+
+    var outlyerLength = Math.floor(chunkCount * 0.01);
+
+    durations = durations.slice(outlyerLength, durations.length - outlyerLength);
+
+    durations.sort(function (a, b,) {
+      return a - b
+    });
+
+    var times = {
+      minimum: durations[0],
+      maximum: durations[durations.length - 1],
+      median: durations[Math.floor(durations.length / 2)],
+      total: durations.reduce(function (total, num) {
+        return total + num
+      }),
+      setSize: durations.length
+    }
+
+    console.debug("Experiment %s: %o", name, times);
+  })
 }
 
 
@@ -84,6 +133,10 @@ function removeScripts(doc) {
 
 
 
+
+
+
+
 domParser = new DOMParser();
 
 
@@ -118,6 +171,42 @@ experiment('DOMParserWithImport', function() {
 });
 */
 
+
+var noScriptPattern = /<noscript[^>]*>(.*?)<\/noscript>/i
+
+experiment('DOMParserWitSmartFixScripts', function() {
+  var requiresNoscriptFix = true;
+
+  var html = HTML;
+
+  if (requiresNoscriptFix) {
+    html = html.replace(noScriptPattern, function (match, content) {
+      return '<div class="up-noscript" data-html="' + escapeHtml(content) + '"></div>'
+    })
+  }
+
+  var doc = domParser.parseFromString(html, "text/html");
+
+  var body = doc.querySelector('body');
+  if (!body) {
+    throw "no body in imported";
+  }
+  removeScripts(body);
+
+  if (requiresNoscriptFix) {
+    var noscripts = body.querySelectorAll('.up-noscript');
+    noscripts.forEach(function(noscript) {
+      var html = noscript.getAttribute('data-html');
+      noscript.outerHTML = html;
+    })
+  }
+});
+
+
+
+
+
+
 experiment('DOMParserWithImportAndFixScripts', function() {
   var doc = domParser.parseFromString(HTML, "text/html");
   var body = doc.querySelector('body');
@@ -126,6 +215,52 @@ experiment('DOMParserWithImportAndFixScripts', function() {
   }
   var importedNode = document.importNode(body, true);
   fixScripts(importedNode);
+});
+
+
+
+
+
+var noScriptPattern = /<noscript[^>]*>(.*?)<\/noscript>/i
+// var customElementPattern = /<[^!\->\s\/]+\-/;
+var customElementPattern = /<\w+-\w+/;
+
+experiment('DOMParserWithOnDemandImportAndFixScript', function() {
+  var requiresNoscriptFix = true;
+
+  var html = HTML;
+
+  if (requiresNoscriptFix) {
+    html = html.replace(noScriptPattern, function (match, content) {
+      return '<div class="up-noscript" data-html="' + escapeHtml(content) + '"></div>'
+    })
+  }
+
+  var doc = domParser.parseFromString(html, "text/html");
+
+  var body = doc.querySelector('body');
+  if (!body) {
+    throw "no body in imported";
+  }
+
+  var importedNode;
+
+  if (customElementPattern.test(html)) {
+    console.debug("importing because found custom element: ", customElementPattern.exec(html));
+    importedNode = document.importNode(body, true);
+  } else {
+    importedNode = body;
+  }
+
+  // removeScripts(importedNode);
+
+  if (requiresNoscriptFix) {
+    var noscripts = importedNode.querySelectorAll('.up-noscript');
+    noscripts.forEach(function(noscript) {
+      var html = noscript.getAttribute('data-html');
+      noscript.outerHTML = html;
+    })
+  }
 });
 
 
@@ -181,8 +316,4 @@ experiment('SmartInnerHTMLWithRemoveScripts', function() {
 
 
 
-
-
-
-
-
+pokeQueue();

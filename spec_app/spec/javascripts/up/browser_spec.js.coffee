@@ -215,3 +215,22 @@ describe 'up.browser', ->
           expect(window.confirm).not.toHaveBeenCalled()
           expect(result.state).toEqual('fulfilled')
           done()
+
+#    describe 'up.browser.ieVersion', ->
+#
+#      it 'returns 10 for Internet Explorer 10', ->
+#        version = up.browser.ieVersion('Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.2; Trident/6.0)')
+#        expect(version).toEqual(10)
+#
+#      it 'returns 11 for Internet Explorer 11', ->
+#        version = up.browser.ieVersion('Mozilla/5.0 (Windows NT 6.3; Trident/7.0; rv:11.0) like Gecko')
+#        expect(version).toEqual(11)
+#
+#      it 'returns 12 for Edge 12', ->
+#        version = up.browser.ieVersion('Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.71 Safari/537.36 Edge/12.0')
+#        expect(version).toEqual(12)
+#
+#      it 'returns 13 for Edge 13', ->
+#        version = up.browser.ieVersion('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/46.0.2486.0 Safari/537.36 Edge/13.10586')
+#        expect(version).toEqual(13)
+#

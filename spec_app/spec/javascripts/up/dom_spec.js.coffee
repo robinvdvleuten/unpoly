@@ -1044,7 +1044,7 @@ describe 'up.dom', ->
                 expect(e).toBeError(/Could not find target in response/i)
                 done()
 
-        describe 'execution of script tags', ->
+        describe 'execution of scripts', ->
 
           beforeEach ->
             window.scriptTagExecuted = jasmine.createSpy('scriptTagExecuted')
@@ -1140,6 +1140,40 @@ describe 'up.dom', ->
                 text = u.trim($noscript.text())
                 expect(text).toEqual('<img src="foo.png">')
                 done()
+
+          if up.browser.canCustomElements()
+
+            describe 'custom elements', ->
+
+              it 'activates custom elements in inserted fragments', (done) ->
+                TestComponent = ->
+                  instance = Reflect.construct(HTMLElement, [], TestComponent)
+                  instance.innerHTML = 'text from component'
+                  instance
+
+                Object.setPrototypeOf(TestComponent.prototype, HTMLElement.prototype)
+                Object.setPrototypeOf(TestComponent, HTMLElement)
+
+                window.customElements.define('test-component-activation-one', TestComponent)
+
+                @responseText = """
+                  <div class="middle">
+                    <test-component-activation-one></test-component-activation-one>
+                  </div>
+                  """
+
+                promise = up.replace('.middle', '/path')
+                @respond()
+
+                promise.then ->
+                  expect('.middle test-component-activation-one').toHaveText('text from component')
+                  done()
+
+              it 'does not activate custom elements outside of inserted fragments'
+
+              it 'call document.importNode() on a fragment when it contains defined custom elements'
+
+              it 'does not call document.importNode() on a fragment when it does not contain custom elements'
 
         describe 'with { restoreScroll: true } option', ->
 

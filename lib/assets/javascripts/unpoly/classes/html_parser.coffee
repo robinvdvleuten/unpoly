@@ -3,7 +3,6 @@ u = up.util
 class up.HtmlParser
 
   constructor: (@html) ->
-    @findCustomElements()
     @wrapNoscriptInHtml()
     @parsedDoc = u.createElementFromHtml(@html)
 
@@ -22,17 +21,7 @@ class up.HtmlParser
   prepareForInsertion: ($element) ->
     element = $element[0]
     @unwrapNoscriptInElement(element)
-    element = @activateCustomElements(element)
     $(element)
-
-  findCustomElements: ->
-    return unless up.browser.canCustomElements()
-    tags = []
-    # Custom elements must contain a dash in their tag name.
-    customElementPattern = /<(\w+-[\w\-]+)/g
-    while match = customElementPattern.exec(@html)
-      tags.push(match[1])
-    @customElementsSelector = tags.join(',')
 
   wrapNoscriptInHtml: ->
     # We wrap <noscript> tags into a <div> for two reasons:
@@ -62,14 +51,3 @@ class up.HtmlParser
       noscript = document.createElement('noscript')
       noscript.textContent = wrappedContent
       wrappedNoscript.parentNode.replaceChild(noscript, wrappedNoscript)
-
-  activateCustomElements: (element) ->
-    return element
-    # importNode() creates a deep copy of the given element in the context of our document
-    # and upgrades custom elements in the process. This is a very expensive operation
-    # and we only do it when the element contains a custom element, or when  the element
-    # is itself a custom element.
-    if @customElementsSelector && (element.querySelector(@customElementsSelector) || element.tagName.indexOf('-') != -1)
-      document.importNode(element, true)
-    else
-      element

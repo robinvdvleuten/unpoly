@@ -1145,20 +1145,21 @@ describe 'up.dom', ->
 
             describe 'custom elements', ->
 
-              it 'activates custom elements in inserted fragments', (done) ->
+              beforeAll ->
                 TestComponent = ->
                   instance = Reflect.construct(HTMLElement, [], TestComponent)
                   instance.innerHTML = 'text from component'
+                  up.emit('test-component:new')
                   instance
-
                 Object.setPrototypeOf(TestComponent.prototype, HTMLElement.prototype)
                 Object.setPrototypeOf(TestComponent, HTMLElement)
 
-                window.customElements.define('test-component-activation-one', TestComponent)
+                window.customElements.define('test-component-activation', TestComponent)
 
+              it 'activates custom elements in inserted fragments', (done) ->
                 @responseText = """
                   <div class="middle">
-                    <test-component-activation-one></test-component-activation-one>
+                    <test-component-activation></test-component-activation>
                   </div>
                   """
 
@@ -1166,14 +1167,32 @@ describe 'up.dom', ->
                 @respond()
 
                 promise.then ->
-                  expect('.middle test-component-activation-one').toHaveText('text from component')
+                  expect('.middle test-component-activation').toHaveText('text from component')
                   done()
 
-              it 'does not activate custom elements outside of inserted fragments'
+              it 'does not activate custom elements outside of inserted fragments', (done) ->
+                constructorSpy = jasmine.createSpy('constructor called')
+                up.on('test-component:new', constructorSpy)
 
-              it 'call document.importNode() on a fragment when it contains defined custom elements'
+                @responseText = """
+                  <div class="before">
+                    <test-component-activation></test-component-activation>
+                  </div>
+                  <div class="middle">
+                    <test-component-activation></test-component-activation>
+                  </div>
+                  <div class="after">
+                    <test-component-activation></test-component-activation>
+                  </div>
+                  """
 
-              it 'does not call document.importNode() on a fragment when it does not contain custom elements'
+                promise = up.replace('.middle', '/path')
+                @respond()
+
+                promise.then =>
+                  expect(constructorSpy.calls.count()).toBe(1)
+                  done()
+
 
         describe 'with { restoreScroll: true } option', ->
 

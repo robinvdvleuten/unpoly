@@ -327,13 +327,6 @@ up.browser = (($) ->
     value = value.substr(1) if value[0] == '#'
     u.presence(value)
 
-#  ieVersion = (uaString = navigator.userAgent) ->
-#    if match = /\b(MSIE |Trident.*?rv:|Edge\/)(\d+)/.exec(uaString)
-#      parseInt(match[2])
-#
-#  isIE = ->
-#    !!isVersion()
-
   <% if ENV['JS_KNIFE'] %>knife: eval(Knife.point)<% end %>
   url: url
   navigate: navigate
@@ -348,8 +341,6 @@ up.browser = (($) ->
   sessionStorage: sessionStorage
   popCookie: popCookie
   hash: hash
-#  ieVersion: ieVersion
-#  isIE: isIE
 
 )(jQuery)
 

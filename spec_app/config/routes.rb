@@ -10,6 +10,7 @@ Rails.application.routes.draw do
   get 'css_test/:action', controller: 'css_test'
   get 'error_test/:action', controller: 'error_test'
   post 'error_test/:action', controller: 'error_test'
+  delete 'replace_test/delete_action', controller: 'replace_test'
   get 'replace_test/:action', controller: 'replace_test'
   get 'hash_test/:action', controller: 'hash_test'
   get 'reveal_test/:action', controller: 'reveal_test'

@@ -1,0 +1,44 @@
+Haml: Generating a unique selector for an element
+
+
+
+
+Having a unique selector for an element is useful to later select it from JavaScript or to update a fragment with an [Unpoly](https://unpoly.com/).
+
+Haml lets you use square brackets (`[]`) to generate a unique class name and ID from a given Ruby object. Haml will infer a `class` attribute from the given object's Ruby class. It will also infer an `id` attribute from the given object's Ruby class and `#id` method.
+
+
+## Example
+
+```haml
+- @users.each do |user|
+  .row[user]
+    = user.name
+```
+
+This compiles to:
+
+```html
+<div class='user row' id='user_37'>Alice</div>
+<div class='user row' id='user_38'>Bob</div>
+```
+
+Since the record's `#id` is part of the generated selector, it will be the same over multiple renderings of the same view.
+
+
+## Controlling the generated string
+
+By default Haml will downcase and underscore the class name. So `ForumPost` will become `forum_post`.
+
+You can control the generated string by overriding the `#haml_object_ref` method in the referenced object:
+
+```
+class ForumPost < ActiveRecord::Base
+
+  def haml_object_ref
+    'forum-comment''
+  end
+
+end
+````
+

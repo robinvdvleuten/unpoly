@@ -2,6 +2,7 @@ Rails.application.routes.draw do
 
   mount JasmineRails::Engine => '/specs' if defined?(JasmineRails)
   root to: 'pages#start'
+  get 'haml_test', to: 'pages#haml_test'
 
   get 'method_test/:action', controller: 'method_test'
   post 'method_test/:action', controller: 'method_test'

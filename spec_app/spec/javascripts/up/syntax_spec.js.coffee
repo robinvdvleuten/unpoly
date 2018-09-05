@@ -124,10 +124,12 @@ describe 'up.syntax', ->
         it 'does not parse an [up-data] attribute if the compiler function only takes a single argument', ->
           parseDataSpy = spyOn(up.syntax, 'serverData').and.returnValue({})
 
-          up.compiler '.child', ($element) -> # no-op
-          up.hello(affix(".child"))
+          $child = affix(".child")
 
-          expect(parseDataSpy).not.toHaveBeenCalled()
+          up.compiler '.child', ($element) -> # no-op
+          up.hello($child)
+
+          expect(parseDataSpy).not.toHaveBeenCalledWith($child.get(0))
 
       it 'compiles matching elements one-by-one', ->
         compiler = jasmine.createSpy('compiler')

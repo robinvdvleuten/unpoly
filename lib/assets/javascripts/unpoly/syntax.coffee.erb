@@ -331,7 +331,6 @@ up.syntax = (($) ->
   ###
   clean = ($fragment) ->
     cleanables = u.selectInSubtree($fragment, '.up-can-clean')
-    console.debug('/// got cleanables: %o', cleanables.get())
     u.each cleanables, (cleanable) ->
       cleanable.upResult?.clean()
       # We do not actually remove the $.data key or .up-can-* classes for performance reasons.

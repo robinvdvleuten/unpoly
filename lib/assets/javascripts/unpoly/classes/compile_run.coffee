@@ -56,6 +56,7 @@ class up.CompileRun
           $(batch).attr('up-keep', value)
 
   dataForElement: (element) =>
+    console.debug("### CompileRun calls up.syntax.serverData(%o)", $me.get(0))
     serverData = up.syntax.serverData(element)
     optionsData = @dataByElement.get(element)
     u.merge(serverData, optionsData)

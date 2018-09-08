@@ -525,6 +525,7 @@ up.dom = (($) ->
           $partner = u.selectInSubtree($new, partnerSelector)
         $partner = $partner.first()
         if $partner.length && $partner.is('[up-keep]')
+          console.debug("### [up-keep] handling calls up.syntax.serverData(%o)", $me.get(0))
           plan =
             $element: $keepable # the element that should be kept
             $newElement: $partner # the element that would have replaced it but now does not

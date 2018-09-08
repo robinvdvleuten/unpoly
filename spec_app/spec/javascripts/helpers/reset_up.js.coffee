@@ -15,4 +15,5 @@ afterEach (done) ->
     # then start the next example.
     up.util.nextFrame ->
       $('.up-toast').remove()
+      console.debug("---- spec done and reset done ----")
       done()

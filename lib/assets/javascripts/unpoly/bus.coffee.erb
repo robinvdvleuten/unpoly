@@ -75,6 +75,8 @@ up.bus = (($) ->
       # count of 0, since then the function might take varargs.
       expectedArgCount = upListener.length
       unless expectedArgCount == 1 || expectedArgCount == 2
+        unless $me.is(document)
+          console.debug("### bus listener %o calls up.syntax.serverData(%o)", upListener, $me.get(0))
         args.push(up.syntax.serverData($me))
 
       upListener.apply($me.get(0), args)
@@ -100,6 +102,8 @@ up.bus = (($) ->
     if isNew
       jqueryListener = upListenerToJqueryListener(upListener)
       upListener._asJqueryListener = jqueryListener
+      if upListener._descriptionNumber
+        up.fail('up.on(): The callback %o cannot be registered more than once')
       upListener._descriptionNumber = ++nextUpDescriptionNumber
     else
       jqueryListener = upListener._asJqueryListener

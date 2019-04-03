@@ -24,31 +24,7 @@ class up.Layer extends up.Record
   @defaults: ->
     u.merge(super.defaults?(), @config)
 
-  @config: new up.Config ->
-    history: false
-    location: null
-    title: null
-    origin: null
-    position: null
-    align: null
-    size: null
-    class: null
-    targets: []
-    openAnimation: 'fade-in'
-    closeAnimation: 'fade-out'
-    openDuration: null
-    closeDuration: null
-    openEasing: null
-    closeEasing: null
-    backdropOpenAnimation: 'fade-in'
-    backdropCloseAnimation: 'fade-out'
-    dismissLabel: '×'
-    dismissAriaLabel: 'Dismiss dialog'
-    dismissible: true
-    onCreated: null
-    onAccepted: null
-    onDismissed: null
-    onContentAttached: null
+
 
   isCurrent: ->
     @stack.current() == this

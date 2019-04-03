@@ -1,3 +1,76 @@
+class up.Layer
+
+  @stack: new up.LayerStack(-> layers: [new up.layers.Root()])
+
+  @config: new up.Config ->
+    history: false
+    location: null
+    title: null
+    origin: null
+    position: null
+    align: null
+    size: null
+    class: null
+    targets: []
+    openAnimation: 'fade-in'
+    closeAnimation: 'fade-out'
+    openDuration: null
+    closeDuration: null
+    openEasing: null
+    closeEasing: null
+    backdropOpenAnimation: 'fade-in'
+    backdropCloseAnimation: 'fade-out'
+    dismissLabel: '×'
+    dismissAriaLabel: 'Dismiss dialog'
+    dismissible: true
+    onCreated: null
+    onAccepted: null
+    onDismissed: null
+    onContentAttached: null
+
+    flavor: 'modal' # default layer flavor to pick
+    targets: ['[up-layer-target]']
+
+  @flavors: {}
+
+  @getImplementation: (options = {}) ->
+    flavor = options.flavor ? config.flavor
+    @flavors[flavor] or up.fail("Unknown layer flavor: #{flavor}")
+
+  @build: (options) ->
+    flavor = options.flavor ? config.flavor
+
+  @registerFlavor: (Implementation) ->
+    flavor = Implementation.flavor
+    # Since the layer class names are not public API, we make their static
+    # config property accessible through up.layer.config. E.g. up.layer.config.dialog
+    # is set to up.layer.Dialog.config.
+
+    Implementation.isDefault = up.framework.isBooting()
+
+    @flavors[flavor] = Implementation
+
+    if attr = Implementation.attr
+      up.link.targetMacro attr,
+        'up-layer': 'new'
+        'up-flavor': flavor
+
+  @reset: ->
+    @config.reset()
+    for flavor, implementation in u.copy(@flavors)
+      implementation.config.reset()
+      delete @flavors[flavor] unless implementation.isDefault
+
+
+class up.Layer.Modal extends up.Layer
+
+
+up.Layer.registerFlavor(up.layer.Modal)
+
+
+#####################################################################
+
+
 up.layer = do ->
 
   DEFAULT_FLAVOR_IMPLEMENTATIONS = [
@@ -100,7 +173,6 @@ up.layer = do ->
   selfAndAncestors: -> stack.selfAndAncestors()
   lookup: lookupOne
   lookupAll: lookupAll
-
   allElements: allElements
   firstElement: firstElement
   config: config

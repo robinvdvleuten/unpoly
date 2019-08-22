@@ -117,6 +117,7 @@ class up.Request extends up.Record
     @normalize()
     @aborted = false
     @deferred = u.newDeferred()
+    @uid = u.uid() # TODO: Remove
 
   @delegate ['then', 'catch', 'always'], 'deferred'
 

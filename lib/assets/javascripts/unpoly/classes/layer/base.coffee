@@ -71,8 +71,7 @@ class up.Layer extends up.Record
     @stack.parentOf(this)
 
   contains: (element) =>
-    # Test that the closest parent is the element and not another layer.
-    e.closest(element, '.up-overlay, html') == @element
+    throw up.error.notImplemented()
 
   on: (args...) ->
     return @buildEventListenerGroup(args).bind()

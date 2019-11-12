@@ -64,6 +64,12 @@ up.layer = do ->
   isOverlayMode = (name) ->
     !!config[name]?.Class
 
+  overlaySelector = ->
+    u.map(OVERLAY_CLASSES, (Class) -> Class.selector()).join(',')
+
+  isOverlay = (element) ->
+    e.matches(element, overlaySelector())
+
   defaultTargets = (mode) ->
     return u.flatMap(modeConfigs(mode), 'targets')
 

@@ -23,6 +23,9 @@ class up.Layer.Root extends up.Layer
 #  @getter 'targets', ->
 #    up.layer.config.root.targets
 
+  contains: (element) ->
+    !e.closest(element, '.up-overlays')
+
   allElements: (selector) ->
     matches = e.all(selector)
     # Since our @element also contains all the other layers we need

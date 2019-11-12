@@ -1,0 +1,163 @@
+%maximize
+  top: 0
+  left: 0
+  bottom: 0
+  right: 0
+
+%large-shadow
+  box-shadow: 0 0 10px 1px rgba(0, 0, 0, 0.3)
+
+%small-shadow
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.3)
+
+
+// Silent elements to @extend below
+
+%up-overlay
+  @extend %maximize
+  // Create a stacking context for layer elements
+  // by giving a position and z-index.
+  position: fixed
+  z-index: 0
+
+%up-overlay-backdrop
+  @extend %maximize
+  position: absolute
+  background-color: rgba(90, 90, 90, 0.4)
+
+%up-overlay-viewport
+  @extend %maximize
+  position: absolute
+
+  // The viewport always has a scrollbar, except when we're animating (see below)
+  overflow-y: scroll
+  overflow-x: hidden
+
+  // Prevent users from scrolling a parent layer when they bump
+  // into the end of this layer's viewport.
+  overscroll-behavior: contain
+
+  // Center .up-overlay-frame within the viewport
+  text-align: center
+
+%up-overlay-frame
+  // Make it grow with the width of .up-overlay-content
+  display: inline-block
+  text-align: left
+
+  position: relative
+  box-sizing: border-box
+  max-width: 100%
+  background-color: #fff
+  padding: 20px
+
+  overflow-x: hidden
+
+%up-overlay-dismiss
+  color: #666
+  position: absolute
+  top: 5px
+  right: 5px
+
+
+// Links that close a layer
+
+[up-dismiss], [up-accept]
+  cursor: pointer
+
+
+// Container for all overlays
+
+.up-overlays
+  // Create a stacking context for .up-overlay children
+  // by giving a position and z-index.
+  position: absolute
+  z-index: 10000
+
+
+// Modals are a centered window with its own scrollbar, growing with its content
+
+.up-modal
+  @extend %up-overlay
+
+.up-modal-backdrop
+  @extend %up-overlay-backdrop
+
+.up-modal-viewport
+  @extend %up-overlay-viewport
+
+  // Implement the margin around the dialog box with a padding of the viewport.
+  // This way we can give .up-overlay-frame a max-width of 100%, (1) preventing people
+  // from setting withs larger than the viewport, and (2) sizing approproately
+  // if the modal contents are very wide and cannot wrap (e.g. code blocks).
+  padding: 30px 10px
+
+  // Allow frame to grow from the center, up to its max-width of 100%
+  justify-content: center
+
+.up-modal-frame
+  @extend %up-overlay-frame
+  @extend %large-shadow
+
+.up-modal-dismiss
+  @extend %up-overlay-dismiss
+
+
+// Drawers are a full-height modal clinging to the left or right edge of the screen
+
+.up-drawer
+  @extend %up-overlay
+
+.up-drawer-backdrop
+  @extend %up-overlay-backdrop
+
+.up-drawer-viewport
+  @extend %up-overlay-viewport
+
+  // Allow frame to grow from the left, up to its max-width of 100%
+  text-align: left
+
+  .up-drawer[up-position=right] &
+    // Allow frame to grow from the right, up to its max-width of 100%
+    text-align: right
+
+.up-drawer-frame
+  @extend %up-overlay-frame
+  @extend %large-shadow
+  min-height: 100vh
+
+.up-drawer-dismiss
+  @extend %up-overlay-dismiss
+
+
+// Cover is an overlay that fills the entire screen
+
+.up-cover
+  @extend %up-overlay
+
+.up-cover-viewport
+  @extend %up-overlay-viewport
+
+.up-cover-frame
+  @extend %up-overlay-frame
+  width: 100%
+  min-height: 100vh
+
+.up-cover-dismiss
+  @extend %up-overlay-dismiss
+
+
+// Popup is a small box that is anchored to a link
+
+.up-popup
+  @extend %up-overlay
+
+.up-popup-frame
+  @extend %up-overlay-frame
+  @extend %small-shadow
+
+  // The small popup box looks better with a smaller padding.
+  padding: 15px
+
+.up-popup-dismiss
+  @extend %up-overlay-dismiss

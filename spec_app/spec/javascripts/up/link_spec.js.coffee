@@ -700,9 +700,9 @@ describe 'up.link', ->
 
             next =>
               expect($('.document .target')).toHaveText('old document text')
-              expect($('.up-overlay .target')).toHaveText('old modal text')
+              expect($('.up-modal .target')).toHaveText('old modal text')
 
-              $linkInModal = $('.up-overlay-content').affix('a[href="/bar"][up-target=".target"]').text('link label')
+              $linkInModal = $('.up-modal-content').affix('a[href="/bar"][up-target=".target"]').text('link label')
               Trigger.clickSequence($linkInModal)
 
             next =>
@@ -710,7 +710,7 @@ describe 'up.link', ->
 
             next =>
               expect($('.document .target')).toHaveText('old document text')
-              expect($('.up-overlay .target')).toHaveText('new text from modal link')
+              expect($('.up-modal .target')).toHaveText('new text from modal link')
 
           describe 'with [up-layer] modifier', ->
 
@@ -723,9 +723,9 @@ describe 'up.link', ->
 
               next =>
                 expect($('.document .target')).toHaveText('old document text')
-                expect($('.up-overlay .target')).toHaveText('old modal text')
+                expect($('.up-modal .target')).toHaveText('old modal text')
 
-                $linkInModal = $('.up-overlay-content').affix('a[href="/bar"][up-target=".target"][up-layer="parent"][up-peel="false"]')
+                $linkInModal = $('.up-modal-content').affix('a[href="/bar"][up-target=".target"][up-layer="parent"][up-peel="false"]')
                 Trigger.clickSequence($linkInModal)
 
               next =>
@@ -733,7 +733,7 @@ describe 'up.link', ->
 
               next =>
                 expect($('.document .target')).toHaveText('new text from modal link')
-                expect($('.up-overlay .target')).toHaveText('old modal text')
+                expect($('.up-modal .target')).toHaveText('old modal text')
 
             it 'ignores [up-layer] if the server responds with an error', asyncSpec (next) ->
               $fixture('.document').affix('.target').text('old document text')
@@ -741,9 +741,9 @@ describe 'up.link', ->
 
               next =>
                 expect($('.document .target')).toHaveText('old document text')
-                expect($('.up-overlay .target')).toHaveText('old modal text')
+                expect($('.up-modal .target')).toHaveText('old modal text')
 
-                $linkInModal = $('.up-overlay-content').affix('a[href="/bar"][up-target=".target"][up-fail-target=".target"][up-layer="parent"][up-peel="false"]')
+                $linkInModal = $('.up-modal-content').affix('a[href="/bar"][up-target=".target"][up-fail-target=".target"][up-layer="parent"][up-peel="false"]')
                 Trigger.clickSequence($linkInModal)
 
               next =>
@@ -753,7 +753,7 @@ describe 'up.link', ->
 
               next =>
                 expect($('.document .target')).toHaveText('old document text')
-                expect($('.up-overlay .target')).toHaveText('new failure text from modal link')
+                expect($('.up-modal .target')).toHaveText('new failure text from modal link')
 
             it 'allows to name a layer for a non-200 response using an [up-fail-layer] modifier', asyncSpec (next) ->
               $fixture('.document').affix('.target').text('old document text')
@@ -761,9 +761,9 @@ describe 'up.link', ->
 
               next =>
                 expect($('.document .target')).toHaveText('old document text')
-                expect($('.up-overlay .target')).toHaveText('old modal text')
+                expect($('.up-modal .target')).toHaveText('old modal text')
 
-                $linkInModal = $('.up-overlay-content').affix('a[href="/bar"][up-target=".target"][up-fail-target=".target"][up-fail-layer="parent"][up-fail-peel="false"]')
+                $linkInModal = $('.up-modal-content').affix('a[href="/bar"][up-target=".target"][up-fail-target=".target"][up-fail-layer="parent"][up-fail-peel="false"]')
                 Trigger.clickSequence($linkInModal)
 
               next =>
@@ -773,7 +773,7 @@ describe 'up.link', ->
 
               next =>
                 expect($('.document .target')).toHaveText('new failure text from modal link')
-                expect($('.up-overlay .target')).toHaveText('old modal text')
+                expect($('.up-modal .target')).toHaveText('old modal text')
 
         describe 'with [up-fail-target] modifier', ->
 

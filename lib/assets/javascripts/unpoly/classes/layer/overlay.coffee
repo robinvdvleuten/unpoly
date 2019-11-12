@@ -73,19 +73,25 @@ class up.Layer.Overlay extends up.Layer
       'up-align': @align
       'up-position': @position,
       'up-size': @size,
-    @element = e.affix(parentElement, '.up-overlay', attrs)
+    @element = @affix(parentElement, null, attrs)
 
     if @class
       @element.classList.add(@class)
 
     if @backdropDismissable
       @element.addEventListener 'click', (event) =>
-        unless e.closest(event.target, '.up-overlay-frame')
+        unless e.closest(event.target, @selector('frame'))
           u.muteRejection @dismiss()
           up.event.halt(event)
 
     @registerCloser(@acceptOn, @accept)
     @registerCloser(@dismissOn, @dismiss)
+
+  affix: (parent, part, attrs) ->
+    return e.affix(parent, @selector(part), attrs)
+
+  selector: (part) ->
+    u.compact(['.up', @constructor.mode, part]).join('-')
 
   registerCloser: (closer, close) ->
     if closer
@@ -97,7 +103,8 @@ class up.Layer.Overlay extends up.Layer
 
   createDismissElement: (parentElement) ->
     if @buttonDismissable
-      @dismissElement = e.affix(parentElement, '.up-overlay-dismiss[up-dismiss]',
+      @dismissElement = @affix(parentElement, 'dismiss',
+        'up-dismiss': '',
         'aria-label': @dismissAriaLabel
       )
       # Since the dismiss button already has an accessible [aria-label]
@@ -106,8 +113,8 @@ class up.Layer.Overlay extends up.Layer
 
   frameInnerContent: (parentElement, options) ->
     content = options.content
-    @frameElement = e.affix(parentElement, '.up-overlay-frame')
-    @contentElement = e.affix(@frameElement, '.up-overlay-content')
+    @frameElement = @affix(parentElement, 'frame')
+    @contentElement = @affix(@frameElement, 'content')
     @contentElement.appendChild(content)
     @createDismissElement(@frameElement)
     options.onContentAttached?({ layer: this, content })
@@ -119,6 +126,10 @@ class up.Layer.Overlay extends up.Layer
   closeAnimateOptions: ->
     easing: @closeEasing
     duration: @closeDuration
+
+  contains: (element) ->
+    # Test that the closest parent is the element and not another layer.
+    e.closest(element, @selector()) == @element
 
   allElements: (selector) ->
     e.all(@contentElement, selector)

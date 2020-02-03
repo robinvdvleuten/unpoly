@@ -148,7 +148,7 @@ module Unpoly
           url = url_for(options)
           # Since our JS has no way to inject those headers into the redirect request,
           # we transport the headers over params. HTTP ceaders are case-insensitive.
-          up_headers = headers.select { |name, _value| name.downcase.starts_with?('x-up-') }
+          up_headers = request.headers.select { |name, _value| name.downcase.starts_with?('x-up-') }
           url = append_params_to_url(url, up_headers)
           controller.send(:redirect_to, url, *args)
         else
@@ -169,7 +169,7 @@ module Unpoly
 
           # We only used the up[...] params to transport headers, but we don't
           # want them to appear in a history URL.
-          non_up_params = params.reject { |key, _value| key.starts_with?('up[') }
+          non_up_params = params.reject { |key, _value| key.starts_with?('_up[') }
 
           append_params_to_url(uri.path, non_up_params)
         else
@@ -181,7 +181,7 @@ module Unpoly
 
       attr_reader :controller
 
-      delegate :request, :params, :response, to: :controller
+      delegate :request, :params, :response, :url_for, to: :controller
 
       def up_field(name, type: :string)
         raw_value = up_header(name) || up_param(name)
@@ -204,7 +204,7 @@ module Unpoly
       end
 
       def up_param(name)
-        if up_params = params['up']
+        if up_params = params['_up']
           name = up_param_name(name, full: false)
           up_params[name]
         end
@@ -213,7 +213,7 @@ module Unpoly
       def up_param_name(name, full: false)
         name = name.to_s
         name = name.dasherize
-        name = "up[#{name}]" if full
+        name = "_up[#{name}]" if full
         name
       end
 

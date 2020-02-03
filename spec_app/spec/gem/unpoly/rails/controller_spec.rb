@@ -258,6 +258,41 @@ describe ActionController::Base, type: :controller do
 
   end
 
+  describe 'up.redirect_to' do
+
+    controller do
+      def one
+        up.redirect_to '/two'
+      end
+
+      def two
+        render text: up.target
+      end
+    end
+
+    before :each do
+      routes.draw do
+        get 'one' => 'anonymous#one'
+        get 'two' => 'anonymous#two'
+      end
+    end
+
+    it 'preserves Unpoly-related headers for the redirect' do
+      request.headers['X-Up-Target'] = '.foo'
+      get :one
+      follow_redirect!
+      expect(response.body).to eq('.foo')
+    end
+
+    it 'does not change the history' do
+      request.headers['X-Up-Target'] = '.foo'
+      get :one
+      follow_redirect!
+      expect(response.headers['X-Up-Location']).to eq('/two')
+    end
+
+  end
+
   describe 'request method cookie' do
 
     controller do

@@ -1,32 +1,35 @@
 source 'https://rubygems.org'
 # source 'https://rails-assets.org'
 
-gem 'rails', '4.2.0'
+gem 'rails', '~> 5.2.0'
 gem 'sqlite3'
-gem 'sass-rails', '~> 5.0'
+gem 'sass-rails'
 gem 'haml-rails'
-gem 'uglifier', '>= 1.3.0'
-gem 'coffee-rails', '~> 4.1.0'
+gem 'uglifier'
+gem 'coffee-rails'
 gem 'therubyracer', platforms: :ruby
 gem 'jquery-rails'
 gem 'unpoly-rails', path: '..'
 gem 'bower-rails'
 gem 'bootstrap-sass', '~> 3.3'
-gem 'rake', '< 11'
+gem 'rake'
 
 # Jasmine spec runner won't boot with a more modern version of sprockets.
 # It crashes with an "asset not precompiled" error.
-gem 'tilt', '=1.4.1'
-gem 'sprockets-rails', '=2.2.4'
-gem 'sprockets', '=2.12.3'
+gem 'tilt'
+gem 'sprockets-rails'
+gem 'sprockets'
+
+group :development do
+  gem 'web-console'
+end
 
 group :development, :test do
   gem 'byebug'
-  gem 'web-console', '~> 2.0'
   gem 'jasmine-rails', git: 'https://github.com/triskweline/jasmine-rails.git', branch: 'hk/jasmine3'
   gem 'jasmine-core', '<3'
 end
 
 group :test do
-  gem 'rspec-rails'
+  gem 'rspec-rails', '=4.0.0.beta4'
 end

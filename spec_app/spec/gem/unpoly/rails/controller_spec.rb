@@ -3,44 +3,44 @@ describe Unpoly::Rails::Controller, type: :request do
   class BindingTestController < ActionController::Base
 
     def is_up
-      render :text => up?.to_s
+      render plain: up?.to_s
     end
 
     def up_target
-      render :text => up.target
+      render plain: up.target
     end
 
     def up_fail_target
-      render :text => up.fail_target
+      render plain: up.fail_target
     end
 
     def up_is_target
-      render :text => up.target?(tested_target).to_s
+      render plain: up.target?(tested_target).to_s
     end
 
     def up_is_fail_target
-      render :text => up.fail_target?(tested_target).to_s
+      render plain: up.fail_target?(tested_target).to_s
     end
 
     def up_is_any_target
-      render :text => up.any_target?(tested_target).to_s
+      render plain: up.any_target?(tested_target).to_s
     end
 
     def is_up_validate
-      render :text => up.validate?.to_s
+      render plain: up.validate?.to_s
     end
 
     def up_validate_name
-      render :text => up.validate_name
+      render plain: up.validate_name
     end
 
     def set_up_title
       up.title = 'Pushed document title'
-      render :text => 'text'
+      render plain: 'text'
     end
 
     def text
-      render :text => 'text from controller'
+      render plain: 'text from controller'
     end
 
     private
@@ -54,12 +54,13 @@ describe Unpoly::Rails::Controller, type: :request do
 
   Rails.application.routes.draw do
     get '/binding_test/:action', controller: 'binding_test'
+    put '/binding_test/:action', controller: 'binding_test'
   end
 
   describe '#up?' do
 
     it 'returns true if the request has an X-Up-Target header' do
-      get '/binding_test/is_up', nil, { 'X-Up-Target' => 'body' }
+      get '/binding_test/is_up', headers: { 'X-Up-Target' => 'body' }
       expect(response.body).to eq('true')
     end
 
@@ -243,7 +244,7 @@ describe Unpoly::Rails::Controller, type: :request do
     describe 'if the request is both non-GET and not a fragment update' do
 
       it 'echoes the request method in an _up_method cookie ' do
-        get '/binding_test/text'
+        put '/binding_test/text'
         expect(cookies['_up_method']).to eq('PUT')
       end
 
@@ -257,7 +258,7 @@ describe Unpoly::Rails::Controller, type: :request do
       end
 
       it 'deletes an existing cookie' do
-        request.cookies['_up_method'] = 'PUT'
+        cookies['_up_method'] = 'PUT'
         get '/binding_test/text'
         expect(cookies['_up_method']).to be_nil
       end

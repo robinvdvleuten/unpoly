@@ -4,7 +4,9 @@ module Unpoly
     # This object allows the server to inspect the current request
     # for Unpoly-related concerns such as "is this a page fragment update?".
     #
-    # Available through the `#up` method in all controllers, helpers and views.
+    # Available through the {ActionController::Base} {#up?} xmethod in all controllers, helpers and views.
+    #
+    # @see ActionController::Base
     class Inspector
       include Memoized
       include FieldRegistry

@@ -88,6 +88,7 @@ class up.LayerStack extends up.Class
   by swapping the body element.
   ###
   attach: ->
+    # TODO: Das wäre nicht mehr richtig; Overlays mit Tether würden sich nur re-attachen wenn ihr { anchor } noch attached ist (und dann an das neu berechnete { parent }. Sonst würden sie sich schließen.
     @overlays.each (overlay) -> document.body.attachChild(overlay.element)
 
   get: (args...) ->

@@ -19,5 +19,4 @@ class up.Layer.OverlayWithTether extends up.Layer.Overlay
     @destroyElement({ animation }).then =>
       @tether.stop()
 
-  sync: ->
-    @tether.sync()
+  @delegate 'sync', 'tether'

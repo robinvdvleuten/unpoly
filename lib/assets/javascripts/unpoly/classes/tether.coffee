@@ -15,9 +15,12 @@ class up.Tether
 
     @alignAxis = if @position == 'top' || @position == 'bottom' then 'horizontal' else 'vertical'
 
+    console.debug("Tether constructed: %o", { @element, @anchor, @position, @align, @alignAxis })
+
     @viewport = up.viewport.closest(@anchor)
     @element.style.position = 'absolute'
     @setBoundsOffset(0, 0)
+    @sync()
 
     @changeEventSubscription('on')
 
@@ -26,9 +29,12 @@ class up.Tether
 
   changeEventSubscription: (fn) ->
     up[fn](window, 'resize', @scheduleSync)
-    up[fn](@viewport, 'scroll', @scheduleSync)
+    console.debug("up.#{fn}(%o, %o)", @viewport, 'scroll')
+    scrollEmitter = if up.viewport.isRoot(@viewport) then document else @viewport
+    up[fn](scrollEmitter, 'scroll', @scheduleSync)
 
   scheduleSync: =>
+    console.debug("scheduleSync")
     clearTimeout(@syncTimer)
     @syncTimer = u.task(@sync)
 

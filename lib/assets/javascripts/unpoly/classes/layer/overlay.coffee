@@ -95,10 +95,17 @@ class up.Layer.Overlay extends up.Layer
       @element.classList.add(@class)
 
     if @outsideDismissable
+      throw "das stimmt nicht mehr, wenn die element-klassen nicht mehr volle breite/höhe haben"
       @element.addEventListener 'click', (event) =>
+        console.debug("CLICKED ELEMENT")
         unless e.closest(event.target, 'up-overlay-frame')
           u.muteRejection @dismiss()
           up.event.halt(event)
+
+      @on 'click up:action:consumed', (event) =>
+        @child?.emit('up:layer:parent:clicked')
+         throw "das ist aber schlecht, wenn wir erst bei up:action:consumed was machen, weil dann ist es schon passiert. Wir wollen up:action:consume (Präsens) machen und das ggf. verhindern. Oder egal?"
+
 
     @registerCloser(@acceptOn, @accept)
     @registerCloser(@dismissOn, @dismiss)

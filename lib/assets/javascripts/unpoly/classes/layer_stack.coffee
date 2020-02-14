@@ -63,6 +63,9 @@ class up.LayerStack extends up.Class
     layerIndex = @indexOf(layer)
     @layers.slice(layerIndex + 1)
 
+  childOf: (layer) ->
+    @descendantsOf(layer)[0]
+
   allReversed: ->
     u.reverse(@layers)
 
@@ -77,9 +80,6 @@ class up.LayerStack extends up.Class
 
   @getter 'front', ->
     u.last(@layers)
-
-  @getter 'parent', ->
-    @parentOf(@current)
 
   ###**
   Attaches all overlays to the body.

@@ -274,7 +274,7 @@ up.layer = do ->
     get_all: -> stack.layers
     get_current: -> stack.current
     get_front: -> stack.front
-    get_parent: -> stack.parent
+    get_parent: -> stack.current.parent
     parentOf: (args...) -> stack.parentOf(args...)
     get_location: -> stack.current.location
     get_history: -> stack.current.history

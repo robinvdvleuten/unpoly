@@ -7,4 +7,5 @@
 tmp
 /dist/manifest.json
 /doc
+/node_modules
 npm-debug.log

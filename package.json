@@ -33,6 +33,8 @@
     "url": "https://github.com/unpoly/unpoly/issues"
   },
   "homepage": "https://unpoly.com",
-  "dependencies": {
+  "dependencies": {},
+  "devDependencies": {
+    "serve": "^11.3.0"
   }
 }

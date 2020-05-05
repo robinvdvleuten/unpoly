@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta content="text/html;charset=UTF-8" http-equiv="Content-Type"/>
+    <title>Unpoly Specs</title>
+
+    <link rel="shortcut icon" type="image/png" href="/jasmine/jasmine_favicon.png">
+    <link rel="stylesheet" href="/jasmine/jasmine.css">
+    <link rel="stylesheet" href="/dist/unpoly.css">
+
+    <style>
+      /** Reduce the backdrop flashing during modal specs */
+      .up-modal-backdrop {
+        background-color: rgba(90, 90, 90, 0.05);
+      }
+
+      .default-fallback {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 500px;
+        height: 300px;
+        background-color: rgba(255, 255, 255, 0.7);
+      }
+
+      .default-fallback:empty {
+        display: none;
+      }
+
+      /** For specs that need to query computed styles */
+      .red-background {
+        background-color: #f00;
+      }
+    </style>
+    
+    <script src="/jasmine/jasmine.js"></script>
+    <script src="/jasmine/jasmine-html.js"></script>
+    <script src="/jasmine/boot.js"></script>
+
+    <!-- dependencies -->
+    <script src="https://unpkg.com/jquery@3.5.1/dist/jquery.js"></script>
+    <script src="/spec/helpers/jquery_no_conflict.js"></script>
+    <script src="https://unpkg.com/jquery-ujs@1.2.2/src/rails.js"></script>
+    <script src="https://unpkg.com/jasmine-ajax@4.0.0/lib/mock-ajax.js"></script>
+    <script src="/spec/helpers/knife.js"></script>
+    <script src="https://unpkg.com/es6-promise@4.2.8/dist/es6-promise.auto.min.js"></script>
+  
+    <!-- source files... -->
+    <script src="/dist/unpoly.js"></script>
+  
+    <!-- helper files... -->
+    <script src="/spec/helpers/agent_detector.js"></script>
+    <script src="/spec/helpers/async_sequence.js"></script>
+    <script src="/spec/helpers/browser_switches.js"></script>
+    <script src="/spec/helpers/enable_logging.js"></script>
+    <script src="/spec/helpers/fixture.js"></script>
+    <script src="/spec/helpers/last_request.js"></script>
+    <script src="/spec/helpers/mock_ajax.js"></script>
+    <script src="/spec/helpers/mock_clock.js"></script>
+    <script src="/spec/helpers/parse_form_data.js"></script>
+    <script src="/spec/helpers/promise_state.js"></script>
+    <script src="/spec/helpers/protect_jasmine_runner.js"></script>
+    <script src="/spec/helpers/remove_body_margin.js"></script>
+    <script src="/spec/helpers/reset_history.js"></script>
+    <script src="/spec/helpers/reset_knife.js"></script>
+    <script src="/spec/helpers/reset_up.js"></script>
+    <script src="/spec/helpers/restore_body_scroll.js"></script>
+    <script src="/spec/helpers/show_lib_versions.js"></script>
+    <script src="/spec/helpers/spec_util.js"></script>
+    <script src="/spec/helpers/to_be_around.js"></script>
+    <script src="/spec/helpers/to_be_array.js"></script>
+    <script src="/spec/helpers/to_be_attached.js"></script>
+    <script src="/spec/helpers/to_be_blank.js"></script>
+    <script src="/spec/helpers/to_be_detached.js"></script>
+    <script src="/spec/helpers/to_be_element.js"></script>
+    <script src="/spec/helpers/to_be_error.js"></script>
+    <script src="/spec/helpers/to_be_given.js"></script>
+    <script src="/spec/helpers/to_be_hidden.js"></script>
+    <script src="/spec/helpers/to_be_jquery.js"></script>
+    <script src="/spec/helpers/to_be_missing.js"></script>
+    <script src="/spec/helpers/to_be_present.js"></script>
+    <script src="/spec/helpers/to_be_scrolled_to.js"></script>
+    <script src="/spec/helpers/to_be_visible.js"></script>
+    <script src="/spec/helpers/to_contain.js"></script>
+    <script src="/spec/helpers/to_end_with.js"></script>
+    <script src="/spec/helpers/to_equal_jquery.js"></script>
+    <script src="/spec/helpers/to_equal_node_list.js"></script>
+    <script src="/spec/helpers/to_equal_via_is_equal.js"></script>
+    <script src="/spec/helpers/to_have_class.js"></script>
+    <script src="/spec/helpers/to_have_descendant.js"></script>
+    <script src="/spec/helpers/to_have_length.js"></script>
+    <script src="/spec/helpers/to_have_opacity.js"></script>
+    <script src="/spec/helpers/to_have_own_property.js"></script>
+    <script src="/spec/helpers/to_have_request_method.js"></script>
+    <script src="/spec/helpers/to_have_text.js"></script>
+    <script src="/spec/helpers/to_have_unhandled_rejections.js"></script>
+    <script src="/spec/helpers/to_match_list.js"></script>
+    <script src="/spec/helpers/to_match_selector.js"></script>
+    <script src="/spec/helpers/to_match_text.js"></script>
+    <script src="/spec/helpers/to_match_url.js"></script>
+    <script src="/spec/helpers/trigger.js"></script>
+    <script src="/spec/helpers/wait_until_dom_ready.js"></script>
+
+    <!-- spec files... -->
+    <script src="/spec/up/classes/store/memory_spec.js"></script>
+    <script src="/spec/up/classes/store/session_spec.js"></script>
+    <script src="/spec/up/classes/cache_spec.js"></script>
+    <script src="/spec/up/classes/divertible_chain_spec.js"></script>
+    <script src="/spec/up/classes/focus_tracker_spec.js"></script>
+    <script src="/spec/up/classes/params_spec.js"></script>
+    <script src="/spec/up/classes/request_spec.js"></script>
+    <script src="/spec/up/classes/scroll_motion_spec.js"></script>
+    <script src="/spec/up/browser_spec.js"></script>
+    <script src="/spec/up/element_spec.js"></script>
+    <script src="/spec/up/event_spec.js"></script>
+    <script src="/spec/up/feedback_spec.js"></script>
+    <script src="/spec/up/form_spec.js"></script>
+    <script src="/spec/up/fragment_spec.js"></script>
+    <script src="/spec/up/history_spec.js"></script>
+    <script src="/spec/up/jquery_spec.js"></script>
+    <script src="/spec/up/legacy_spec.js"></script>
+    <script src="/spec/up/link_spec.js"></script>
+    <script src="/spec/up/log_spec.js"></script>
+    <script src="/spec/up/modal_spec.js"></script>
+    <script src="/spec/up/motion_spec.js"></script>
+    <script src="/spec/up/popup_spec.js"></script>
+    <script src="/spec/up/protocol_spec.js"></script>
+    <script src="/spec/up/proxy_spec.js"></script>
+    <script src="/spec/up/radio_spec.js"></script>
+    <script src="/spec/up/rails_spec.js"></script>
+    <script src="/spec/up/spec_spec.js"></script>
+    <script src="/spec/up/syntax_spec.js"></script>
+    <script src="/spec/up/toast_spec.js"></script>
+    <script src="/spec/up/tooltip_spec.js"></script>
+    <script src="/spec/up/util_spec.js"></script>
+    <script src="/spec/up/viewport_spec.js"></script>
+  </head>
+  <body>
+    <!-- ... -->
+  </body>
+</html>
